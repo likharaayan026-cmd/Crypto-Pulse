@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Crypto Pulse - Technical Terminal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    html, body {
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      overflow-x: hidden;
+      background-color: #030712;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased">
+
+  <div id="splash-screen" class="fixed inset-0 bg-slate-950 z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
+    <div class="flex items-center gap-3 animate-bounce">
+      <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-extrabold text-2xl shadow-lg shadow-indigo-500/30">C</div>
+      <span class="text-3xl font-extrabold text-white tracking-tight">Crypto<span class="text-indigo-500">Pulse</span></span>
+    </div>
+  </div>
+
+  <header id="app-header" class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 hidden">
+    <div class="max-w-6xl mx-auto px-6 py-5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-md shadow-indigo-500/20">C</div>
+        <span class="text-2xl font-extrabold text-white tracking-tight">Crypto<span class="text-indigo-500">Pulse</span></span>
+      </div>
+      <div class="flex items-center gap-4">
+        <button onclick="handleLogout()" class="text-xs text-rose-400 font-bold hover:bg-rose-500/10 px-4 py-2 rounded-xl transition border border-rose-500/30">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-6xl mx-auto w-full p-4">
+
+    <section id="auth-section" class="max-w-sm mx-auto my-8 hidden animate-fade-in">
+      <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
+        <div class="text-center mb-5">
+          <h2 class="text-2xl font-extrabold text-white">CryptoPulse Login</h2>
+          <p class="text-xs text-slate-400 mt-1">Real-Time Crypto Dark Terminal</p>
+        </div>
+
+        <div class="flex bg-slate-950 p-1 rounded-xl mb-5 border border-slate-800">
+          <button id="tab-login" onclick="toggleAuthTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-slate-800 text-indigo-400 transition">Login</button>
+          <button id="tab-signup" onclick="toggleAuthTab('signup')" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 transition">Sign Up</button>
+        </div>
+
+        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Email</label>
+            <input type="email" id="login-email" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Password</label>
+            <input type="password" id="login-password" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
+          </div>
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-md shadow-indigo-600/30">Log In</button>
+        </form>
+
+        <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Full Name</label>
+            <input type="text" id="signup-name" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Email</label>
+            <input type="email" id="signup-email" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Password</label>
+            <input type="password" id="signup-password" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
+          </div>
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-md shadow-indigo-600/30">Create Account</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="dashboard-section" class="hidden animate-fade-in space-y-3">
+
+      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex flex-wrap justify-between items-center gap-3">
+        <div class="flex items-center gap-2">
+          <button onclick="changeCoin('BTCUSDT', 'Bitcoin (BTC)')" id="btn-btc" class="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition shadow-sm">BTC / USDT</button>
+          <button onclick="changeCoin('ETHUSDT', 'Ethereum (ETH)')" id="btn-eth" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition">ETH / USDT</button>
+          <button onclick="changeCoin('SOLUSDT', 'Solana (SOL)')" id="btn-sol" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition">SOL / USDT</button>
+        </div>
+
+        <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-3 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded-lg transition">5m</button>
+          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-3 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded-lg shadow transition">15m</button>
+          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-3 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded-lg transition">1h</button>
+          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-3 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded-lg transition">4h</button>
+        </div>
+
+        <button id="run-ai-btn" onclick="runStrategyEngine()" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2">
+          <span id="btn-spinner" class="hidden animate-spin">⚡</span>
+          <span id="btn-text">Run Strategy Analysis</span>
+        </button>
+      </div>
+
+      <div class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[400px] relative overflow-hidden">
+        <div class="absolute top-4 left-4 z-20 bg-slate-950/90 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-bold flex items-center gap-3">
+          <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-1 bg-blue-500 rounded"></span> 9 EMA</span>
+          <span class="flex items-center gap-1 text-red-500"><span class="w-2.5 h-1 bg-red-600 rounded"></span> 20 EMA</span>
+          <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> LIVE</span>
+        </div>
+        <div id="tv-dark-chart" class="w-full h-full"></div>
+      </div>
+
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-md">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
+          <div>
+            <h3 class="text-sm font-extrabold text-white" id="analysis-coin-title">Analysis Terminal</h3>
+            <p class="text-[10px] text-slate-400">Rules: 9/20 EMA Crossover + Candle Close + 1:2 RRR</p>
+          </div>
+          <span id="signal-badge" class="hidden text-xs font-bold px-3 py-1 rounded-full"></span>
+        </div>
+
+        <div id="ai-analysis-output">
+          <div class="text-center py-4">
+            <h4 class="font-bold text-slate-300 text-xs">Ready to Scan</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">Click <strong>"Run Strategy Analysis"</strong> to scan trade signals with 1:2 RRR.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="bg-slate-950 border-t border-slate-900 py-3 text-center text-[11px] text-slate-500 mt-auto">
+    Developer: <span id="dev-link" ondblclick="handleDevDoubleTap()" class="font-bold text-indigo-400 cursor-pointer hover:underline select-none">Aayan Industries</span>
+  </footer>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBt3iYcR4SijEJqtrBlH8mNr292vakgJFQ",
+      authDomain: "figo-movies.firebaseapp.com",
+      databaseURL: "https://figo-movies-default-rtdb.firebaseio.com",
+      projectId: "figo-movies",
+      storageBucket: "figo-movies.firebasestorage.app",
+      messagingSenderId: "425238806262",
+      appId: "1:425238806262:web:7d23814e4b550695bb76d7"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentPair = 'BTCUSDT';
+    let currentCoinName = 'Bitcoin (BTC)';
+    let currentTimeframe = '15m'; 
+    let isAnalyzing = false;
+
+    let darkChart = null;
+    let candleSeries = null;
+    let ema9Series = null;
+    let ema20Series = null;
+    let chartLines = [];
+
+    let ws = null;
+    let currentCandles = [];
+    let lastTapTime = 0;
+
+    let calculatedResistance = 0;
+    let calculatedSupport = 0;
+
+    let activeSignalState = null; 
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        splash.style.opacity = '0';
+        setTimeout(() => splash.classList.add('hidden'), 300);
+
+        const savedUser = localStorage.getItem('deeepr_user');
+        if (savedUser) {
+          showDashboard();
+        } else {
+          showAuthSection();
+        }
+      }, 500);
+    });
+
+    function handleDevDoubleTap() {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTapTime;
+      if (tapLength < 3000 && tapLength > 0) {
+        window.open("https://aayanindustries.shop", "_blank");
+      }
+      lastTapTime = currentTime;
+    }
+
+    function showAuthSection() {
+      document.getElementById('app-header').classList.add('hidden');
+      document.getElementById('dashboard-section').classList.add('hidden');
+      document.getElementById('auth-section').classList.remove('hidden');
+    }
+
+    function showDashboard() {
+      document.getElementById('auth-section').classList.add('hidden');
+      document.getElementById('app-header').classList.remove('hidden');
+      document.getElementById('dashboard-section').classList.remove('hidden');
+      buildDarkCanvasChart();
+      loadBinanceOHLCData();
+    }
+
+    function toggleAuthTab(tab) {
+      if (tab === 'login') {
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('signup-form').classList.add('hidden');
+        document.getElementById('tab-login').className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-slate-800 text-indigo-400 transition';
+        document.getElementById('tab-signup').className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 transition';
+      } else {
+        document.getElementById('signup-form').classList.remove('hidden');
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('tab-signup').className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-slate-800 text-indigo-400 transition';
+        document.getElementById('tab-login').className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 transition';
+      }
+    }
+
+    function handleSignup(e) {
+      e.preventDefault();
+      const name = document.getElementById('signup-name').value;
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const userData = { uid: userCredential.user.uid, name, email };
+          db.ref('users/' + userCredential.user.uid).set(userData);
+          localStorage.setItem('deeepr_user', JSON.stringify(userData));
+          showDashboard();
+        })
+        .catch((err) => alert("Error: " + err.message));
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const userData = { uid: userCredential.user.uid, email, name: email.split('@')[0] };
+          localStorage.setItem('deeepr_user', JSON.stringify(userData));
+          showDashboard();
+        })
+        .catch((err) => alert("Error: " + err.message));
+    }
+
+    function handleLogout() {
+      if(ws) ws.close();
+      auth.signOut().then(() => {
+        localStorage.removeItem('deeepr_user');
+        showAuthSection();
+      });
+    }
+
+    function buildDarkCanvasChart() {
+      const container = document.getElementById('tv-dark-chart');
+      container.innerHTML = '';
+
+      if (darkChart) {
+        darkChart.remove();
+        darkChart = null;
+      }
+
+      darkChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        layout: { background: { type: 'solid', color: '#090d16' }, textColor: '#64748b' },
+        grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        priceScale: { borderColor: '#334155' },
+        timeScale: { borderColor: '#334155', timeVisible: true },
+      });
+
+      candleSeries = darkChart.addCandlestickSeries({
+        upColor: '#22c55e', downColor: '#ef4444',
+        borderDownColor: '#ef4444', borderUpColor: '#22c55e',
+        wickDownColor: '#ef4444', wickUpColor: '#22c55e',
+      });
+
+      ema9Series = darkChart.addLineSeries({ color: '#2563eb', lineWidth: 2, title: '9 EMA' });
+      ema20Series = darkChart.addLineSeries({ color: '#dc2626', lineWidth: 2, title: '20 EMA' });
+    }
+
+    window.addEventListener('resize', () => {
+      const container = document.getElementById('tv-dark-chart');
+      if(darkChart && container) {
+        darkChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+      }
+    });
+
+    function computeEMA(candles, period) {
+      const k = 2 / (period + 1);
+      let emaArray = [];
+      let prev = candles[0].close;
+
+      for (let i = 0; i < candles.length; i++) {
+        const val = i === 0 ? candles[i].close : (candles[i].close * k) + (prev * (1 - k));
+        emaArray.push({ time: candles[i].time, value: val });
+        prev = val;
+      }
+      return emaArray;
+    }
+
+    function connectLiveWebSocket() {
+      if (ws) ws.close();
+
+      const streamSymbol = currentPair.toLowerCase();
+      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${streamSymbol}@kline_${currentTimeframe}`);
+
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        const kline = message.k;
+
+        const candle = {
+          time: kline.t / 1000,
+          open: parseFloat(kline.o),
+          high: parseFloat(kline.h),
+          low: parseFloat(kline.l),
+          close: parseFloat(kline.c)
+        };
+
+        if (currentCandles.length > 0) {
+          const lastIdx = currentCandles.length - 1;
+          if (currentCandles[lastIdx].time === candle.time) {
+            currentCandles[lastIdx] = candle;
+          } else if (candle.time > currentCandles[lastIdx].time) {
+            currentCandles.push(candle);
+          }
+
+          candleSeries.update(candle);
+
+          const ema9Data = computeEMA(currentCandles, 9);
+          const ema20Data = computeEMA(currentCandles, 20);
+
+          ema9Series.setData(ema9Data);
+          ema20Series.setData(ema20Data);
+        }
+      };
+    }
+
+    function calculateSupportResistance(candles) {
+      const sliced = candles.slice(-50);
+      let maxHigh = -Infinity;
+      let minLow = Infinity;
+
+      sliced.forEach(c => {
+        if (c.high > maxHigh) maxHigh = c.high;
+        if (c.low < minLow) minLow = c.low;
+      });
+
+      calculatedResistance = maxHigh;
+      calculatedSupport = minLow;
+    }
+
+    function drawSupportResistanceOnChart() {
+      chartLines.push(candleSeries.createPriceLine({
+        price: calculatedResistance,
+        color: '#a855f7',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        title: 'RESISTANCE / BSL'
+      }));
+
+      chartLines.push(candleSeries.createPriceLine({
+        price: calculatedSupport,
+        color: '#06b6d4',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        title: 'SUPPORT / SSL'
+      }));
+    }
+
+    async function loadBinanceOHLCData() {
+      clearCanvasLines();
+      try {
+        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=${currentTimeframe}&limit=120`);
+        const raw = await res.json();
+
+        currentCandles = raw.map(d => ({
+          time: d[0] / 1000,
+          open: parseFloat(d[1]),
+          high: parseFloat(d[2]),
+          low: parseFloat(d[3]),
+          close: parseFloat(d[4])
+        }));
+
+        candleSeries.setData(currentCandles);
+
+        const ema9Data = computeEMA(currentCandles, 9);
+        const ema20Data = computeEMA(currentCandles, 20);
+
+        ema9Series.setData(ema9Data);
+        ema20Series.setData(ema20Data);
+
+        calculateSupportResistance(currentCandles);
+
+        darkChart.timeScale().fitContent();
+        connectLiveWebSocket();
+
+        return { candles: currentCandles, ema9Data, ema20Data };
+      } catch (err) {
+        console.error("Data Load Failure", err);
+      }
+    }
+
+    function clearCanvasLines() {
+      if (!candleSeries) return;
+      chartLines.forEach(l => candleSeries.removePriceLine(l));
+      chartLines = [];
+    }
+
+    function changeTimeframe(tf) {
+      currentTimeframe = tf;
+      activeSignalState = null; 
+      ['5m', '15m', '1h', '4h'].forEach(t => {
+        const btn = document.getElementById(`tf-${t}`);
+        btn.className = t === tf 
+          ? "px-3 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded-lg shadow transition"
+          : "px-3 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded-lg transition";
+      });
+      loadBinanceOHLCData();
+    }
+
+    function changeCoin(pair, name) {
+      currentPair = pair;
+      currentCoinName = name;
+      activeSignalState = null;
+
+      document.getElementById('btn-btc').className = pair === 'BTCUSDT' ? 'px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition shadow-sm' : 'px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+      document.getElementById('btn-eth').className = pair === 'ETHUSDT' ? 'px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition shadow-sm' : 'px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+      document.getElementById('btn-sol').className = pair === 'SOLUSDT' ? 'px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition shadow-sm' : 'px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+
+      document.getElementById('signal-badge').classList.add('hidden');
+      document.getElementById('ai-analysis-output').innerHTML = `
+        <div class="text-center py-4">
+          <h4 class="font-bold text-slate-300 text-xs">Switched to ${name}</h4>
+          <p class="text-[11px] text-slate-500 mt-0.5">Click <strong>"Run Strategy Analysis"</strong> to scan trade signals with 1:2 RRR.</p>
+        </div>
+      `;
+
+      buildDarkCanvasChart();
+      loadBinanceOHLCData();
+    }
+
+    async function runStrategyEngine() {
+      if (isAnalyzing) return;
+      isAnalyzing = true;
+
+      const output = document.getElementById('ai-analysis-output');
+      const badge = document.getElementById('signal-badge');
+      const spinner = document.getElementById('btn-spinner');
+      const btnText = document.getElementById('btn-text');
+
+      badge.classList.add('hidden');
+      spinner.classList.remove('hidden');
+      btnText.innerText = "Scanning Rules...";
+
+      clearCanvasLines();
+      const dataObj = await loadBinanceOHLCData();
+      
+      setTimeout(() => {
+        spinner.classList.add('hidden');
+        btnText.innerText = "Run Strategy Analysis";
+        isAnalyzing = false;
+
+        if (!dataObj) return;
+
+        drawSupportResistanceOnChart();
+
+        const candles = dataObj.candles;
+        const e9 = dataObj.ema9Data;
+        const e20 = dataObj.ema20Data;
+
+        const closedIdx = candles.length - 2;
+        const liveIdx = candles.length - 1;
+
+        const livePrice = candles[liveIdx].close;
+
+        const curE9 = e9[closedIdx].value;
+        const curE20 = e20[closedIdx].value;
+        const prevE9 = e9[closedIdx - 1].value;
+        const prevE20 = e20[closedIdx - 1].value;
+
+        const emaGap = Math.abs(curE9 - curE20) / livePrice;
+        const isStrongMomentum = (emaGap > 0.0008); 
+
+        let isBullish = (curE9 > curE20);
+        let isBearish = (curE9 < curE20);
+        let isFreshBullCross = (prevE9 <= prevE20 && curE9 > curE20);
+        let isFreshBearCross = (prevE9 >= prevE20 && curE9 < curE20);
+
+        if ((isFreshBullCross || activeSignalState === 'BULLISH') && isBullish && isStrongMomentum) {
+          activeSignalState = 'BULLISH';
+        } else if ((isFreshBearCross || activeSignalState === 'BEARISH') && isBearish && isStrongMomentum) {
+          activeSignalState = 'BEARISH';
+        } else if (!isStrongMomentum) {
+          activeSignalState = null;
+        }
+
+        const liquidityUpper = (calculatedResistance * 1.002).toFixed(2);
+        const liquidityLower = (calculatedSupport * 0.998).toFixed(2);
+
+        const liquidityBlock = `
+          <div class="mt-3 pt-3 border-t border-slate-800">
+            <div class="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 mb-1.5 flex items-center justify-between">
+              <span>📍 Live Liquidity & RR Ratio (1:2 Min):</span>
+              <span class="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">CONFIRMED 1:2 RRR</span>
+            </div>
+            <div class="flex flex-wrap gap-2 text-[11px]">
+              <a href="https://aayanindustries.shop" target="_blank" class="bg-purple-950/60 border border-purple-800/50 hover:border-purple-500 text-purple-300 px-2.5 py-1 rounded-lg transition font-mono flex items-center gap-1">
+                <span>🔗 BSL:</span> <strong>$${liquidityUpper}</strong>
+              </a>
+              <a href="https://aayanindustries.shop" target="_blank" class="bg-cyan-950/60 border border-cyan-800/50 hover:border-cyan-500 text-cyan-300 px-2.5 py-1 rounded-lg transition font-mono flex items-center gap-1">
+                <span>🔗 SSL:</span> <strong>$${liquidityLower}</strong>
+              </a>
+              <span class="bg-slate-950 border border-slate-800 text-slate-300 px-2.5 py-1 rounded-lg font-mono">
+                Resistance: <strong class="text-purple-400">$${calculatedResistance.toFixed(2)}</strong>
+              </span>
+              <span class="bg-slate-950 border border-slate-800 text-slate-300 px-2.5 py-1 rounded-lg font-mono">
+                Support: <strong class="text-cyan-400">$${calculatedSupport.toFixed(2)}</strong>
+              </span>
+            </div>
+          </div>
+        `;
+
+        if (activeSignalState === 'BULLISH') {
+          const entry = livePrice;
+          const sl = entry * 0.995;
+          const riskAmount = entry - sl;
+          const t1 = entry + (riskAmount * 2.0);
+
+          chartLines.push(candleSeries.createPriceLine({ price: entry, color: '#2563eb', lineWidth: 2, title: 'BUY ENTRY' }));
+          chartLines.push(candleSeries.createPriceLine({ price: t1, color: '#22c55e', lineWidth: 2, title: 'TARGET (1:2)' }));
+          chartLines.push(candleSeries.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 2, title: 'STOP LOSS' }));
+
+          badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-block";
+          badge.innerText = "BUY SIGNAL (1:2 RRR)";
+          badge.classList.remove('hidden');
+
+          output.innerHTML = `
+            <div class="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg text-emerald-300 mb-2 text-xs">
+              <strong>🚀 BUY Signal Confirmed:</strong> 9 EMA crossed ABOVE 20 EMA on closed candle. Strong momentum verified.
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${entry.toFixed(2)}</strong></div>
+              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TARGET (1:2)</span><strong class="text-emerald-400">$${t1.toFixed(2)}</strong></div>
+              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400">$${sl.toFixed(2)}</strong></div>
+            </div>
+            ${liquidityBlock}
+          `;
+        } else if (activeSignalState === 'BEARISH') {
+          const entry = livePrice;
+          const sl = entry * 1.005;
+          const riskAmount = sl - entry;
+          const t1 = entry - (riskAmount * 2.0);
+
+          chartLines.push(candleSeries.createPriceLine({ price: entry, color: '#2563eb', lineWidth: 2, title: 'SELL ENTRY' }));
+          chartLines.push(candleSeries.createPriceLine({ price: t1, color: '#ef4444', lineWidth: 2, title: 'TARGET (1:2)' }));
+          chartLines.push(candleSeries.createPriceLine({ price: sl, color: '#f59e0b', lineWidth: 2, title: 'STOP LOSS' }));
+
+          badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 inline-block";
+          badge.innerText = "SELL SIGNAL (1:2 RRR)";
+          badge.classList.remove('hidden');
+
+          output.innerHTML = `
+            <div class="bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg text-rose-300 mb-2 text-xs">
+              <strong>📉 SELL Signal Confirmed:</strong> 9 EMA crossed BELOW 20 EMA on closed candle. Strong momentum verified.
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${entry.toFixed(2)}</strong></div>
+              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TARGET (1:2)</span><strong class="text-rose-400">$${t1.toFixed(2)}</strong></div>
+              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-amber-400">$${sl.toFixed(2)}</strong></div>
+            </div>
+            ${liquidityBlock}
+          `;
+        } else {
+          badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 inline-block";
+          badge.innerText = "WAIT / SIDEWAYS MARKET";
+          badge.classList.remove('hidden');
+
+          output.innerHTML = `
+            <div class="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg text-amber-300 text-xs">
+              <strong>⏳ WAIT - Flat / Sideways Market Filter:</strong> EMA lines are flat or gap is too narrow to avoid false signals. Wait for candle close confirmation & momentum gap.
+            </div>
+            <div class="mt-2 text-xs text-slate-400">Live Price: <strong class="text-white font-mono">$${livePrice.toFixed(2)}</strong></div>
+            ${liquidityBlock}
+          `;
+        }
+      }, 500);
+    }
+  </script>
+</body>
+</html>
