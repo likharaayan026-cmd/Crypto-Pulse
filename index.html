@@ -3,150 +3,196 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Crypto Pulse - Technical Terminal</title>
+  <title>Crypto Pulse</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
   <style>
     html, body {
       touch-action: manipulation;
-      -webkit-user-select: none;
       user-select: none;
       overflow-x: hidden;
       background-color: #030712;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
+    .fade-out {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease-out;
     }
-    .animate-fade-in {
-      animation: fadeIn 0.25s ease-out forwards;
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .tv-lightweight-charts-legend {
+      display: none !important;
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-  <div id="splash-screen" class="fixed inset-0 bg-slate-950 z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
-    <div class="flex items-center gap-3 animate-bounce">
-      <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-extrabold text-2xl shadow-lg shadow-indigo-500/30">C</div>
-      <span class="text-3xl font-extrabold text-white tracking-tight">Crypto<span class="text-indigo-500">Pulse</span></span>
+  <!-- Splash Screen -->
+  <div id="splash-screen" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
+    <div class="relative flex items-center justify-center">
+      <div class="w-20 h-20 bg-indigo-600 rounded-3xl animate-ping opacity-25 absolute"></div>
+      <div class="w-20 h-20 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-3xl flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-indigo-500/50 animate-bounce">
+        C
+      </div>
+    </div>
+    <h1 class="mt-6 text-2xl font-black tracking-wider text-white">Crypto<span class="text-indigo-500"> Pulse</span></h1>
+    <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase animate-pulse">Authenticating Session...</p>
+  </div>
+
+  <!-- Auth Screen -->
+  <div id="auth-container" class="hidden fixed inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 transform transition-all duration-300">
+      
+      <div class="text-center space-y-1">
+        <h2 id="auth-title" class="text-2xl font-black text-white tracking-tight">Welcome Back</h2>
+        <p id="auth-subtitle" class="text-xs text-slate-400">Log in to access live market analytics</p>
+      </div>
+
+      <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+        <div id="field-name" class="hidden space-y-1">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+          <input type="text" id="input-name" placeholder="John Doe" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div id="field-mobile" class="hidden space-y-1">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mobile Number</label>
+          <input type="tel" id="input-mobile" placeholder="+91 9876543210" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+          <input type="email" id="input-email" required placeholder="trader@cryptopulse.com" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
+          <input type="password" id="input-password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <p id="auth-error" class="text-[11px] text-rose-400 text-center font-bold hidden"></p>
+
+        <button type="submit" id="auth-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition">
+          Log In
+        </button>
+      </form>
+
+      <div class="text-center pt-2 border-t border-slate-800/80">
+        <p class="text-xs text-slate-400">
+          <span id="auth-toggle-text">Don't have an account?</span>
+          <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-indigo-400 font-bold ml-1 hover:underline">Sign Up</button>
+        </p>
+      </div>
+
     </div>
   </div>
 
-  <header id="app-header" class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 hidden">
-    <div class="max-w-6xl mx-auto px-6 py-5 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-md shadow-indigo-500/20">C</div>
-        <span class="text-2xl font-extrabold text-white tracking-tight">Crypto<span class="text-indigo-500">Pulse</span></span>
+  <!-- Main Terminal UI -->
+  <div id="app-container" class="hidden flex-col min-h-screen">
+    
+    <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-500/20">C</div>
+          <span class="text-xl font-black text-white tracking-tight">Crypto<span class="text-indigo-500"> Pulse</span></span>
+        </div>
+        
+        <button onclick="handleLogout()" class="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-3.5 py-1.5 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
+          <span>Logout</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        </button>
       </div>
-      <div class="flex items-center gap-4">
-        <button onclick="handleLogout()" class="text-xs text-rose-400 font-bold hover:bg-rose-500/10 px-4 py-2 rounded-xl transition border border-rose-500/30">Logout</button>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <main class="flex-grow max-w-6xl mx-auto w-full p-4">
+    <main class="flex-grow max-w-7xl mx-auto w-full p-3 sm:p-4 space-y-3">
 
-    <section id="auth-section" class="max-w-sm mx-auto my-8 hidden animate-fade-in">
-      <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
-        <div class="text-center mb-5">
-          <h2 class="text-2xl font-extrabold text-white">CryptoPulse Login</h2>
-          <p class="text-xs text-slate-400 mt-1">Real-Time Crypto Dark Terminal</p>
+      <!-- Controls -->
+      <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex flex-wrap justify-between items-center gap-2">
+        <div class="flex items-center gap-1.5">
+          <button onclick="changeCoin('ETHUSDT', 'Ethereum (ETH)')" id="btn-eth" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition">ETH/USDT</button>
+          <button onclick="changeCoin('BTCUSDT', 'Bitcoin (BTC)')" id="btn-btc" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition">BTC/USDT</button>
+          <button onclick="changeCoin('SOLUSDT', 'Solana (SOL)')" id="btn-sol" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition">SOL/USDT</button>
         </div>
 
-        <div class="flex bg-slate-950 p-1 rounded-xl mb-5 border border-slate-800">
-          <button id="tab-login" onclick="toggleAuthTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-slate-800 text-indigo-400 transition">Login</button>
-          <button id="tab-signup" onclick="toggleAuthTab('signup')" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 transition">Sign Up</button>
+        <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
+          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">5m</button>
+          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition">15m</button>
+          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">1h</button>
+          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">4h</button>
         </div>
 
-        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-          <div>
-            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Email</label>
-            <input type="email" id="login-email" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Password</label>
-            <input type="password" id="login-password" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
-          </div>
-          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-md shadow-indigo-600/30">Log In</button>
-        </form>
-
-        <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
-          <div>
-            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Full Name</label>
-            <input type="text" id="signup-name" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Email</label>
-            <input type="email" id="signup-email" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Password</label>
-            <input type="password" id="signup-password" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none">
-          </div>
-          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-md shadow-indigo-600/30">Create Account</button>
-        </form>
-      </div>
-    </section>
-
-    <section id="dashboard-section" class="hidden animate-fade-in space-y-3">
-
-      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex flex-wrap justify-between items-center gap-3">
-        <div class="flex items-center gap-2">
-          <button onclick="changeCoin('BTCUSDT', 'Bitcoin (BTC)')" id="btn-btc" class="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition shadow-sm">BTC / USDT</button>
-          <button onclick="changeCoin('ETHUSDT', 'Ethereum (ETH)')" id="btn-eth" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition">ETH / USDT</button>
-          <button onclick="changeCoin('SOLUSDT', 'Solana (SOL)')" id="btn-sol" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition">SOL / USDT</button>
-        </div>
-
-        <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
-          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-3 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded-lg transition">5m</button>
-          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-3 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded-lg shadow transition">15m</button>
-          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-3 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded-lg transition">1h</button>
-          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-3 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded-lg transition">4h</button>
-        </div>
-
-        <button id="run-ai-btn" onclick="runStrategyEngine()" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2">
+        <button id="run-ai-btn" onclick="runAnalysisEngine()" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-md transition flex items-center gap-2">
           <span id="btn-spinner" class="hidden animate-spin">⚡</span>
-          <span id="btn-text">Run Strategy Analysis</span>
+          <span id="btn-text">Scan Market Setup</span>
         </button>
       </div>
 
-      <div class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[400px] relative overflow-hidden">
-        <div class="absolute top-4 left-4 z-20 bg-slate-950/90 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-bold flex items-center gap-3">
+      <!-- Chart Container -->
+      <div class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[380px] relative overflow-hidden">
+        <div class="absolute top-3 left-3 z-20 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-md border border-slate-800 text-[11px] font-bold flex items-center gap-3">
           <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-1 bg-blue-500 rounded"></span> 9 EMA</span>
           <span class="flex items-center gap-1 text-red-500"><span class="w-2.5 h-1 bg-red-600 rounded"></span> 20 EMA</span>
-          <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> LIVE</span>
         </div>
         <div id="tv-dark-chart" class="w-full h-full"></div>
       </div>
 
-      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-md">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
-          <div>
-            <h3 class="text-sm font-extrabold text-white" id="analysis-coin-title">Analysis Terminal</h3>
-            <p class="text-[10px] text-slate-400">Rules: 9/20 EMA Crossover + Candle Close + 1:2 RRR</p>
+      <!-- Analysis Metrics -->
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-500 block font-bold">9/20 EMA TREND</span>
+            <strong id="metric-ema" class="text-slate-300">--</strong>
           </div>
-          <span id="signal-badge" class="hidden text-xs font-bold px-3 py-1 rounded-full"></span>
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-500 block font-bold">VOLATILITY STATUS</span>
+            <strong id="metric-sweep" class="text-slate-300">--</strong>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-500 block font-bold">RISK-REWARD FILTER</span>
+            <strong id="metric-rrr" class="text-emerald-400">Min 1:2 Target</strong>
+          </div>
         </div>
 
-        <div id="ai-analysis-output">
-          <div class="text-center py-4">
-            <h4 class="font-bold text-slate-300 text-xs">Ready to Scan</h4>
-            <p class="text-[11px] text-slate-500 mt-0.5">Click <strong>"Run Strategy Analysis"</strong> to scan trade signals with 1:2 RRR.</p>
+        <div id="ai-analysis-output" class="bg-slate-950 p-4 rounded-xl border border-slate-800 min-h-[100px] flex items-center justify-center">
+          <div class="text-center">
+            <h4 class="font-bold text-slate-300 text-xs">Engine Ready</h4>
+            <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to compute real-time signal and plot S/R levels.</p>
           </div>
         </div>
       </div>
 
-    </section>
-  </main>
+    </main>
 
-  <footer class="bg-slate-950 border-t border-slate-900 py-3 text-center text-[11px] text-slate-500 mt-auto">
-    Developer: <span id="dev-link" ondblclick="handleDevDoubleTap()" class="font-bold text-indigo-400 cursor-pointer hover:underline select-none">Aayan Industries</span>
-  </footer>
+    <!-- Developer Credits Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800/80 py-3 mt-auto">
+      <div class="max-w-7xl mx-auto px-4 text-center">
+        <p class="text-[11px] text-slate-500 font-medium">
+          Designed & Developed by 
+          <span id="dev-aayan" class="text-indigo-400 font-bold cursor-pointer hover:underline select-none">Aayan Likhar</span> & 
+          <span id="dev-rahul" class="text-indigo-400 font-bold cursor-pointer hover:underline select-none">Rahul Likhar</span>
+        </p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Developer Image Modal Popup (512x512 Format) -->
+  <div id="dev-modal" onclick="closeDevModal()" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="relative bg-slate-900 border border-slate-800 rounded-3xl p-3 shadow-2xl flex flex-col items-center">
+      <img id="dev-modal-img" src="" alt="Developer" class="w-[280px] h-[280px] sm:w-[380px] sm:h-[380px] md:w-[512px] md:h-[512px] object-cover rounded-2xl shadow-md">
+      <button onclick="closeDevModal()" class="mt-3 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition">Close</button>
+    </div>
+  </div>
 
   <script>
+    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBt3iYcR4SijEJqtrBlH8mNr292vakgJFQ",
       authDomain: "figo-movies.firebaseapp.com",
@@ -157,120 +203,155 @@
       appId: "1:425238806262:web:7d23814e4b550695bb76d7"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const auth = firebase.auth();
-    const db = firebase.database();
 
-    let currentPair = 'BTCUSDT';
-    let currentCoinName = 'Bitcoin (BTC)';
-    let currentTimeframe = '15m'; 
+    // App State Defaults
+    let currentPair = 'ETHUSDT';
+    let currentCoinName = 'Ethereum (ETH)';
+    let currentTimeframe = '15m';
     let isAnalyzing = false;
+    let isSignUpMode = false;
 
     let darkChart = null;
     let candleSeries = null;
     let ema9Series = null;
     let ema20Series = null;
     let chartLines = [];
-
     let ws = null;
     let currentCandles = [];
-    let lastTapTime = 0;
 
-    let calculatedResistance = 0;
-    let calculatedSupport = 0;
-
-    let activeSignalState = null; 
-
+    // Splash Screen & Auto-Login Logic
     window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        splash.style.opacity = '0';
-        setTimeout(() => splash.classList.add('hidden'), 300);
+      auth.onAuthStateChanged(user => {
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
 
-        const savedUser = localStorage.getItem('deeepr_user');
-        if (savedUser) {
-          showDashboard();
+        if (user) {
+          authContainer.classList.add('hidden');
+          appContainer.classList.remove('hidden');
+          appContainer.classList.add('flex');
+          buildDarkCanvasChart();
+          loadBinanceOHLCData();
         } else {
-          showAuthSection();
+          authContainer.classList.remove('hidden');
+          appContainer.classList.add('hidden');
+          appContainer.classList.remove('flex');
         }
-      }, 500);
+
+        setTimeout(() => {
+          const splash = document.getElementById('splash-screen');
+          if (splash) {
+            splash.classList.add('fade-out');
+            setTimeout(() => splash.remove(), 500);
+          }
+        }, 1200);
+      });
+
+      setupDeveloperTapEvents();
     });
 
-    function handleDevDoubleTap() {
-      const currentTime = new Date().getTime();
-      const tapLength = currentTime - lastTapTime;
-      if (tapLength < 3000 && tapLength > 0) {
-        window.open("https://aayanindustries.shop", "_blank");
-      }
-      lastTapTime = currentTime;
-    }
+    // Double Tap Detection Logic for Developers
+    function setupDeveloperTapEvents() {
+      let rahulTaps = 0;
+      let rahulTimer = null;
+      const devRahul = document.getElementById('dev-rahul');
 
-    function showAuthSection() {
-      document.getElementById('app-header').classList.add('hidden');
-      document.getElementById('dashboard-section').classList.add('hidden');
-      document.getElementById('auth-section').classList.remove('hidden');
-    }
+      devRahul.addEventListener('click', () => {
+        rahulTaps++;
+        if (rahulTaps === 1) {
+          rahulTimer = setTimeout(() => { rahulTaps = 0; }, 3000);
+        } else if (rahulTaps === 2) {
+          clearTimeout(rahulTimer);
+          rahulTaps = 0;
+          openDevModal('https://i.ibb.co/yctmyQbP/IMG-20251016-WA0003.jpg');
+        }
+      });
 
-    function showDashboard() {
-      document.getElementById('auth-section').classList.add('hidden');
-      document.getElementById('app-header').classList.remove('hidden');
-      document.getElementById('dashboard-section').classList.remove('hidden');
-      buildDarkCanvasChart();
-      loadBinanceOHLCData();
-    }
+      let aayanTaps = 0;
+      let aayanTimer = null;
+      const devAayan = document.getElementById('dev-aayan');
 
-    function toggleAuthTab(tab) {
-      if (tab === 'login') {
-        document.getElementById('login-form').classList.remove('hidden');
-        document.getElementById('signup-form').classList.add('hidden');
-        document.getElementById('tab-login').className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-slate-800 text-indigo-400 transition';
-        document.getElementById('tab-signup').className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 transition';
-      } else {
-        document.getElementById('signup-form').classList.remove('hidden');
-        document.getElementById('login-form').classList.add('hidden');
-        document.getElementById('tab-signup').className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-slate-800 text-indigo-400 transition';
-        document.getElementById('tab-login').className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 transition';
-      }
-    }
-
-    function handleSignup(e) {
-      e.preventDefault();
-      const name = document.getElementById('signup-name').value;
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-
-      auth.createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          const userData = { uid: userCredential.user.uid, name, email };
-          db.ref('users/' + userCredential.user.uid).set(userData);
-          localStorage.setItem('deeepr_user', JSON.stringify(userData));
-          showDashboard();
-        })
-        .catch((err) => alert("Error: " + err.message));
-    }
-
-    function handleLogin(e) {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-
-      auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          const userData = { uid: userCredential.user.uid, email, name: email.split('@')[0] };
-          localStorage.setItem('deeepr_user', JSON.stringify(userData));
-          showDashboard();
-        })
-        .catch((err) => alert("Error: " + err.message));
-    }
-
-    function handleLogout() {
-      if(ws) ws.close();
-      auth.signOut().then(() => {
-        localStorage.removeItem('deeepr_user');
-        showAuthSection();
+      devAayan.addEventListener('click', () => {
+        aayanTaps++;
+        if (aayanTaps === 1) {
+          aayanTimer = setTimeout(() => { aayanTaps = 0; }, 3000);
+        } else if (aayanTaps === 2) {
+          clearTimeout(aayanTimer);
+          aayanTaps = 0;
+          openDevModal('https://i.ibb.co/Xkj3793s/IMG-20241210-154041.jpg');
+        }
       });
     }
 
+    // Modal Control
+    function openDevModal(imgUrl) {
+      const modal = document.getElementById('dev-modal');
+      const modalImg = document.getElementById('dev-modal-img');
+      modalImg.src = imgUrl;
+      modal.classList.remove('hidden');
+
+      window.history.pushState({ modalOpen: true }, '');
+    }
+
+    function closeDevModal() {
+      const modal = document.getElementById('dev-modal');
+      if (!modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+        if (window.history.state && window.history.state.modalOpen) {
+          window.history.back();
+        }
+      }
+    }
+
+    window.addEventListener('popstate', (e) => {
+      const modal = document.getElementById('dev-modal');
+      if (modal && !modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+      }
+    });
+
+    // Toggle Auth Mode
+    function toggleAuthMode() {
+      isSignUpMode = !isSignUpMode;
+      document.getElementById('field-name').classList.toggle('hidden', !isSignUpMode);
+      document.getElementById('field-mobile').classList.toggle('hidden', !isSignUpMode);
+      
+      document.getElementById('auth-title').innerText = isSignUpMode ? "Create Account" : "Welcome Back";
+      document.getElementById('auth-subtitle').innerText = isSignUpMode ? "Sign up for full terminal access" : "Log in to access live market analytics";
+      document.getElementById('auth-btn').innerText = isSignUpMode ? "Sign Up" : "Log In";
+      document.getElementById('auth-toggle-text').innerText = isSignUpMode ? "Already have an account?" : "Don't have an account?";
+      document.getElementById('auth-toggle-btn').innerText = isSignUpMode ? "Log In" : "Sign Up";
+      document.getElementById('auth-error').classList.add('hidden');
+    }
+
+    // Handle Authentication
+    async function handleAuth(e) {
+      e.preventDefault();
+      const email = document.getElementById('input-email').value;
+      const password = document.getElementById('input-password').value;
+      const errorEl = document.getElementById('auth-error');
+      errorEl.classList.add('hidden');
+
+      try {
+        if (isSignUpMode) {
+          await auth.createUserWithEmailAndPassword(email, password);
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+        }
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      auth.signOut();
+    }
+
+    // Charting Engine
     function buildDarkCanvasChart() {
       const container = document.getElementById('tv-dark-chart');
       container.innerHTML = '';
@@ -296,13 +377,14 @@
         wickDownColor: '#ef4444', wickUpColor: '#22c55e',
       });
 
-      ema9Series = darkChart.addLineSeries({ color: '#2563eb', lineWidth: 2, title: '9 EMA' });
-      ema20Series = darkChart.addLineSeries({ color: '#dc2626', lineWidth: 2, title: '20 EMA' });
+      // Price line labels on price axis disabled (priceLineVisible: false)
+      ema9Series = darkChart.addLineSeries({ color: '#2563eb', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      ema20Series = darkChart.addLineSeries({ color: '#dc2626', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
     }
 
     window.addEventListener('resize', () => {
       const container = document.getElementById('tv-dark-chart');
-      if(darkChart && container) {
+      if (darkChart && container) {
         darkChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
       }
     });
@@ -344,55 +426,20 @@
             currentCandles[lastIdx] = candle;
           } else if (candle.time > currentCandles[lastIdx].time) {
             currentCandles.push(candle);
+            if (currentCandles.length > 150) currentCandles.shift();
           }
 
           candleSeries.update(candle);
-
-          const ema9Data = computeEMA(currentCandles, 9);
-          const ema20Data = computeEMA(currentCandles, 20);
-
-          ema9Series.setData(ema9Data);
-          ema20Series.setData(ema20Data);
+          ema9Series.setData(computeEMA(currentCandles, 9));
+          ema20Series.setData(computeEMA(currentCandles, 20));
         }
       };
-    }
-
-    function calculateSupportResistance(candles) {
-      const sliced = candles.slice(-50);
-      let maxHigh = -Infinity;
-      let minLow = Infinity;
-
-      sliced.forEach(c => {
-        if (c.high > maxHigh) maxHigh = c.high;
-        if (c.low < minLow) minLow = c.low;
-      });
-
-      calculatedResistance = maxHigh;
-      calculatedSupport = minLow;
-    }
-
-    function drawSupportResistanceOnChart() {
-      chartLines.push(candleSeries.createPriceLine({
-        price: calculatedResistance,
-        color: '#a855f7',
-        lineWidth: 2,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        title: 'RESISTANCE / BSL'
-      }));
-
-      chartLines.push(candleSeries.createPriceLine({
-        price: calculatedSupport,
-        color: '#06b6d4',
-        lineWidth: 2,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        title: 'SUPPORT / SSL'
-      }));
     }
 
     async function loadBinanceOHLCData() {
       clearCanvasLines();
       try {
-        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=${currentTimeframe}&limit=120`);
+        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=${currentTimeframe}&limit=100`);
         const raw = await res.json();
 
         currentCandles = raw.map(d => ({
@@ -404,21 +451,13 @@
         }));
 
         candleSeries.setData(currentCandles);
-
-        const ema9Data = computeEMA(currentCandles, 9);
-        const ema20Data = computeEMA(currentCandles, 20);
-
-        ema9Series.setData(ema9Data);
-        ema20Series.setData(ema20Data);
-
-        calculateSupportResistance(currentCandles);
+        ema9Series.setData(computeEMA(currentCandles, 9));
+        ema20Series.setData(computeEMA(currentCandles, 20));
 
         darkChart.timeScale().fitContent();
         connectLiveWebSocket();
-
-        return { candles: currentCandles, ema9Data, ema20Data };
       } catch (err) {
-        console.error("Data Load Failure", err);
+        console.error("Binance Fetch Error", err);
       }
     }
 
@@ -430,12 +469,11 @@
 
     function changeTimeframe(tf) {
       currentTimeframe = tf;
-      activeSignalState = null; 
       ['5m', '15m', '1h', '4h'].forEach(t => {
         const btn = document.getElementById(`tf-${t}`);
         btn.className = t === tf 
-          ? "px-3 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded-lg shadow transition"
-          : "px-3 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded-lg transition";
+          ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition"
+          : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition";
       });
       loadBinanceOHLCData();
     }
@@ -443,169 +481,141 @@
     function changeCoin(pair, name) {
       currentPair = pair;
       currentCoinName = name;
-      activeSignalState = null;
 
-      document.getElementById('btn-btc').className = pair === 'BTCUSDT' ? 'px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition shadow-sm' : 'px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
-      document.getElementById('btn-eth').className = pair === 'ETHUSDT' ? 'px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition shadow-sm' : 'px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
-      document.getElementById('btn-sol').className = pair === 'SOLUSDT' ? 'px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition shadow-sm' : 'px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
-
-      document.getElementById('signal-badge').classList.add('hidden');
-      document.getElementById('ai-analysis-output').innerHTML = `
-        <div class="text-center py-4">
-          <h4 class="font-bold text-slate-300 text-xs">Switched to ${name}</h4>
-          <p class="text-[11px] text-slate-500 mt-0.5">Click <strong>"Run Strategy Analysis"</strong> to scan trade signals with 1:2 RRR.</p>
-        </div>
-      `;
+      document.getElementById('btn-eth').className = pair === 'ETHUSDT' ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition' : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+      document.getElementById('btn-btc').className = pair === 'BTCUSDT' ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition' : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+      document.getElementById('btn-sol').className = pair === 'SOLUSDT' ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition' : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
 
       buildDarkCanvasChart();
       loadBinanceOHLCData();
     }
 
-    async function runStrategyEngine() {
-      if (isAnalyzing) return;
+    // Real-Time technical analysis algorithm with Sideways Check
+    function runAnalysisEngine() {
+      if (isAnalyzing || currentCandles.length < 30) return;
       isAnalyzing = true;
 
       const output = document.getElementById('ai-analysis-output');
-      const badge = document.getElementById('signal-badge');
       const spinner = document.getElementById('btn-spinner');
       const btnText = document.getElementById('btn-text');
 
-      badge.classList.add('hidden');
+      const metricEma = document.getElementById('metric-ema');
+      const metricSweep = document.getElementById('metric-sweep');
+
       spinner.classList.remove('hidden');
-      btnText.innerText = "Scanning Rules...";
+      btnText.innerText = "Analyzing Market Structure...";
 
       clearCanvasLines();
-      const dataObj = await loadBinanceOHLCData();
-      
+
       setTimeout(() => {
         spinner.classList.add('hidden');
-        btnText.innerText = "Run Strategy Analysis";
+        btnText.innerText = "Scan Market Setup";
         isAnalyzing = false;
 
-        if (!dataObj) return;
+        const len = currentCandles.length;
+        const c2 = currentCandles[len - 2];
+        const c3 = currentCandles[len - 1];
 
-        drawSupportResistanceOnChart();
+        const ema9Vals = computeEMA(currentCandles, 9);
+        const ema20Vals = computeEMA(currentCandles, 20);
 
-        const candles = dataObj.candles;
-        const e9 = dataObj.ema9Data;
-        const e20 = dataObj.ema20Data;
+        const currEma9 = ema9Vals[len - 1].value;
+        const currEma20 = ema20Vals[len - 1].value;
 
-        const closedIdx = candles.length - 2;
-        const liveIdx = candles.length - 1;
+        // Sideways / Chop Detection logic using ATR/Range & EMA Spread %
+        const recent = currentCandles.slice(-15);
+        const highMax = Math.max(...recent.map(c => c.high));
+        const lowMin = Math.min(...recent.map(c => c.low));
+        const channelRange = (highMax - lowMin) / c3.close;
+        const emaDiff = Math.abs(currEma9 - currEma20) / c3.close;
 
-        const livePrice = candles[liveIdx].close;
+        // Strict condition for Sideways / No Setup
+        const isSideways = channelRange < 0.0035 || emaDiff < 0.0008;
 
-        const curE9 = e9[closedIdx].value;
-        const curE20 = e20[closedIdx].value;
-        const prevE9 = e9[closedIdx - 1].value;
-        const prevE20 = e20[closedIdx - 1].value;
+        if (isSideways) {
+          metricEma.innerText = "Sideways / Compression";
+          metricEma.className = "text-amber-400 font-bold";
 
-        const emaGap = Math.abs(curE9 - curE20) / livePrice;
-        const isStrongMomentum = (emaGap > 0.0008); 
+          metricSweep.innerText = "Low Volatility (Ranging)";
+          metricSweep.className = "text-amber-400 font-bold";
 
-        let isBullish = (curE9 > curE20);
-        let isBearish = (curE9 < curE20);
-        let isFreshBullCross = (prevE9 <= prevE20 && curE9 > curE20);
-        let isFreshBearCross = (prevE9 >= prevE20 && curE9 < curE20);
-
-        if ((isFreshBullCross || activeSignalState === 'BULLISH') && isBullish && isStrongMomentum) {
-          activeSignalState = 'BULLISH';
-        } else if ((isFreshBearCross || activeSignalState === 'BEARISH') && isBearish && isStrongMomentum) {
-          activeSignalState = 'BEARISH';
-        } else if (!isStrongMomentum) {
-          activeSignalState = null;
+          output.innerHTML = `
+            <div class="w-full text-center space-y-2 py-2">
+              <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">⏳ NO ENTRY - MARKET IS SIDEWAYS</span>
+              <p class="text-xs text-slate-400 font-medium">Market is ranging in a tight compression. Wait for a clear breakout above/below key EMA levels.</p>
+            </div>
+          `;
+          return;
         }
 
-        const liquidityUpper = (calculatedResistance * 1.002).toFixed(2);
-        const liquidityLower = (calculatedSupport * 0.998).toFixed(2);
+        const isBullishEMA = currEma9 > currEma20;
 
-        const liquidityBlock = `
-          <div class="mt-3 pt-3 border-t border-slate-800">
-            <div class="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 mb-1.5 flex items-center justify-between">
-              <span>📍 Live Liquidity & RR Ratio (1:2 Min):</span>
-              <span class="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">CONFIRMED 1:2 RRR</span>
-            </div>
-            <div class="flex flex-wrap gap-2 text-[11px]">
-              <a href="https://aayanindustries.shop" target="_blank" class="bg-purple-950/60 border border-purple-800/50 hover:border-purple-500 text-purple-300 px-2.5 py-1 rounded-lg transition font-mono flex items-center gap-1">
-                <span>🔗 BSL:</span> <strong>$${liquidityUpper}</strong>
-              </a>
-              <a href="https://aayanindustries.shop" target="_blank" class="bg-cyan-950/60 border border-cyan-800/50 hover:border-cyan-500 text-cyan-300 px-2.5 py-1 rounded-lg transition font-mono flex items-center gap-1">
-                <span>🔗 SSL:</span> <strong>$${liquidityLower}</strong>
-              </a>
-              <span class="bg-slate-950 border border-slate-800 text-slate-300 px-2.5 py-1 rounded-lg font-mono">
-                Resistance: <strong class="text-purple-400">$${calculatedResistance.toFixed(2)}</strong>
-              </span>
-              <span class="bg-slate-950 border border-slate-800 text-slate-300 px-2.5 py-1 rounded-lg font-mono">
-                Support: <strong class="text-cyan-400">$${calculatedSupport.toFixed(2)}</strong>
-              </span>
-            </div>
-          </div>
-        `;
+        const resistanceLevel = Math.max(...currentCandles.slice(-30).map(c => c.high));
+        const supportLevel = Math.min(...currentCandles.slice(-30).map(c => c.low));
 
-        if (activeSignalState === 'BULLISH') {
-          const entry = livePrice;
-          const sl = entry * 0.995;
-          const riskAmount = entry - sl;
-          const t1 = entry + (riskAmount * 2.0);
+        chartLines.push(candleSeries.createPriceLine({ price: resistanceLevel, color: '#a855f7', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Resistance' }));
+        chartLines.push(candleSeries.createPriceLine({ price: supportLevel, color: '#06b6d4', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Support' }));
+
+        metricEma.innerText = isBullishEMA ? "Strong Bullish Trend" : "Strong Bearish Trend";
+        metricEma.className = isBullishEMA ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+
+        metricSweep.innerText = c3.close >= c3.open ? "High Volume Up-Candle" : "High Volume Down-Candle";
+        metricSweep.className = c3.close >= c3.open ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+
+        if (isBullishEMA) {
+          const entry = c3.close;
+          const sl = Math.min(c3.low, c2.low) * 0.998;
+          const risk = entry - sl;
+          const tp1 = entry + (risk * 2.0);
+          const tp2 = entry + (risk * 3.5);
 
           chartLines.push(candleSeries.createPriceLine({ price: entry, color: '#2563eb', lineWidth: 2, title: 'BUY ENTRY' }));
-          chartLines.push(candleSeries.createPriceLine({ price: t1, color: '#22c55e', lineWidth: 2, title: 'TARGET (1:2)' }));
+          chartLines.push(candleSeries.createPriceLine({ price: tp1, color: '#22c55e', lineWidth: 2, title: 'TP1 (1:2)' }));
+          chartLines.push(candleSeries.createPriceLine({ price: tp2, color: '#10b981', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dotted, title: 'TP2 (1:3.5)' }));
           chartLines.push(candleSeries.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 2, title: 'STOP LOSS' }));
 
-          badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-block";
-          badge.innerText = "BUY SIGNAL (1:2 RRR)";
-          badge.classList.remove('hidden');
-
           output.innerHTML = `
-            <div class="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg text-emerald-300 mb-2 text-xs">
-              <strong>🚀 BUY Signal Confirmed:</strong> 9 EMA crossed ABOVE 20 EMA on closed candle. Strong momentum verified.
+            <div class="w-full space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span class="text-xs font-bold text-slate-400">MARKET SETUP:</span>
+                <span class="px-4 py-1.5 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">🚀 BULLISH CONFIRMED</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
+                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${entry.toFixed(2)}</strong></div>
+                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400">$${tp1.toFixed(2)}</strong></div>
+                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3.5)</span><strong class="text-emerald-300">$${tp2.toFixed(2)}</strong></div>
+                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400">$${sl.toFixed(2)}</strong></div>
+              </div>
             </div>
-            <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
-              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${entry.toFixed(2)}</strong></div>
-              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TARGET (1:2)</span><strong class="text-emerald-400">$${t1.toFixed(2)}</strong></div>
-              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400">$${sl.toFixed(2)}</strong></div>
-            </div>
-            ${liquidityBlock}
-          `;
-        } else if (activeSignalState === 'BEARISH') {
-          const entry = livePrice;
-          const sl = entry * 1.005;
-          const riskAmount = sl - entry;
-          const t1 = entry - (riskAmount * 2.0);
-
-          chartLines.push(candleSeries.createPriceLine({ price: entry, color: '#2563eb', lineWidth: 2, title: 'SELL ENTRY' }));
-          chartLines.push(candleSeries.createPriceLine({ price: t1, color: '#ef4444', lineWidth: 2, title: 'TARGET (1:2)' }));
-          chartLines.push(candleSeries.createPriceLine({ price: sl, color: '#f59e0b', lineWidth: 2, title: 'STOP LOSS' }));
-
-          badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 inline-block";
-          badge.innerText = "SELL SIGNAL (1:2 RRR)";
-          badge.classList.remove('hidden');
-
-          output.innerHTML = `
-            <div class="bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg text-rose-300 mb-2 text-xs">
-              <strong>📉 SELL Signal Confirmed:</strong> 9 EMA crossed BELOW 20 EMA on closed candle. Strong momentum verified.
-            </div>
-            <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
-              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${entry.toFixed(2)}</strong></div>
-              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TARGET (1:2)</span><strong class="text-rose-400">$${t1.toFixed(2)}</strong></div>
-              <div class="bg-slate-950 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-amber-400">$${sl.toFixed(2)}</strong></div>
-            </div>
-            ${liquidityBlock}
           `;
         } else {
-          badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 inline-block";
-          badge.innerText = "WAIT / SIDEWAYS MARKET";
-          badge.classList.remove('hidden');
+          const entry = c3.close;
+          const sl = Math.max(c3.high, c2.high) * 1.002;
+          const risk = sl - entry;
+          const tp1 = entry - (risk * 2.0);
+          const tp2 = entry - (risk * 3.5);
+
+          chartLines.push(candleSeries.createPriceLine({ price: entry, color: '#2563eb', lineWidth: 2, title: 'SELL ENTRY' }));
+          chartLines.push(candleSeries.createPriceLine({ price: tp1, color: '#22c55e', lineWidth: 2, title: 'TP1 (1:2)' }));
+          chartLines.push(candleSeries.createPriceLine({ price: tp2, color: '#10b981', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dotted, title: 'TP2 (1:3.5)' }));
+          chartLines.push(candleSeries.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 2, title: 'STOP LOSS' }));
 
           output.innerHTML = `
-            <div class="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg text-amber-300 text-xs">
-              <strong>⏳ WAIT - Flat / Sideways Market Filter:</strong> EMA lines are flat or gap is too narrow to avoid false signals. Wait for candle close confirmation & momentum gap.
+            <div class="w-full space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span class="text-xs font-bold text-slate-400">MARKET SETUP:</span>
+                <span class="px-4 py-1.5 rounded-full text-xs font-black bg-rose-500/20 text-rose-400 border border-rose-500/40">📉 BEARISH CONFIRMED</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
+                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${entry.toFixed(2)}</strong></div>
+                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400">$${tp1.toFixed(2)}</strong></div>
+                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3.5)</span><strong class="text-emerald-300">$${tp2.toFixed(2)}</strong></div>
+                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400">$${sl.toFixed(2)}</strong></div>
+              </div>
             </div>
-            <div class="mt-2 text-xs text-slate-400">Live Price: <strong class="text-white font-mono">$${livePrice.toFixed(2)}</strong></div>
-            ${liquidityBlock}
           `;
         }
-      }, 500);
+      }, 150);
     }
   </script>
 </body>
