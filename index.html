@@ -388,11 +388,15 @@
     async function sendTelegramNotification(message) {
       if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
       try {
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" })
         });
+        const data = await res.json();
+        if (!data.ok) {
+          console.error("Telegram Error Response:", data.description);
+        }
       } catch (err) { console.error("Telegram Error:", err); }
     }
 
@@ -420,7 +424,7 @@
 
     async function saveTelegramUsername() {
       const handle = document.getElementById('telegram-username-input').value.trim().replace(/^@/, '');
-      if (!handle) return alert("Enter valid Telegram handle.");
+      if (!handle) return alert("Please enter a valid Telegram username.");
       
       localStorage.setItem('telegram_handle', handle);
 
@@ -552,6 +556,15 @@
 
         holdTimer = setTimeout(() => {
           holdIndicator.style.display = 'none';
+
+          // Mandatory Telegram Username Check
+          const handle = localStorage.getItem('telegram_handle');
+          if (!handle) {
+            alert("Pehle apna Telegram Username connect karein!");
+            openTelegramModal();
+            return;
+          }
+
           let alertPrice = lastCrosshairPrice;
           if (!alertPrice && currentCandles.length > 0) {
             alertPrice = currentCandles[currentCandles.length - 1].close;
@@ -597,6 +610,14 @@
     }
 
     function confirmCreateAlert() {
+      const handle = localStorage.getItem('telegram_handle');
+      if (!handle) {
+        alert("Pehle Telegram Username connect karein!");
+        closeAlertSetModal();
+        openTelegramModal();
+        return;
+      }
+
       const val = parseFloat(document.getElementById('new-alert-price-input').value);
       if (isNaN(val) || val <= 0) return alert("Invalid price.");
 
