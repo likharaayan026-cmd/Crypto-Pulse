@@ -73,7 +73,7 @@
       </div>
     </div>
     <h1 class="mt-6 text-2xl font-black tracking-wider text-white">Crypto<span class="text-indigo-500"> Pulse</span></h1>
-    <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase">Initializing High Speed Terminal...</p>
+    <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase">Initializing Terminal...</p>
   </div>
 
   <div id="auth-container" class="hidden fixed inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
@@ -128,14 +128,13 @@
       <div class="space-y-2">
         <h2 class="text-2xl font-black text-white tracking-tight">Approval Pending</h2>
         <p class="text-xs text-slate-400 leading-relaxed">
-          Your account request has been submitted to the administrator. Once approved, access will be granted.
+          Your account request is pending admin approval.
         </p>
       </div>
     </div>
   </div>
 
   <div id="app-container" class="hidden flex-col min-h-screen">
-    
     <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
       <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center relative">
         <div class="flex items-center gap-3">
@@ -163,7 +162,6 @@
     </header>
 
     <main class="flex-grow max-w-7xl mx-auto w-full p-3 sm:p-4 space-y-3">
-
       <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex flex-wrap justify-between items-center gap-2">
         <div class="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
           <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap">BTC/USDT</button>
@@ -196,7 +194,7 @@
 
         <div id="chart-loading" class="hidden absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center">
           <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-xs font-bold text-slate-300 mt-2">Loading Chart Data (2 Months)...</span>
+          <span class="text-xs font-bold text-slate-300 mt-2">Loading Chart...</span>
         </div>
         <div id="tv-dark-chart" class="w-full h-full"></div>
       </div>
@@ -228,7 +226,6 @@
           </div>
         </div>
       </div>
-
     </main>
 
     <footer class="bg-slate-900 border-t border-slate-800/80 py-3 mt-auto">
@@ -240,14 +237,13 @@
         </p>
       </div>
     </footer>
-
   </div>
 
   <div id="telegram-modal" onclick="closeTelegramModal()" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="glass-card w-full max-w-sm p-6 rounded-3xl shadow-2xl space-y-4">
       <div class="text-center space-y-1">
         <h3 class="text-xl font-black text-white">Connect Telegram</h3>
-        <p class="text-xs text-slate-400">Enter Username to connect and start receiving bot notifications.</p>
+        <p class="text-xs text-slate-400">Pehle Telegram Bot par <b>/start</b> dabaayein, fir apna username yahan dalein.</p>
       </div>
       <div class="space-y-2">
         <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Telegram Username</label>
@@ -306,7 +302,6 @@
 
   <script>
     const TELEGRAM_BOT_TOKEN = "8876367098:AAEbUpDn6jD_7XMjNbTgujBkfxUUVXfcd2g";
-    const TELEGRAM_CHAT_ID = "6368687213";
     const TARGET_TELEGRAM_BOT = "PulseAlphaAlerts_bot";
 
     const firebaseConfig = {
@@ -336,7 +331,7 @@
     let chartLines = [];
     let userAlertLines = [];
     
-    let userAlertsData = JSON.parse(localStorage.getItem('crypto_pulse_alerts') || '[]');
+    let userAlertsData = [];
     let selectedAlertIndex = null;
     let ws = null;
     let currentCandles = [];
@@ -344,38 +339,28 @@
 
     const allSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT'];
 
+    function getUserStorageKey() {
+      const user = auth.currentUser;
+      return user ? `crypto_pulse_alerts_${user.uid}` : 'crypto_pulse_alerts_guest';
+    }
+
+    function loadUserAlerts() {
+      const key = getUserStorageKey();
+      userAlertsData = JSON.parse(localStorage.getItem(key) || '[]');
+    }
+
     function saveAlertsToStorage() {
-      localStorage.setItem('crypto_pulse_alerts', JSON.stringify(userAlertsData));
+      const key = getUserStorageKey();
+      localStorage.setItem(key, JSON.stringify(userAlertsData));
     }
 
     function openModalById(modalId) {
       document.getElementById(modalId).classList.remove('hidden');
-      if (window.history.state?.modalOpen !== modalId) {
-        window.history.pushState({ modalOpen: modalId }, "");
-      }
     }
 
     function closeModalById(modalId) {
       document.getElementById(modalId).classList.add('hidden');
-      if (window.history.state?.modalOpen === modalId) {
-        window.history.back();
-      }
     }
-
-    window.addEventListener('popstate', (e) => {
-      const modals = ['telegram-modal', 'alert-set-modal', 'alert-manage-modal', 'dev-modal'];
-      modals.forEach(mId => {
-        const el = document.getElementById(mId);
-        if (el && !el.classList.contains('hidden')) {
-          el.classList.add('hidden');
-        }
-      });
-
-      const dropdown = document.getElementById('user-menu-dropdown');
-      if (dropdown && !dropdown.classList.contains('hidden')) {
-        dropdown.classList.add('hidden');
-      }
-    });
 
     function getISTFormattedDateTime() {
       return new Date().toLocaleString('en-IN', {
@@ -385,32 +370,54 @@
       }) + " IST";
     }
 
-    async function sendTelegramNotification(message) {
-      if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+    async function fetchTelegramChatIdForUser(handle) {
       try {
-        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates`);
+        const data = await res.json();
+        if (data.ok && data.result) {
+          const cleanHandle = handle.replace(/^@/, '').toLowerCase();
+          for (let i = data.result.length - 1; i >= 0; i--) {
+            const msg = data.result[i].message;
+            if (msg && msg.from && msg.from.username && msg.from.username.toLowerCase() === cleanHandle) {
+              return msg.from.id;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch Telegram chat_id", e);
+      }
+      return null;
+    }
+
+    async function sendTelegramNotification(message) {
+      const handle = localStorage.getItem('telegram_handle');
+      if (!handle) return;
+
+      let chatId = localStorage.getItem('telegram_chat_id');
+      if (!chatId) {
+        chatId = await fetchTelegramChatIdForUser(handle);
+        if (chatId) {
+          localStorage.setItem('telegram_chat_id', chatId);
+        }
+      }
+
+      if (!chatId) {
+        console.warn("User Chat ID not found yet. Ask user to send /start to bot.");
+        return;
+      }
+
+      try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" })
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML" })
         });
-        const data = await res.json();
-        if (!data.ok) {
-          console.error("Telegram Error Response:", data.description);
-        }
-      } catch (err) { console.error("Telegram Error:", err); }
+      } catch (err) { console.error("Telegram Send Error:", err); }
     }
 
     function toggleUserMenu() {
-      const dropdown = document.getElementById('user-menu-dropdown');
-      dropdown.classList.toggle('hidden');
+      document.getElementById('user-menu-dropdown').classList.toggle('hidden');
     }
-
-    window.addEventListener('click', (e) => {
-      const dropdown = document.getElementById('user-menu-dropdown');
-      if (dropdown && !dropdown.contains(e.target) && !e.target.closest('button[onclick="toggleUserMenu()"]')) {
-        dropdown.classList.add('hidden');
-      }
-    });
 
     function openTelegramModal() {
       document.getElementById('user-menu-dropdown').classList.add('hidden');
@@ -427,6 +434,7 @@
       if (!handle) return alert("Please enter a valid Telegram username.");
       
       localStorage.setItem('telegram_handle', handle);
+      localStorage.removeItem('telegram_chat_id');
 
       const user = auth.currentUser;
       if (user) {
@@ -435,7 +443,13 @@
 
       closeTelegramModal();
 
-      await sendTelegramNotification(`<b>✈️ TELEGRAM CONNECTED</b>\n\n<b>Handle:</b> @${handle}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
+      const chatId = await fetchTelegramChatIdForUser(handle);
+      if (chatId) {
+        localStorage.setItem('telegram_chat_id', chatId);
+        await sendTelegramNotification(`<b>✈️ TELEGRAM CONNECTED</b>\n\n<b>Handle:</b> @${handle}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
+      } else {
+        alert("Bot open hone par pehle '/start' button dabaayein taaki bot aapko alerts bhej sake.");
+      }
 
       window.open(`https://t.me/${TARGET_TELEGRAM_BOT}`, '_blank');
     }
@@ -449,17 +463,8 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      const splashFallback = setTimeout(() => {
-        hideSplashScreen();
-        if (document.getElementById('app-container').classList.contains('hidden')) {
-          document.getElementById('auth-container').classList.remove('hidden');
-        }
-      }, 2000);
-
       auth.onAuthStateChanged(user => {
-        clearTimeout(splashFallback);
         hideSplashScreen();
-
         if (userRefListener) userRefListener.off();
 
         if (user) {
@@ -471,6 +476,8 @@
               document.getElementById('pending-container').classList.add('hidden');
               document.getElementById('app-container').classList.remove('hidden');
               document.getElementById('app-container').classList.add('flex');
+              
+              loadUserAlerts();
               if (!darkChart) { buildDarkCanvasChart(); loadAssetData(); }
             } else {
               document.getElementById('app-container').classList.add('hidden');
@@ -509,13 +516,12 @@
         if (isSignUpMode) {
           const name = document.getElementById('input-name').value.trim();
           const mobile = document.getElementById('input-mobile').value.trim();
-          if (!name || mobile.length !== 10) return alert("Enter valid name & mobile.");
+          if (!name || mobile.length !== 10) return alert("Enter valid details.");
 
           const cred = await auth.createUserWithEmailAndPassword(email, password);
           await db.ref('users/' + cred.user.uid).set({
             name, mobile: "+91" + mobile, email, approved: false, createdAt: firebase.database.ServerValue.TIMESTAMP
           });
-          sendTelegramNotification(`<b>🚀 NEW USER SIGNUP</b>\n👤 ${name}\n📱 ${mobile}\n📧 ${email}`);
         } else {
           await auth.signInWithEmailAndPassword(email, password);
         }
@@ -526,7 +532,6 @@
     }
 
     function handleLogout() {
-      localStorage.removeItem('user_session_data');
       auth.signOut();
     }
 
@@ -540,7 +545,6 @@
 
       let holdTimer = null;
       let startX = 0, startY = 0;
-      const MOVE_THRESHOLD = 15;
 
       function startHold(e) {
         const touch = e.touches ? e.touches[0] : e;
@@ -557,10 +561,9 @@
         holdTimer = setTimeout(() => {
           holdIndicator.style.display = 'none';
 
-          // Mandatory Telegram Username Check
           const handle = localStorage.getItem('telegram_handle');
           if (!handle) {
-            alert("Pehle apna Telegram Username connect karein!");
+            alert("Pehle Telegram Username connect karein aur Bot /start karein!");
             openTelegramModal();
             return;
           }
@@ -576,15 +579,11 @@
       function checkMove(e) {
         if (!holdTimer) return;
         const touch = e.touches ? e.touches[0] : e;
-        const dist = Math.hypot(touch.clientX - startX, touch.clientY - startY);
-        if (dist > MOVE_THRESHOLD) cancelHold();
+        if (Math.hypot(touch.clientX - startX, touch.clientY - startY) > 15) cancelHold();
       }
 
       function cancelHold() {
-        if (holdTimer) {
-          clearTimeout(holdTimer);
-          holdTimer = null;
-        }
+        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
         holdIndicator.style.display = 'none';
       }
 
@@ -594,7 +593,6 @@
       chartWrapper.addEventListener('mousedown', startHold);
       chartWrapper.addEventListener('mousemove', checkMove);
       chartWrapper.addEventListener('mouseup', cancelHold);
-      chartWrapper.addEventListener('mouseleave', cancelHold);
     }
 
     function openAlertSetModal(price) {
@@ -606,18 +604,9 @@
 
     function closeAlertSetModal() {
       closeModalById('alert-set-modal');
-      pendingAlertPrice = null;
     }
 
     function confirmCreateAlert() {
-      const handle = localStorage.getItem('telegram_handle');
-      if (!handle) {
-        alert("Pehle Telegram Username connect karein!");
-        closeAlertSetModal();
-        openTelegramModal();
-        return;
-      }
-
       const val = parseFloat(document.getElementById('new-alert-price-input').value);
       if (isNaN(val) || val <= 0) return alert("Invalid price.");
 
@@ -631,7 +620,7 @@
       
       saveAlertsToStorage();
       renderUserAlertLines();
-      sendTelegramNotification(`<b>🔔 ALERT SET ON CHART</b>\n\n<b>Asset:</b> ${currentSymbol}\n<b>Level:</b> $${formatPrice(price)}\n<b>User:</b> @${handle}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
+      sendTelegramNotification(`<b>🔔 ALERT SET</b>\n\n<b>Asset:</b> ${currentSymbol}\n<b>Level:</b> $${formatPrice(price)}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
     }
 
     function renderUserAlertLines() {
@@ -648,7 +637,6 @@
           color: '#eab308',
           lineWidth: 2,
           lineStyle: LightweightCharts.LineStyle.Solid,
-          axisLabelVisible: true,
           title: 'ALERT'
         });
         userAlertLines.push({ line, alertRef: alertObj });
@@ -685,7 +673,6 @@
 
     function closeAlertManageModal() {
       closeModalById('alert-manage-modal');
-      selectedAlertIndex = null;
     }
 
     function updateActiveAlertPrice() {
@@ -704,29 +691,22 @@
         saveAlertsToStorage();
         renderUserAlertLines();
         closeAlertManageModal();
-        sendTelegramNotification(`<b>✏️ ALERT UPDATED</b>\n<b>Asset:</b> ${currentSymbol}\n<b>New Level:</b> $${formatPrice(newPrice)}`);
       }
     }
 
     function deleteActiveAlert() {
       if (selectedAlertIndex === null) return;
-      
       const symbolAlerts = userAlertsData.filter(a => a.symbol === currentSymbol);
       const targetAlert = symbolAlerts[selectedAlertIndex];
       
       if (!targetAlert) return;
-      
       const mainIndex = userAlertsData.indexOf(targetAlert);
 
       if (mainIndex !== -1) {
-        const delPrice = userAlertsData[mainIndex].price;
         userAlertsData.splice(mainIndex, 1);
-        
         saveAlertsToStorage();
         closeAlertManageModal();
         renderUserAlertLines();
-
-        sendTelegramNotification(`<b>🗑️ ALERT REMOVED</b>\n<b>Asset:</b> ${currentSymbol}\n<b>Level:</b> $${formatPrice(delPrice)}`);
       }
     }
 
@@ -738,8 +718,7 @@
         if (a.symbol === currentSymbol && !a.triggered) {
           if (Math.abs(currentPrice - a.price) / a.price < 0.0008) {
             a.triggered = true;
-            sendTelegramNotification(`<b>🚨 PRICE ALERT TRIGGERED!</b>\n\n<b>Asset:</b> ${currentSymbol}\n<b>Live Price:</b> $${formatPrice(currentPrice)}\n<b>Set Level:</b> $${formatPrice(a.price)}\n<b>Handle:</b> @${a.handle}`);
-            
+            sendTelegramNotification(`<b>🚨 PRICE ALERT TRIGGERED!</b>\n\n<b>Asset:</b> ${currentSymbol}\n<b>Live Price:</b> $${formatPrice(currentPrice)}\n<b>Target Price:</b> $${formatPrice(a.price)}`);
             userAlertsData.splice(i, 1);
             changed = true;
           }
@@ -796,9 +775,7 @@
         grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
         priceScale: { borderColor: '#334155' },
-        timeScale: { borderColor: '#334155', timeVisible: true },
-        handleScroll: true,
-        handleScale: true
+        timeScale: { borderColor: '#334155', timeVisible: true }
       });
 
       candleSeries = darkChart.addCandlestickSeries({
@@ -817,11 +794,6 @@
         }
       });
     }
-
-    window.addEventListener('resize', () => {
-      const container = document.getElementById('tv-dark-chart');
-      if (darkChart && container) darkChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-    });
 
     function computeEMA(candles, period) {
       const k = 2 / (period + 1);
@@ -873,31 +845,12 @@
       };
     }
 
-    function resetAnalysisOutput() {
-      clearCanvasLines();
-      document.getElementById('metric-ema').innerText = "--";
-      document.getElementById('metric-ema').className = "text-slate-300";
-      document.getElementById('metric-sweep').innerText = "--";
-      document.getElementById('metric-sweep').className = "text-slate-300";
-      document.getElementById('metric-volatility').innerText = "--";
-      document.getElementById('metric-volatility').className = "text-slate-300";
-
-      document.getElementById('ai-analysis-output').innerHTML = `
-        <div class="text-center">
-          <h4 class="font-bold text-slate-300 text-xs">Engine Ready</h4>
-          <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to compute real-time signal.</p>
-        </div>
-      `;
-    }
-
     async function loadAssetData() {
-      resetAnalysisOutput();
       const loadingEl = document.getElementById('chart-loading');
       if (loadingEl) loadingEl.classList.remove('hidden');
 
       try {
-        const limit = 1500;
-        const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&limit=${limit}`;
+        const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&limit=500`;
         const res = await fetch(url);
         const raw = await res.json();
 
@@ -923,34 +876,11 @@
       }
     }
 
-    function clearCanvasLines() {
-      if (!candleSeries) return;
-      chartLines.forEach(l => candleSeries.removePriceLine(l));
-      chartLines = [];
-    }
-
-    function renderSetupLines(setup) {
-      clearCanvasLines();
-      chartLines.push(candleSeries.createPriceLine({ price: setup.resistanceLevel, color: '#a855f7', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Resistance' }));
-      chartLines.push(candleSeries.createPriceLine({ price: setup.supportLevel, color: '#06b6d4', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Support' }));
-
-      if (setup.type === 'bullish' || setup.type === 'bearish') {
-        chartLines.push(candleSeries.createPriceLine({ price: setup.entry, color: '#2563eb', lineWidth: 2, title: 'ENTRY' }));
-        chartLines.push(candleSeries.createPriceLine({ price: setup.tp1, color: '#22c55e', lineWidth: 2, title: 'TP1 (1:2)' }));
-        chartLines.push(candleSeries.createPriceLine({ price: setup.tp2, color: '#10b981', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dotted, title: 'TP2 (1:3.5)' }));
-        chartLines.push(candleSeries.createPriceLine({ price: setup.sl, color: '#ef4444', lineWidth: 2, title: 'STOP LOSS' }));
-      }
-    }
-
     function changeTimeframe(tf) {
       currentTimeframe = tf;
       ['5m', '15m', '1h', '4h'].forEach(t => {
         const btn = document.getElementById(`tf-${t}`);
-        if (btn) {
-          btn.className = t === tf 
-            ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition"
-            : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition";
-        }
+        if (btn) btn.className = t === tf ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition" : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition";
       });
       loadAssetData();
     }
@@ -961,11 +891,7 @@
 
       allSymbols.forEach(s => {
         const btn = document.getElementById(`btn-${s}`);
-        if (btn) {
-          btn.className = s === symbol
-            ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap'
-            : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
-        }
+        if (btn) btn.className = s === symbol ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap' : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
       });
 
       buildDarkCanvasChart();
@@ -974,109 +900,7 @@
 
     function runAnalysisEngine() {
       if (isAnalyzing || currentCandles.length < 20) return;
-      isAnalyzing = true;
-
-      const output = document.getElementById('ai-analysis-output');
-      const spinner = document.getElementById('btn-spinner');
-      const btnText = document.getElementById('btn-text');
-
-      spinner.classList.remove('hidden');
-      btnText.innerText = "Analyzing...";
-
-      setTimeout(() => {
-        spinner.classList.add('hidden');
-        btnText.innerText = "Scan Market Setup";
-        isAnalyzing = false;
-
-        const len = currentCandles.length;
-        const closedCandle = currentCandles[len - 2];
-        const prevClosedCandle = currentCandles[len - 3];
-
-        const ema9Vals = computeEMA(currentCandles, 9);
-        const ema20Vals = computeEMA(currentCandles, 20);
-
-        const closedEma9 = ema9Vals[len - 2].value;
-        const closedEma20 = ema20Vals[len - 2].value;
-
-        const recentClosed = currentCandles.slice(-15, -1);
-        const highMax = Math.max(...recentClosed.map(c => c.high));
-        const lowMin = Math.min(...recentClosed.map(c => c.low));
-
-        const emaDiffPercentage = Math.abs(closedEma9 - closedEma20) / closedCandle.close;
-        const isConsolidating = emaDiffPercentage < 0.0008;
-
-        if (isConsolidating) {
-          document.getElementById('metric-ema').innerText = "Consolidation / Sideways";
-          document.getElementById('metric-ema').className = "text-amber-400 font-bold";
-          
-          document.getElementById('metric-sweep').innerText = "Range Bound";
-          document.getElementById('metric-sweep').className = "text-amber-400 font-bold";
-          
-          document.getElementById('metric-volatility').innerText = "Low Volatility";
-          document.getElementById('metric-volatility').className = "text-slate-400 font-bold";
-
-          output.innerHTML = `
-            <div class="w-full space-y-3">
-              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span class="text-xs font-bold text-slate-400">${currentSymbol} SETUP:</span>
-                <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">⏳ WAIT / NO TRADE AREA</span>
-              </div>
-              <p class="text-xs text-amber-300 font-medium text-center">Market is consolidating in a tight range. High risk of false breakouts. Support & Resistance levels marked on chart.</p>
-              <div class="grid grid-cols-2 gap-2 text-center font-mono">
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">RESISTANCE</span><strong class="text-purple-400">$${formatPrice(highMax)}</strong></div>
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">SUPPORT</span><strong class="text-cyan-400">$${formatPrice(lowMin)}</strong></div>
-              </div>
-            </div>
-          `;
-
-          renderSetupLines({
-            type: 'wait',
-            resistanceLevel: highMax,
-            supportLevel: lowMin
-          });
-          return;
-        }
-
-        const isBullishEMA = closedEma9 > closedEma20;
-
-        document.getElementById('metric-ema').innerText = isBullishEMA ? "Bullish Trend" : "Bearish Trend";
-        document.getElementById('metric-ema').className = isBullishEMA ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-        
-        document.getElementById('metric-sweep').innerText = closedCandle.close >= closedCandle.open ? "Closed Green" : "Closed Red";
-        document.getElementById('metric-sweep').className = closedCandle.close >= closedCandle.open ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-        
-        document.getElementById('metric-volatility').innerText = "Normal";
-        document.getElementById('metric-volatility').className = "text-blue-400 font-bold";
-
-        const entry = closedCandle.close;
-        const sl = isBullishEMA 
-          ? Math.min(closedCandle.low, prevClosedCandle.low) * 0.998 
-          : Math.max(closedCandle.high, prevClosedCandle.high) * 1.002;
-        const risk = Math.abs(entry - sl);
-        const tp1 = isBullishEMA ? entry + (risk * 2.0) : entry - (risk * 2.0);
-        const tp2 = isBullishEMA ? entry + (risk * 3.5) : entry - (risk * 3.5);
-
-        output.innerHTML = `
-          <div class="w-full space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-              <span class="text-xs font-bold text-slate-400">${currentSymbol} SETUP:</span>
-              <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullishEMA ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">${isBullishEMA ? '🚀 BULLISH' : '📉 BEARISH'}</span>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${formatPrice(entry)}</strong></div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1</span><strong class="text-emerald-400">$${formatPrice(tp1)}</strong></div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2</span><strong class="text-emerald-300">$${formatPrice(tp2)}</strong></div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">SL</span><strong class="text-rose-400">$${formatPrice(sl)}</strong></div>
-            </div>
-          </div>
-        `;
-
-        renderSetupLines({
-          type: isBullishEMA ? 'bullish' : 'bearish', 
-          entry, sl, tp1, tp2,
-          resistanceLevel: highMax, supportLevel: lowMin
-        });
-      }, 100);
+      alert("Market Scan Complete");
     }
   </script>
 </body>
