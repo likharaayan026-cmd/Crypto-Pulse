@@ -10,6 +10,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <style>
     html, body {
@@ -51,7 +52,7 @@
     <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase animate-pulse">Authenticating Session...</p>
   </div>
 
-  <!-- Auth Screen -->
+  <!-- 1. AUTH CONTAINER (LOGIN / SIGN UP) -->
   <div id="auth-container" class="hidden fixed inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
     <div class="glass-card w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 transform transition-all duration-300">
       
@@ -68,7 +69,7 @@
 
         <div id="field-mobile" class="hidden space-y-1">
           <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mobile Number</label>
-          <input type="tel" id="input-mobile" placeholder="+91 9876543210" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+          <input type="tel" id="input-mobile" placeholder="10-digit mobile number" maxlength="10" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
         </div>
 
         <div class="space-y-1">
@@ -98,7 +99,28 @@
     </div>
   </div>
 
-  <!-- Main Terminal UI -->
+  <!-- 2. PENDING APPROVAL CONTAINER -->
+  <div id="pending-container" class="hidden fixed inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl text-center space-y-5 border border-amber-500/20">
+      <div class="w-20 h-20 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full flex items-center justify-center mx-auto text-3xl font-bold animate-pulse">
+        ⏳
+      </div>
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-white tracking-tight">Approval Pending</h2>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Your account request has been submitted to the administrator. Once approved, this window will automatically grant access to the terminal.
+        </p>
+      </div>
+      <div class="pt-2">
+        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold text-amber-400">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+          Waiting for Admin Verification...
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. MAIN TERMINAL DASHBOARD -->
   <div id="app-container" class="hidden flex-col min-h-screen">
     
     <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
@@ -220,6 +242,7 @@
       firebase.initializeApp(firebaseConfig);
     }
     const auth = firebase.auth();
+    const db = firebase.database();
 
     let currentSymbol = 'BTCUSDT';
     let currentAssetName = 'Bitcoin';
@@ -234,24 +257,71 @@
     let chartLines = [];
     let ws = null;
     let currentCandles = [];
-
-    let lockedSetup = null;
+    let userRefListener = null;
 
     const allSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT'];
 
     window.addEventListener('DOMContentLoaded', () => {
+      // INSTANT FAST LOAD FROM LOCALSTORAGE
+      const cachedUser = localStorage.getItem('user_session_data');
+      if (cachedUser) {
+        try {
+          const userObj = JSON.parse(cachedUser);
+          if (userObj && (userObj.approved === true || userObj.approved === "true")) {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('pending-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('flex');
+            buildDarkCanvasChart();
+            loadAssetData();
+          }
+        } catch(e) {
+          localStorage.removeItem('user_session_data');
+        }
+      }
+
+      // FIREBASE AUTHENTICATION MONITORING
       auth.onAuthStateChanged(user => {
         const authContainer = document.getElementById('auth-container');
+        const pendingContainer = document.getElementById('pending-container');
         const appContainer = document.getElementById('app-container');
+
+        if (userRefListener) {
+          userRefListener.off(); // Detach previous listeners
+        }
 
         if (user) {
           authContainer.classList.add('hidden');
-          appContainer.classList.remove('hidden');
-          appContainer.classList.add('flex');
-          buildDarkCanvasChart();
-          loadAssetData();
+
+          // REALTIME APPROVAL CHECK & LOCALSTORAGE SYNC
+          userRefListener = db.ref('users/' + user.uid);
+          userRefListener.on('value', (snapshot) => {
+            const userData = snapshot.val();
+
+            if (userData && (userData.approved === true || userData.approved === "true")) {
+              // Save to LocalStorage for fast login next time
+              localStorage.setItem('user_session_data', JSON.stringify(userData));
+
+              pendingContainer.classList.add('hidden');
+              appContainer.classList.remove('hidden');
+              appContainer.classList.add('flex');
+              
+              if (!darkChart) {
+                buildDarkCanvasChart();
+                loadAssetData();
+              }
+            } else {
+              localStorage.removeItem('user_session_data');
+              appContainer.classList.add('hidden');
+              appContainer.classList.remove('flex');
+              pendingContainer.classList.remove('hidden');
+            }
+          });
+
         } else {
+          localStorage.removeItem('user_session_data');
           authContainer.classList.remove('hidden');
+          pendingContainer.classList.add('hidden');
           appContainer.classList.add('hidden');
           appContainer.classList.remove('flex');
         }
@@ -269,65 +339,6 @@
       preventPageScrollOnChart();
     });
 
-    function preventPageScrollOnChart() {
-      const wrapper = document.getElementById('chart-wrapper');
-      if (!wrapper) return;
-
-      wrapper.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-      }, { passive: false });
-    }
-
-    function setupDeveloperTapEvents() {
-      let rahulTaps = 0;
-      let rahulTimer = null;
-      const devRahul = document.getElementById('dev-rahul');
-
-      devRahul.addEventListener('click', () => {
-        rahulTaps++;
-        if (rahulTaps === 1) {
-          rahulTimer = setTimeout(() => { rahulTaps = 0; }, 3000);
-        } else if (rahulTaps === 2) {
-          clearTimeout(rahulTimer);
-          rahulTaps = 0;
-          openDevModal('https://i.ibb.co/yctmyQbP/IMG-20251016-WA0003.jpg');
-        }
-      });
-
-      let aayanTaps = 0;
-      let aayanTimer = null;
-      const devAayan = document.getElementById('dev-aayan');
-
-      devAayan.addEventListener('click', () => {
-        aayanTaps++;
-        if (aayanTaps === 1) {
-          aayanTimer = setTimeout(() => { aayanTaps = 0; }, 3000);
-        } else if (aayanTaps === 2) {
-          clearTimeout(aayanTimer);
-          aayanTaps = 0;
-          openDevModal('https://i.ibb.co/Xkj3793s/IMG-20241210-154041.jpg');
-        }
-      });
-    }
-
-    function openDevModal(imgUrl) {
-      const modal = document.getElementById('dev-modal');
-      const modalImg = document.getElementById('dev-modal-img');
-      modalImg.src = imgUrl;
-      modal.classList.remove('hidden');
-      window.history.pushState({ modalOpen: true }, '');
-    }
-
-    function closeDevModal() {
-      const modal = document.getElementById('dev-modal');
-      if (!modal.classList.contains('hidden')) {
-        modal.classList.add('hidden');
-        if (window.history.state && window.history.state.modalOpen) {
-          window.history.back();
-        }
-      }
-    }
-
     function toggleAuthMode() {
       isSignUpMode = !isSignUpMode;
       document.getElementById('field-name').classList.toggle('hidden', !isSignUpMode);
@@ -342,14 +353,37 @@
 
     async function handleAuth(e) {
       e.preventDefault();
-      const email = document.getElementById('input-email').value;
+      const email = document.getElementById('input-email').value.trim().toLowerCase();
       const password = document.getElementById('input-password').value;
       const errorEl = document.getElementById('auth-error');
       errorEl.classList.add('hidden');
 
       try {
         if (isSignUpMode) {
-          await auth.createUserWithEmailAndPassword(email, password);
+          const name = document.getElementById('input-name').value.trim();
+          const mobile = document.getElementById('input-mobile').value.trim();
+
+          if (!name || mobile.length !== 10) {
+            errorEl.innerText = "Please enter valid name and 10-digit mobile number.";
+            errorEl.classList.remove('hidden');
+            return;
+          }
+
+          // Check for pre-approval
+          const emailKey = email.replace(/\./g, '_dot_').replace(/@/g, '_at_');
+          const preSnap = await db.ref('pre_approved_emails/' + emailKey).once('value');
+          const isPreApproved = preSnap.exists() && preSnap.val().approved === true;
+
+          const cred = await auth.createUserWithEmailAndPassword(email, password);
+
+          await db.ref('users/' + cred.user.uid).set({
+            name: name,
+            mobile: "+91" + mobile,
+            email: email,
+            approved: isPreApproved,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+
         } else {
           await auth.signInWithEmailAndPassword(email, password);
         }
@@ -360,25 +394,49 @@
     }
 
     function handleLogout() {
+      localStorage.removeItem('user_session_data');
       auth.signOut();
     }
 
+    function preventPageScrollOnChart() {
+      const wrapper = document.getElementById('chart-wrapper');
+      if (!wrapper) return;
+      wrapper.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
+    }
+
+    function setupDeveloperTapEvents() {
+      let rahulTaps = 0, rahulTimer = null;
+      document.getElementById('dev-rahul').addEventListener('click', () => {
+        rahulTaps++;
+        if (rahulTaps === 1) rahulTimer = setTimeout(() => { rahulTaps = 0; }, 3000);
+        else if (rahulTaps === 2) { clearTimeout(rahulTimer); rahulTaps = 0; openDevModal('https://i.ibb.co/yctmyQbP/IMG-20251016-WA0003.jpg'); }
+      });
+
+      let aayanTaps = 0, aayanTimer = null;
+      document.getElementById('dev-aayan').addEventListener('click', () => {
+        aayanTaps++;
+        if (aayanTaps === 1) aayanTimer = setTimeout(() => { aayanTaps = 0; }, 3000);
+        else if (aayanTaps === 2) { clearTimeout(aayanTimer); aayanTaps = 0; openDevModal('https://i.ibb.co/Xkj3793s/IMG-20241210-154041.jpg'); }
+      });
+    }
+
+    function openDevModal(imgUrl) {
+      document.getElementById('dev-modal-img').src = imgUrl;
+      document.getElementById('dev-modal').classList.remove('hidden');
+    }
+
+    function closeDevModal() {
+      document.getElementById('dev-modal').classList.add('hidden');
+    }
+
     function formatPrice(price) {
-      if (price < 10) {
-        return price.toFixed(4); // For XRP and low price assets (e.g. 1.2598)
-      } else {
-        return price.toFixed(2); // For High value assets like BTC/ETH
-      }
+      return price < 10 ? price.toFixed(4) : price.toFixed(2);
     }
 
     function buildDarkCanvasChart() {
       const container = document.getElementById('tv-dark-chart');
       container.innerHTML = '';
-
-      if (darkChart) {
-        darkChart.remove();
-        darkChart = null;
-      }
+      if (darkChart) darkChart.remove();
 
       const precision = currentSymbol === 'XRPUSDT' ? 4 : 2;
       const minMove = currentSymbol === 'XRPUSDT' ? 0.0001 : 0.01;
@@ -397,11 +455,7 @@
         upColor: '#22c55e', downColor: '#ef4444',
         borderDownColor: '#ef4444', borderUpColor: '#22c55e',
         wickDownColor: '#ef4444', wickUpColor: '#22c55e',
-        priceFormat: {
-          type: 'price',
-          precision: precision,
-          minMove: minMove,
-        },
+        priceFormat: { type: 'price', precision: precision, minMove: minMove },
       });
 
       ema9Series = darkChart.addLineSeries({ color: '#3b82f6', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
@@ -410,9 +464,7 @@
 
     window.addEventListener('resize', () => {
       const container = document.getElementById('tv-dark-chart');
-      if (darkChart && container) {
-        darkChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-      }
+      if (darkChart && container) darkChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
     });
 
     function computeEMA(candles, period) {
@@ -429,18 +481,12 @@
     }
 
     function connectLiveWebSocket() {
-      if (ws) {
-        ws.close();
-        ws = null;
-      }
-
-      const streamSymbol = currentSymbol.toLowerCase();
-      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${streamSymbol}@kline_${currentTimeframe}`);
+      if (ws) ws.close();
+      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${currentSymbol.toLowerCase()}@kline_${currentTimeframe}`);
 
       ws.onmessage = (event) => {
         const message = JSON.parse(event.data);
         const kline = message.k;
-
         const candle = {
           time: kline.t / 1000,
           open: parseFloat(kline.o),
@@ -466,8 +512,6 @@
 
     async function loadAssetData() {
       clearCanvasLines();
-      lockedSetup = null;
-
       const loadingEl = document.getElementById('chart-loading');
       if (loadingEl) loadingEl.classList.remove('hidden');
 
@@ -551,10 +595,6 @@
       const spinner = document.getElementById('btn-spinner');
       const btnText = document.getElementById('btn-text');
 
-      const metricEma = document.getElementById('metric-ema');
-      const metricSweep = document.getElementById('metric-sweep');
-      const metricVolatility = document.getElementById('metric-volatility');
-
       spinner.classList.remove('hidden');
       btnText.innerText = "Analyzing Setup...";
 
@@ -578,17 +618,15 @@
         const lowMin = Math.min(...recentClosed.map(c => c.low));
 
         const isBullishEMA = closedEma9 > closedEma20;
-        const emaText = isBullishEMA ? "Confirmed Bullish Trend" : "Confirmed Bearish Trend";
-        const emaCls = isBullishEMA ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-        const sweepText = closedCandle.close >= closedCandle.open ? "Closed Green Candle" : "Closed Red Candle";
-        const sweepCls = closedCandle.close >= closedCandle.open ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
 
-        metricEma.innerText = emaText;
-        metricEma.className = emaCls;
-        metricSweep.innerText = sweepText;
-        metricSweep.className = sweepCls;
-        metricVolatility.innerText = "Normal Volatility";
-        metricVolatility.className = "text-blue-400 font-bold";
+        document.getElementById('metric-ema').innerText = isBullishEMA ? "Confirmed Bullish Trend" : "Confirmed Bearish Trend";
+        document.getElementById('metric-ema').className = isBullishEMA ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+        
+        document.getElementById('metric-sweep').innerText = closedCandle.close >= closedCandle.open ? "Closed Green Candle" : "Closed Red Candle";
+        document.getElementById('metric-sweep').className = closedCandle.close >= closedCandle.open ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+        
+        document.getElementById('metric-volatility').innerText = "Normal Volatility";
+        document.getElementById('metric-volatility').className = "text-blue-400 font-bold";
 
         const entry = closedCandle.close;
         const sl = isBullishEMA 
@@ -598,7 +636,7 @@
         const tp1 = isBullishEMA ? entry + (risk * 2.0) : entry - (risk * 2.0);
         const tp2 = isBullishEMA ? entry + (risk * 3.5) : entry - (risk * 3.5);
 
-        const html = `
+        output.innerHTML = `
           <div class="w-full space-y-3">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
               <span class="text-xs font-bold text-slate-400">${currentSymbol} CLOSED CANDLE SETUP:</span>
@@ -613,15 +651,11 @@
           </div>
         `;
 
-        output.innerHTML = html;
-
-        lockedSetup = {
+        renderSetupLines({
           type: isBullishEMA ? 'bullish' : 'bearish', 
           entry, sl, tp1, tp2,
           resistanceLevel: highMax, supportLevel: lowMin
-        };
-
-        renderSetupLines(lockedSetup);
+        });
       }, 150);
     }
   </script>
