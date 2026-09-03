@@ -153,6 +153,7 @@
           <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition">15m</button>
           <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">1h</button>
           <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">4h</button>
+          <button onclick="changeTimeframe('1d')" id="tf-1d" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">1d</button>
         </div>
 
         <button id="run-ai-btn" onclick="runAnalysisEngine()" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-md transition flex items-center gap-2">
@@ -370,7 +371,7 @@
           }
 
           // Check for pre-approval
-          const emailKey = email.replace(/\./g, '_dot_').replace(/@/g, '_at_');
+          const emailKey = email.replace(/\\./g, '_dot_').replace(/@/g, '_at_');
           const preSnap = await db.ref('pre_approved_emails/' + emailKey).once('value');
           const isPreApproved = preSnap.exists() && preSnap.val().approved === true;
 
@@ -510,22 +511,50 @@
       };
     }
 
+    // UPDATED DATA FETCHING FUNCTION TO LOAD 60 DAYS (2 MONTHS) OF CANDLE DATA
     async function loadAssetData() {
       clearCanvasLines();
       const loadingEl = document.getElementById('chart-loading');
       if (loadingEl) loadingEl.classList.remove('hidden');
 
       try {
-        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&limit=500`);
-        const raw = await res.json();
+        // Calculate timestamp for 60 days (2 months) ago
+        const sixtyDaysAgoMs = Date.now() - (60 * 24 * 60 * 60 * 1000);
+        let allCandles = [];
+        let startTime = sixtyDaysAgoMs;
+        const limit = 1000; // Binance API max limit per request
 
-        currentCandles = raw.map(d => ({
-          time: d[0] / 1000,
-          open: parseFloat(d[1]),
-          high: parseFloat(d[2]),
-          low: parseFloat(d[3]),
-          close: parseFloat(d[4])
-        }));
+        // Pagination loop to fetch full 2 months historical candles
+        while (true) {
+          const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&startTime=${startTime}&limit=${limit}`;
+          const res = await fetch(url);
+          const raw = await res.json();
+
+          if (!raw || raw.length === 0) break;
+
+          const fetchedCandles = raw.map(d => ({
+            time: d[0] / 1000,
+            open: parseFloat(d[1]),
+            high: parseFloat(d[2]),
+            low: parseFloat(d[3]),
+            close: parseFloat(d[4])
+          }));
+
+          // Avoid duplicates on page boundary
+          if (allCandles.length > 0 && fetchedCandles[0].time === allCandles[allCandles.length - 1].time) {
+            allCandles.pop();
+          }
+
+          allCandles = allCandles.concat(fetchedCandles);
+
+          // If returned data is less than limit, we've fetched up to the latest candle
+          if (raw.length < limit) break;
+
+          // Set startTime for the next iteration (last candle timestamp + 1 ms)
+          startTime = raw[raw.length - 1][0] + 1;
+        }
+
+        currentCandles = allCandles;
 
         candleSeries.setData(currentCandles);
         ema9Series.setData(computeEMA(currentCandles, 9));
@@ -561,11 +590,13 @@
 
     function changeTimeframe(tf) {
       currentTimeframe = tf;
-      ['5m', '15m', '1h', '4h'].forEach(t => {
+      ['5m', '15m', '1h', '4h', '1d'].forEach(t => {
         const btn = document.getElementById(`tf-${t}`);
-        btn.className = t === tf 
-          ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition"
-          : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition";
+        if (btn) {
+          btn.className = t === tf 
+            ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition"
+            : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition";
+        }
       });
       loadAssetData();
     }
