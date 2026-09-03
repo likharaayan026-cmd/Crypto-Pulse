@@ -262,7 +262,26 @@
 
     const allSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT'];
 
+    function hideSplashScreen() {
+      const splash = document.getElementById('splash-screen');
+      if (splash) {
+        splash.classList.add('fade-out');
+        setTimeout(() => splash.remove(), 500);
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      // 1. HARD FALLBACK TIMEOUT FOR SPLASH SCREEN
+      const splashFallback = setTimeout(() => {
+        hideSplashScreen();
+        // If Auth screen is not visible and App is not visible, show auth by default
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        if (appContainer.classList.contains('hidden')) {
+          authContainer.classList.remove('hidden');
+        }
+      }, 2500);
+
       // INSTANT FAST LOAD FROM LOCALSTORAGE
       const cachedUser = localStorage.getItem('user_session_data');
       if (cachedUser) {
@@ -275,6 +294,8 @@
             document.getElementById('app-container').classList.add('flex');
             buildDarkCanvasChart();
             loadAssetData();
+            clearTimeout(splashFallback);
+            hideSplashScreen();
           }
         } catch(e) {
           localStorage.removeItem('user_session_data');
@@ -283,6 +304,9 @@
 
       // FIREBASE AUTHENTICATION MONITORING
       auth.onAuthStateChanged(user => {
+        clearTimeout(splashFallback);
+        hideSplashScreen();
+
         const authContainer = document.getElementById('auth-container');
         const pendingContainer = document.getElementById('pending-container');
         const appContainer = document.getElementById('app-container');
@@ -300,7 +324,6 @@
             const userData = snapshot.val();
 
             if (userData && (userData.approved === true || userData.approved === "true")) {
-              // Save to LocalStorage for fast login next time
               localStorage.setItem('user_session_data', JSON.stringify(userData));
 
               pendingContainer.classList.add('hidden');
@@ -317,6 +340,10 @@
               appContainer.classList.remove('flex');
               pendingContainer.classList.remove('hidden');
             }
+          }, (err) => {
+            // Handle error reading database
+            console.error(err);
+            authContainer.classList.remove('hidden');
           });
 
         } else {
@@ -326,14 +353,6 @@
           appContainer.classList.add('hidden');
           appContainer.classList.remove('flex');
         }
-
-        setTimeout(() => {
-          const splash = document.getElementById('splash-screen');
-          if (splash) {
-            splash.classList.add('fade-out');
-            setTimeout(() => splash.remove(), 500);
-          }
-        }, 1200);
       });
 
       setupDeveloperTapEvents();
@@ -370,10 +389,16 @@
             return;
           }
 
-          // FIX: Correctly replacing all '.' with '_dot_' and '@' with '_at_'
+          // FIX: Global Regex Safe Pathing
           const emailKey = email.replace(/@/g, '_at_').replace(/\./g, '_dot_');
-          const preSnap = await db.ref('pre_approved_emails/' + emailKey).once('value');
-          const isPreApproved = preSnap.exists() && preSnap.val().approved === true;
+          let isPreApproved = false;
+
+          try {
+            const preSnap = await db.ref('pre_approved_emails/' + emailKey).once('value');
+            isPreApproved = preSnap.exists() && preSnap.val().approved === true;
+          } catch(dbErr) {
+            console.warn("Pre-approval check bypassed due to rules:", dbErr);
+          }
 
           const cred = await auth.createUserWithEmailAndPassword(email, password);
 
@@ -557,7 +582,7 @@
         connectLiveWebSocket();
       } catch (err) {
         console.error("Data Fetch Error", err);
-      } font-bold {
+      } finally {
         if (loadingEl) loadingEl.classList.add('hidden');
       }
     }
