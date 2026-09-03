@@ -247,7 +247,7 @@
     <div onclick="event.stopPropagation()" class="glass-card w-full max-w-sm p-6 rounded-3xl shadow-2xl space-y-4">
       <div class="text-center space-y-1">
         <h3 class="text-xl font-black text-white">Connect Telegram</h3>
-        <p class="text-xs text-slate-400">Enter Telegram Username to receive notifications.</p>
+        <p class="text-xs text-slate-400">Enter Username to connect and start receiving bot notifications.</p>
       </div>
       <div class="space-y-2">
         <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Telegram Username</label>
@@ -258,7 +258,7 @@
       </div>
       <div class="flex gap-2 pt-2">
         <button onclick="closeTelegramModal()" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition">Cancel</button>
-        <button onclick="saveTelegramUsername()" class="w-1/2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition">Save Handle</button>
+        <button onclick="saveTelegramUsername()" class="w-1/2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition">Connect Bot</button>
       </div>
     </div>
   </div>
@@ -307,6 +307,7 @@
   <script>
     const TELEGRAM_BOT_TOKEN = "8876367098:AAEbUpDn6jD_7XMjNbTgujBkfxUUVXfcd2g";
     const TELEGRAM_CHAT_ID = "6368687213";
+    const TARGET_TELEGRAM_BOT = "PulseAlphaAlerts_bot";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBt3iYcR4SijEJqtrBlH8mNr292vakgJFQ",
@@ -335,7 +336,6 @@
     let chartLines = [];
     let userAlertLines = [];
     
-    // Persistent Alert Storage Initializer
     let userAlertsData = JSON.parse(localStorage.getItem('crypto_pulse_alerts') || '[]');
     let selectedAlertIndex = null;
     let ws = null;
@@ -348,7 +348,6 @@
       localStorage.setItem('crypto_pulse_alerts', JSON.stringify(userAlertsData));
     }
 
-    // Modal Manager Function to prevent infinite pushStates
     function openModalById(modalId) {
       document.getElementById(modalId).classList.remove('hidden');
       if (window.history.state?.modalOpen !== modalId) {
@@ -365,19 +364,16 @@
 
     window.addEventListener('popstate', (e) => {
       const modals = ['telegram-modal', 'alert-set-modal', 'alert-manage-modal', 'dev-modal'];
-      let modalClosed = false;
       modals.forEach(mId => {
         const el = document.getElementById(mId);
         if (el && !el.classList.contains('hidden')) {
           el.classList.add('hidden');
-          modalClosed = true;
         }
       });
 
       const dropdown = document.getElementById('user-menu-dropdown');
       if (dropdown && !dropdown.classList.contains('hidden')) {
         dropdown.classList.add('hidden');
-        modalClosed = true;
       }
     });
 
@@ -425,14 +421,19 @@
     async function saveTelegramUsername() {
       const handle = document.getElementById('telegram-username-input').value.trim().replace(/^@/, '');
       if (!handle) return alert("Enter valid Telegram handle.");
+      
       localStorage.setItem('telegram_handle', handle);
-      closeTelegramModal();
 
       const user = auth.currentUser;
-      if (user) db.ref('users/' + user.uid).update({ telegram_handle: "@" + handle });
+      if (user) {
+        db.ref('users/' + user.uid).update({ telegram_handle: "@" + handle });
+      }
 
-      await sendTelegramNotification(`<b>✈️ TELEGRAM CONNECTED</b>\n\n<b>Handle:</b> @${handle}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
-      alert(`Telegram connected with @${handle}!`);
+      closeTelegramModal();
+
+      sendTelegramNotification(`<b>✈️ TELEGRAM CONNECTED</b>\n\n<b>Handle:</b> @${handle}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
+
+      window.location.href = `https://t.me/${TARGET_TELEGRAM_BOT}`;
     }
 
     function hideSplashScreen() {
@@ -525,7 +526,6 @@
       auth.signOut();
     }
 
-    /* 2-SECOND LONG PRESS ALERT LOGIC */
     let lastCrosshairPrice = null;
     let pendingAlertPrice = null;
 
@@ -613,7 +613,6 @@
       sendTelegramNotification(`<b>🔔 ALERT SET ON CHART</b>\n\n<b>Asset:</b> ${currentSymbol}\n<b>Level:</b> $${formatPrice(price)}\n<b>User:</b> @${handle}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
     }
 
-    /* RENDER ALERT LINES ON CHART */
     function renderUserAlertLines() {
       if (!candleSeries) return;
 
@@ -710,7 +709,6 @@
       }
     }
 
-    /* AUTO-DELETE ALERT ON TRIGGER */
     function checkPriceAlertsTrigger(currentPrice) {
       let changed = false;
 
@@ -877,7 +875,6 @@
       if (loadingEl) loadingEl.classList.remove('hidden');
 
       try {
-        // Extended limit to ~1500 candles to show minimum 2 months of chart data
         const limit = 1500;
         const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&limit=${limit}`;
         const res = await fetch(url);
