@@ -370,8 +370,8 @@
             return;
           }
 
-          // Check for pre-approval
-          const emailKey = email.replace(/\\./g, '_dot_').replace(/@/g, '_at_');
+          // FIX: Correctly replacing all '.' with '_dot_' and '@' with '_at_'
+          const emailKey = email.replace(/@/g, '_at_').replace(/\./g, '_dot_');
           const preSnap = await db.ref('pre_approved_emails/' + emailKey).once('value');
           const isPreApproved = preSnap.exists() && preSnap.val().approved === true;
 
@@ -511,20 +511,17 @@
       };
     }
 
-    // UPDATED DATA FETCHING FUNCTION TO LOAD 60 DAYS (2 MONTHS) OF CANDLE DATA
     async function loadAssetData() {
       clearCanvasLines();
       const loadingEl = document.getElementById('chart-loading');
       if (loadingEl) loadingEl.classList.remove('hidden');
 
       try {
-        // Calculate timestamp for 60 days (2 months) ago
         const sixtyDaysAgoMs = Date.now() - (60 * 24 * 60 * 60 * 1000);
         let allCandles = [];
         let startTime = sixtyDaysAgoMs;
-        const limit = 1000; // Binance API max limit per request
+        const limit = 1000;
 
-        // Pagination loop to fetch full 2 months historical candles
         while (true) {
           const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&startTime=${startTime}&limit=${limit}`;
           const res = await fetch(url);
@@ -540,17 +537,13 @@
             close: parseFloat(d[4])
           }));
 
-          // Avoid duplicates on page boundary
           if (allCandles.length > 0 && fetchedCandles[0].time === allCandles[allCandles.length - 1].time) {
             allCandles.pop();
           }
 
           allCandles = allCandles.concat(fetchedCandles);
 
-          // If returned data is less than limit, we've fetched up to the latest candle
           if (raw.length < limit) break;
-
-          // Set startTime for the next iteration (last candle timestamp + 1 ms)
           startTime = raw[raw.length - 1][0] + 1;
         }
 
@@ -564,7 +557,7 @@
         connectLiveWebSocket();
       } catch (err) {
         console.error("Data Fetch Error", err);
-      } finally {
+      } font-bold {
         if (loadingEl) loadingEl.classList.add('hidden');
       }
     }
