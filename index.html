@@ -385,16 +385,16 @@
       }) + " IST";
     }
 
-    async function sendTelegramNotification(message, targetChatId = TELEGRAM_CHAT_ID) {
-  if (!TELEGRAM_BOT_TOKEN || !targetChatId) return;
-  try {
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: targetChatId, text: message, parse_mode: "HTML" })
-    });
-  } catch (err) { console.error("Telegram Error:", err); }
-}
+    async function sendTelegramNotification(message) {
+      if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+      try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" })
+        });
+      } catch (err) { console.error("Telegram Error:", err); }
+    }
 
     function toggleUserMenu() {
       const dropdown = document.getElementById('user-menu-dropdown');
@@ -431,7 +431,7 @@
 
       closeTelegramModal();
 
-      sendTelegramNotification(`<b>✈️ TELEGRAM CONNECTED</b>\n\n<b>Handle:</b> @${handle}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
+      await sendTelegramNotification(`<b>✈️ TELEGRAM CONNECTED</b>\n\n<b>Handle:</b> @${handle}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
 
       window.open(`https://t.me/${TARGET_TELEGRAM_BOT}`, '_blank');
     }
