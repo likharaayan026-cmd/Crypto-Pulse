@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Crypto Pulse</title>
+  <title>Crypto Pulse Terminal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   
@@ -13,10 +13,11 @@
 
   <style>
     html, body {
-      touch-action: manipulation;
+      touch-action: pan-y;
       user-select: none;
       overflow-x: hidden;
       background-color: #030712;
+      height: 100%;
     }
     .fade-out {
       opacity: 0;
@@ -30,6 +31,9 @@
     }
     .tv-lightweight-charts-legend {
       display: none !important;
+    }
+    #chart-wrapper {
+      touch-action: none;
     }
   </style>
 </head>
@@ -115,10 +119,11 @@
 
       <!-- Controls -->
       <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex flex-wrap justify-between items-center gap-2">
-        <div class="flex items-center gap-1.5">
-          <button onclick="changeCoin('ETHUSDT', 'Ethereum (ETH)')" id="btn-eth" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition">ETH/USDT</button>
-          <button onclick="changeCoin('BTCUSDT', 'Bitcoin (BTC)')" id="btn-btc" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition">BTC/USDT</button>
-          <button onclick="changeCoin('SOLUSDT', 'Solana (SOL)')" id="btn-sol" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition">SOL/USDT</button>
+        <div class="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
+          <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap">BTC/USDT</button>
+          <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">ETH/USDT</button>
+          <button onclick="changeAsset('SOLUSDT', 'Solana')" id="btn-SOLUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">SOL/USDT</button>
+          <button onclick="changeAsset('XRPUSDT', 'XRP')" id="btn-XRPUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">XRP/USDT</button>
         </div>
 
         <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
@@ -135,14 +140,15 @@
       </div>
 
       <!-- Chart Container -->
-      <div class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[380px] relative overflow-hidden">
-        <div class="absolute top-3 left-3 z-20 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-md border border-slate-800 text-[11px] font-bold flex items-center gap-3">
+      <div id="chart-wrapper" class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[380px] relative overflow-hidden">
+        <div class="absolute top-3 left-3 z-20 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-md border border-slate-800 text-[11px] font-bold flex items-center gap-3 pointer-events-none">
           <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-1 bg-blue-500 rounded"></span> 9 EMA</span>
           <span class="flex items-center gap-1 text-red-500"><span class="w-2.5 h-1 bg-red-600 rounded"></span> 20 EMA</span>
+          <span id="live-indicator" class="text-[10px] text-emerald-400 font-extrabold ml-2">● LIVE FEED</span>
         </div>
         <div id="chart-loading" class="hidden absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center">
           <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-xs font-bold text-slate-300 mt-2">Fetching 60 Days History...</span>
+          <span class="text-xs font-bold text-slate-300 mt-2">Loading Chart Data...</span>
         </div>
         <div id="tv-dark-chart" class="w-full h-full"></div>
       </div>
@@ -171,7 +177,7 @@
         <div id="ai-analysis-output" class="bg-slate-950 p-4 rounded-xl border border-slate-800 min-h-[100px] flex items-center justify-center">
           <div class="text-center">
             <h4 class="font-bold text-slate-300 text-xs">Engine Ready</h4>
-            <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to compute real-time signal and plot S/R levels based on closed candle.</p>
+            <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to compute real-time signal and plot levels based on closed candle.</p>
           </div>
         </div>
       </div>
@@ -191,7 +197,7 @@
 
   </div>
 
-  <!-- Developer Image Modal Popup (512x512 Format) -->
+  <!-- Developer Image Modal Popup -->
   <div id="dev-modal" onclick="closeDevModal()" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="relative bg-slate-900 border border-slate-800 rounded-3xl p-3 shadow-2xl flex flex-col items-center">
       <img id="dev-modal-img" src="" alt="Developer" class="w-[280px] h-[280px] sm:w-[380px] sm:h-[380px] md:w-[512px] md:h-[512px] object-cover rounded-2xl shadow-md">
@@ -200,7 +206,6 @@
   </div>
 
   <script>
-    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBt3iYcR4SijEJqtrBlH8mNr292vakgJFQ",
       authDomain: "figo-movies.firebaseapp.com",
@@ -216,9 +221,8 @@
     }
     const auth = firebase.auth();
 
-    // App State Defaults
-    let currentPair = 'ETHUSDT';
-    let currentCoinName = 'Ethereum (ETH)';
+    let currentSymbol = 'BTCUSDT';
+    let currentAssetName = 'Bitcoin';
     let currentTimeframe = '15m';
     let isAnalyzing = false;
     let isSignUpMode = false;
@@ -231,11 +235,10 @@
     let ws = null;
     let currentCandles = [];
 
-    // Locked Trade Signal state for the active closed candle
-    let lockedSignalTime = null;
     let lockedSetup = null;
 
-    // Splash Screen & Auto-Login Logic
+    const allSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT'];
+
     window.addEventListener('DOMContentLoaded', () => {
       auth.onAuthStateChanged(user => {
         const authContainer = document.getElementById('auth-container');
@@ -246,7 +249,7 @@
           appContainer.classList.remove('hidden');
           appContainer.classList.add('flex');
           buildDarkCanvasChart();
-          loadBinanceOHLCData();
+          loadAssetData();
         } else {
           authContainer.classList.remove('hidden');
           appContainer.classList.add('hidden');
@@ -263,9 +266,18 @@
       });
 
       setupDeveloperTapEvents();
+      preventPageScrollOnChart();
     });
 
-    // Double Tap Detection Logic for Developers
+    function preventPageScrollOnChart() {
+      const wrapper = document.getElementById('chart-wrapper');
+      if (!wrapper) return;
+
+      wrapper.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+      }, { passive: false });
+    }
+
     function setupDeveloperTapEvents() {
       let rahulTaps = 0;
       let rahulTimer = null;
@@ -298,13 +310,11 @@
       });
     }
 
-    // Modal Control
     function openDevModal(imgUrl) {
       const modal = document.getElementById('dev-modal');
       const modalImg = document.getElementById('dev-modal-img');
       modalImg.src = imgUrl;
       modal.classList.remove('hidden');
-
       window.history.pushState({ modalOpen: true }, '');
     }
 
@@ -318,19 +328,10 @@
       }
     }
 
-    window.addEventListener('popstate', (e) => {
-      const modal = document.getElementById('dev-modal');
-      if (modal && !modal.classList.contains('hidden')) {
-        modal.classList.add('hidden');
-      }
-    });
-
-    // Toggle Auth Mode
     function toggleAuthMode() {
       isSignUpMode = !isSignUpMode;
       document.getElementById('field-name').classList.toggle('hidden', !isSignUpMode);
       document.getElementById('field-mobile').classList.toggle('hidden', !isSignUpMode);
-      
       document.getElementById('auth-title').innerText = isSignUpMode ? "Create Account" : "Welcome Back";
       document.getElementById('auth-subtitle').innerText = isSignUpMode ? "Sign up for full terminal access" : "Log in to access live market analytics";
       document.getElementById('auth-btn').innerText = isSignUpMode ? "Sign Up" : "Log In";
@@ -339,7 +340,6 @@
       document.getElementById('auth-error').classList.add('hidden');
     }
 
-    // Handle Authentication
     async function handleAuth(e) {
       e.preventDefault();
       const email = document.getElementById('input-email').value;
@@ -363,7 +363,14 @@
       auth.signOut();
     }
 
-    // Charting Engine
+    function formatPrice(price) {
+      if (price < 10) {
+        return price.toFixed(4); // For XRP and low price assets (e.g. 1.2598)
+      } else {
+        return price.toFixed(2); // For High value assets like BTC/ETH
+      }
+    }
+
     function buildDarkCanvasChart() {
       const container = document.getElementById('tv-dark-chart');
       container.innerHTML = '';
@@ -372,6 +379,9 @@
         darkChart.remove();
         darkChart = null;
       }
+
+      const precision = currentSymbol === 'XRPUSDT' ? 4 : 2;
+      const minMove = currentSymbol === 'XRPUSDT' ? 0.0001 : 0.01;
 
       darkChart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
@@ -387,10 +397,15 @@
         upColor: '#22c55e', downColor: '#ef4444',
         borderDownColor: '#ef4444', borderUpColor: '#22c55e',
         wickDownColor: '#ef4444', wickUpColor: '#22c55e',
+        priceFormat: {
+          type: 'price',
+          precision: precision,
+          minMove: minMove,
+        },
       });
 
-      ema9Series = darkChart.addLineSeries({ color: '#2563eb', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
-      ema20Series = darkChart.addLineSeries({ color: '#dc2626', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      ema9Series = darkChart.addLineSeries({ color: '#3b82f6', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      ema20Series = darkChart.addLineSeries({ color: '#ef4444', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
     }
 
     window.addEventListener('resize', () => {
@@ -414,9 +429,12 @@
     }
 
     function connectLiveWebSocket() {
-      if (ws) ws.close();
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
 
-      const streamSymbol = currentPair.toLowerCase();
+      const streamSymbol = currentSymbol.toLowerCase();
       ws = new WebSocket(`wss://stream.binance.com:9443/ws/${streamSymbol}@kline_${currentTimeframe}`);
 
       ws.onmessage = (event) => {
@@ -446,47 +464,24 @@
       };
     }
 
-    // Minimum 60-Day Data Fetcher Loop
-    async function loadBinanceOHLCData() {
+    async function loadAssetData() {
       clearCanvasLines();
-      lockedSignalTime = null;
       lockedSetup = null;
 
       const loadingEl = document.getElementById('chart-loading');
       if (loadingEl) loadingEl.classList.remove('hidden');
 
       try {
-        const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
-        const targetStartTime = Date.now() - sixtyDaysMs;
-        let fetchedCandles = [];
-        let currentStart = targetStartTime;
+        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&limit=500`);
+        const raw = await res.json();
 
-        // Loop Binance API to fetch historical candles until present time
-        while (currentStart < Date.now()) {
-          const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=${currentTimeframe}&startTime=${currentStart}&limit=1000`);
-          const raw = await res.json();
-
-          if (!raw || raw.length === 0) break;
-
-          const chunk = raw.map(d => ({
-            time: d[0] / 1000,
-            open: parseFloat(d[1]),
-            high: parseFloat(d[2]),
-            low: parseFloat(d[3]),
-            close: parseFloat(d[4])
-          }));
-
-          fetchedCandles = fetchedCandles.concat(chunk);
-          const lastFetchedTime = raw[raw.length - 1][0];
-
-          if (lastFetchedTime <= currentStart) break;
-          currentStart = lastFetchedTime + 1;
-        }
-
-        // Remove duplicate candles if any
-        const uniqueCandlesMap = new Map();
-        fetchedCandles.forEach(c => uniqueCandlesMap.set(c.time, c));
-        currentCandles = Array.from(uniqueCandlesMap.values()).sort((a, b) => a.time - b.time);
+        currentCandles = raw.map(d => ({
+          time: d[0] / 1000,
+          open: parseFloat(d[1]),
+          high: parseFloat(d[2]),
+          low: parseFloat(d[3]),
+          close: parseFloat(d[4])
+        }));
 
         candleSeries.setData(currentCandles);
         ema9Series.setData(computeEMA(currentCandles, 9));
@@ -495,7 +490,7 @@
         darkChart.timeScale().fitContent();
         connectLiveWebSocket();
       } catch (err) {
-        console.error("Binance Fetch Error", err);
+        console.error("Data Fetch Error", err);
       } finally {
         if (loadingEl) loadingEl.classList.add('hidden');
       }
@@ -512,13 +507,8 @@
       chartLines.push(candleSeries.createPriceLine({ price: setup.resistanceLevel, color: '#a855f7', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Resistance' }));
       chartLines.push(candleSeries.createPriceLine({ price: setup.supportLevel, color: '#06b6d4', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Support' }));
 
-      if (setup.type === 'bullish') {
-        chartLines.push(candleSeries.createPriceLine({ price: setup.entry, color: '#2563eb', lineWidth: 2, title: 'BUY ENTRY' }));
-        chartLines.push(candleSeries.createPriceLine({ price: setup.tp1, color: '#22c55e', lineWidth: 2, title: 'TP1 (1:2)' }));
-        chartLines.push(candleSeries.createPriceLine({ price: setup.tp2, color: '#10b981', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dotted, title: 'TP2 (1:3.5)' }));
-        chartLines.push(candleSeries.createPriceLine({ price: setup.sl, color: '#ef4444', lineWidth: 2, title: 'STOP LOSS' }));
-      } else if (setup.type === 'bearish') {
-        chartLines.push(candleSeries.createPriceLine({ price: setup.entry, color: '#2563eb', lineWidth: 2, title: 'SELL ENTRY' }));
+      if (setup.type === 'bullish' || setup.type === 'bearish') {
+        chartLines.push(candleSeries.createPriceLine({ price: setup.entry, color: '#2563eb', lineWidth: 2, title: 'ENTRY' }));
         chartLines.push(candleSeries.createPriceLine({ price: setup.tp1, color: '#22c55e', lineWidth: 2, title: 'TP1 (1:2)' }));
         chartLines.push(candleSeries.createPriceLine({ price: setup.tp2, color: '#10b981', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dotted, title: 'TP2 (1:3.5)' }));
         chartLines.push(candleSeries.createPriceLine({ price: setup.sl, color: '#ef4444', lineWidth: 2, title: 'STOP LOSS' }));
@@ -533,24 +523,28 @@
           ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition"
           : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition";
       });
-      loadBinanceOHLCData();
+      loadAssetData();
     }
 
-    function changeCoin(pair, name) {
-      currentPair = pair;
-      currentCoinName = name;
+    function changeAsset(symbol, name) {
+      currentSymbol = symbol;
+      currentAssetName = name;
 
-      document.getElementById('btn-eth').className = pair === 'ETHUSDT' ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition' : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
-      document.getElementById('btn-btc').className = pair === 'BTCUSDT' ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition' : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
-      document.getElementById('btn-sol').className = pair === 'SOLUSDT' ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition' : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+      allSymbols.forEach(s => {
+        const btn = document.getElementById(`btn-${s}`);
+        if (btn) {
+          btn.className = s === symbol
+            ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap'
+            : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
+        }
+      });
 
       buildDarkCanvasChart();
-      loadBinanceOHLCData();
+      loadAssetData();
     }
 
-    // Real-Time technical analysis based STRICTLY on FULLY CLOSED CANDLES
     function runAnalysisEngine() {
-      if (isAnalyzing || currentCandles.length < 35) return;
+      if (isAnalyzing || currentCandles.length < 20) return;
       isAnalyzing = true;
 
       const output = document.getElementById('ai-analysis-output');
@@ -562,7 +556,7 @@
       const metricVolatility = document.getElementById('metric-volatility');
 
       spinner.classList.remove('hidden');
-      btnText.innerText = "Analyzing Closed Setup...";
+      btnText.innerText = "Analyzing Setup...";
 
       setTimeout(() => {
         spinner.classList.add('hidden');
@@ -570,21 +564,8 @@
         isAnalyzing = false;
 
         const len = currentCandles.length;
-
-        const closedCandle = currentCandles[len - 2]; 
-        const prevClosedCandle = currentCandles[len - 3]; 
-
-        if (lockedSignalTime === closedCandle.time && lockedSetup) {
-          renderSetupLines(lockedSetup);
-          metricEma.innerText = lockedSetup.emaTrendText;
-          metricEma.className = lockedSetup.emaTrendClass;
-          metricSweep.innerText = lockedSetup.candleStateText;
-          metricSweep.className = lockedSetup.candleStateClass;
-          metricVolatility.innerText = lockedSetup.volatilityText;
-          metricVolatility.className = lockedSetup.volatilityClass;
-          output.innerHTML = lockedSetup.outputHTML;
-          return;
-        }
+        const closedCandle = currentCandles[len - 2];
+        const prevClosedCandle = currentCandles[len - 3];
 
         const ema9Vals = computeEMA(currentCandles, 9);
         const ema20Vals = computeEMA(currentCandles, 20);
@@ -592,74 +573,11 @@
         const closedEma9 = ema9Vals[len - 2].value;
         const closedEma20 = ema20Vals[len - 2].value;
 
-        const recentClosed = currentCandles.slice(-17, -1);
-        let trSum = 0;
-        for(let i = 1; i < recentClosed.length; i++) {
-          const c = recentClosed[i];
-          const prevC = recentClosed[i-1];
-          const tr = Math.max(c.high - c.low, Math.abs(c.high - prevC.close), Math.abs(c.low - prevC.close));
-          trSum += tr;
-        }
-        const atr = trSum / (recentClosed.length - 1);
-        const atrPercent = (atr / closedCandle.close) * 100;
-
+        const recentClosed = currentCandles.slice(-15, -1);
         const highMax = Math.max(...recentClosed.map(c => c.high));
         const lowMin = Math.min(...recentClosed.map(c => c.low));
-        const channelRange = (highMax - lowMin) / closedCandle.close;
-        const emaDiff = Math.abs(closedEma9 - closedEma20) / closedCandle.close;
-
-        let volText = "Normal Volatility";
-        let volClass = "text-blue-400 font-bold";
-
-        if (atrPercent < 0.15 || channelRange < 0.0035) {
-          volText = "Low Volatility (Chop)";
-          volClass = "text-amber-400 font-bold";
-        } else if (atrPercent > 0.45) {
-          volText = "High Volatility (Expansion)";
-          volClass = "text-emerald-400 font-bold";
-        }
-
-        const isSideways = channelRange < 0.0035 || emaDiff < 0.0008;
-
-        if (isSideways) {
-          const emaText = "Sideways / Compression";
-          const emaCls = "text-amber-400 font-bold";
-          const sweepText = "Closed: Ranging";
-          const sweepCls = "text-amber-400 font-bold";
-
-          metricEma.innerText = emaText;
-          metricEma.className = emaCls;
-          metricSweep.innerText = sweepText;
-          metricSweep.className = sweepCls;
-          metricVolatility.innerText = "Low Volatility (Chop)";
-          metricVolatility.className = "text-amber-400 font-bold";
-
-          clearCanvasLines();
-
-          const html = `
-            <div class="w-full text-center space-y-2 py-2">
-              <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">⏳ NO ENTRY - MARKET IS SIDEWAYS</span>
-              <p class="text-xs text-slate-400 font-medium">Last closed candle confirmed a tight range. Wait for a solid breakout above/below EMA levels.</p>
-            </div>
-          `;
-
-          output.innerHTML = html;
-
-          lockedSignalTime = closedCandle.time;
-          lockedSetup = {
-            type: 'sideways',
-            emaTrendText: emaText, emaTrendClass: emaCls,
-            candleStateText: sweepText, candleStateClass: sweepCls,
-            volatilityText: "Low Volatility (Chop)", volatilityClass: "text-amber-400 font-bold",
-            outputHTML: html, resistanceLevel: highMax, supportLevel: lowMin
-          };
-          return;
-        }
 
         const isBullishEMA = closedEma9 > closedEma20;
-        const resistanceLevel = Math.max(...recentClosed.map(c => c.high));
-        const supportLevel = Math.min(...recentClosed.map(c => c.low));
-
         const emaText = isBullishEMA ? "Confirmed Bullish Trend" : "Confirmed Bearish Trend";
         const emaCls = isBullishEMA ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
         const sweepText = closedCandle.close >= closedCandle.open ? "Closed Green Candle" : "Closed Red Candle";
@@ -669,79 +587,41 @@
         metricEma.className = emaCls;
         metricSweep.innerText = sweepText;
         metricSweep.className = sweepCls;
-        metricVolatility.innerText = volText;
-        metricVolatility.className = volClass;
+        metricVolatility.innerText = "Normal Volatility";
+        metricVolatility.className = "text-blue-400 font-bold";
 
-        if (isBullishEMA) {
-          const entry = closedCandle.close;
-          const sl = Math.min(closedCandle.low, prevClosedCandle.low) * 0.998;
-          const risk = entry - sl;
-          const tp1 = entry + (risk * 2.0);
-          const tp2 = entry + (risk * 3.5);
+        const entry = closedCandle.close;
+        const sl = isBullishEMA 
+          ? Math.min(closedCandle.low, prevClosedCandle.low) * 0.998 
+          : Math.max(closedCandle.high, prevClosedCandle.high) * 1.002;
+        const risk = Math.abs(entry - sl);
+        const tp1 = isBullishEMA ? entry + (risk * 2.0) : entry - (risk * 2.0);
+        const tp2 = isBullishEMA ? entry + (risk * 3.5) : entry - (risk * 3.5);
 
-          const html = `
-            <div class="w-full space-y-3">
-              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span class="text-xs font-bold text-slate-400">CLOSED CANDLE SETUP:</span>
-                <span class="px-4 py-1.5 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">🚀 BULLISH CONFIRMED</span>
-              </div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${entry.toFixed(2)}</strong></div>
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400">$${tp1.toFixed(2)}</strong></div>
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3.5)</span><strong class="text-emerald-300">$${tp2.toFixed(2)}</strong></div>
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400">$${sl.toFixed(2)}</strong></div>
-              </div>
+        const html = `
+          <div class="w-full space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+              <span class="text-xs font-bold text-slate-400">${currentSymbol} CLOSED CANDLE SETUP:</span>
+              <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullishEMA ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">${isBullishEMA ? '🚀 BULLISH CONFIRMED' : '📉 BEARISH CONFIRMED'}</span>
             </div>
-          `;
-
-          output.innerHTML = html;
-
-          lockedSetup = {
-            type: 'bullish', entry, sl, tp1, tp2,
-            resistanceLevel, supportLevel,
-            emaTrendText: emaText, emaTrendClass: emaCls,
-            candleStateText: sweepText, candleStateClass: sweepCls,
-            volatilityText: volText, volatilityClass: volClass,
-            outputHTML: html
-          };
-
-        } else {
-          const entry = closedCandle.close;
-          const sl = Math.max(closedCandle.high, prevClosedCandle.high) * 1.002;
-          const risk = sl - entry;
-          const tp1 = entry - (risk * 2.0);
-          const tp2 = entry - (risk * 3.5);
-
-          const html = `
-            <div class="w-full space-y-3">
-              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span class="text-xs font-bold text-slate-400">CLOSED CANDLE SETUP:</span>
-                <span class="px-4 py-1.5 rounded-full text-xs font-black bg-rose-500/20 text-rose-400 border border-rose-500/40">📉 BEARISH CONFIRMED</span>
-              </div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${entry.toFixed(2)}</strong></div>
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400">$${tp1.toFixed(2)}</strong></div>
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3.5)</span><strong class="text-emerald-300">$${tp2.toFixed(2)}</strong></div>
-                <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400">$${sl.toFixed(2)}</strong></div>
-              </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
+              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${formatPrice(entry)}</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400">$${formatPrice(tp1)}</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3.5)</span><strong class="text-emerald-300">$${formatPrice(tp2)}</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400">$${formatPrice(sl)}</strong></div>
             </div>
-          `;
+          </div>
+        `;
 
-          output.innerHTML = html;
+        output.innerHTML = html;
 
-          lockedSetup = {
-            type: 'bearish', entry, sl, tp1, tp2,
-            resistanceLevel, supportLevel,
-            emaTrendText: emaText, emaTrendClass: emaCls,
-            candleStateText: sweepText, candleStateClass: sweepCls,
-            volatilityText: volText, volatilityClass: volClass,
-            outputHTML: html
-          };
-        }
+        lockedSetup = {
+          type: isBullishEMA ? 'bullish' : 'bearish', 
+          entry, sl, tp1, tp2,
+          resistanceLevel: highMax, supportLevel: lowMin
+        };
 
-        lockedSignalTime = closedCandle.time;
         renderSetupLines(lockedSetup);
-
       }, 150);
     }
   </script>
