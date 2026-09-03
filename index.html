@@ -140,6 +140,10 @@
           <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-1 bg-blue-500 rounded"></span> 9 EMA</span>
           <span class="flex items-center gap-1 text-red-500"><span class="w-2.5 h-1 bg-red-600 rounded"></span> 20 EMA</span>
         </div>
+        <div id="chart-loading" class="hidden absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center">
+          <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-xs font-bold text-slate-300 mt-2">Fetching 60 Days History...</span>
+        </div>
         <div id="tv-dark-chart" class="w-full h-full"></div>
       </div>
 
@@ -433,7 +437,6 @@
             currentCandles[lastIdx] = candle;
           } else if (candle.time > currentCandles[lastIdx].time) {
             currentCandles.push(candle);
-            if (currentCandles.length > 150) currentCandles.shift();
           }
 
           candleSeries.update(candle);
@@ -443,21 +446,47 @@
       };
     }
 
+    // Minimum 60-Day Data Fetcher Loop
     async function loadBinanceOHLCData() {
       clearCanvasLines();
       lockedSignalTime = null;
       lockedSetup = null;
-      try {
-        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=${currentTimeframe}&limit=100`);
-        const raw = await res.json();
 
-        currentCandles = raw.map(d => ({
-          time: d[0] / 1000,
-          open: parseFloat(d[1]),
-          high: parseFloat(d[2]),
-          low: parseFloat(d[3]),
-          close: parseFloat(d[4])
-        }));
+      const loadingEl = document.getElementById('chart-loading');
+      if (loadingEl) loadingEl.classList.remove('hidden');
+
+      try {
+        const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
+        const targetStartTime = Date.now() - sixtyDaysMs;
+        let fetchedCandles = [];
+        let currentStart = targetStartTime;
+
+        // Loop Binance API to fetch historical candles until present time
+        while (currentStart < Date.now()) {
+          const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=${currentTimeframe}&startTime=${currentStart}&limit=1000`);
+          const raw = await res.json();
+
+          if (!raw || raw.length === 0) break;
+
+          const chunk = raw.map(d => ({
+            time: d[0] / 1000,
+            open: parseFloat(d[1]),
+            high: parseFloat(d[2]),
+            low: parseFloat(d[3]),
+            close: parseFloat(d[4])
+          }));
+
+          fetchedCandles = fetchedCandles.concat(chunk);
+          const lastFetchedTime = raw[raw.length - 1][0];
+
+          if (lastFetchedTime <= currentStart) break;
+          currentStart = lastFetchedTime + 1;
+        }
+
+        // Remove duplicate candles if any
+        const uniqueCandlesMap = new Map();
+        fetchedCandles.forEach(c => uniqueCandlesMap.set(c.time, c));
+        currentCandles = Array.from(uniqueCandlesMap.values()).sort((a, b) => a.time - b.time);
 
         candleSeries.setData(currentCandles);
         ema9Series.setData(computeEMA(currentCandles, 9));
@@ -467,6 +496,8 @@
         connectLiveWebSocket();
       } catch (err) {
         console.error("Binance Fetch Error", err);
+      } finally {
+        if (loadingEl) loadingEl.classList.add('hidden');
       }
     }
 
@@ -540,11 +571,9 @@
 
         const len = currentCandles.length;
 
-        // CRITICAL FIX: Always target the LAST FULLY CLOSED CANDLE (index len-2)
         const closedCandle = currentCandles[len - 2]; 
         const prevClosedCandle = currentCandles[len - 3]; 
 
-        // Lock verification: If we already scanned this closed candle, re-display locked levels!
         if (lockedSignalTime === closedCandle.time && lockedSetup) {
           renderSetupLines(lockedSetup);
           metricEma.innerText = lockedSetup.emaTrendText;
@@ -563,7 +592,6 @@
         const closedEma9 = ema9Vals[len - 2].value;
         const closedEma20 = ema20Vals[len - 2].value;
 
-        // Calculate Average True Range (ATR) / Volatility on closed structure
         const recentClosed = currentCandles.slice(-17, -1);
         let trSum = 0;
         for(let i = 1; i < recentClosed.length; i++) {
@@ -575,7 +603,6 @@
         const atr = trSum / (recentClosed.length - 1);
         const atrPercent = (atr / closedCandle.close) * 100;
 
-        // Range channel
         const highMax = Math.max(...recentClosed.map(c => c.high));
         const lowMin = Math.min(...recentClosed.map(c => c.low));
         const channelRange = (highMax - lowMin) / closedCandle.close;
@@ -618,7 +645,6 @@
 
           output.innerHTML = html;
 
-          // Lock setup state
           lockedSignalTime = closedCandle.time;
           lockedSetup = {
             type: 'sideways',
