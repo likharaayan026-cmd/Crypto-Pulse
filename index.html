@@ -433,7 +433,7 @@
 
       sendTelegramNotification(`<b>✈️ TELEGRAM CONNECTED</b>\n\n<b>Handle:</b> @${handle}\n<b>Time:</b> ${getISTFormattedDateTime()}`);
 
-      window.location.href = `https://t.me/${TARGET_TELEGRAM_BOT}`;
+      window.open(`https://t.me/${TARGET_TELEGRAM_BOT}`, '_blank');
     }
 
     function hideSplashScreen() {
