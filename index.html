@@ -505,6 +505,7 @@
 
       setupDeveloperTapEvents();
       setupExact2SecLongPress();
+      startBackgroundGlobalAlertChecker();
     });
 
     function toggleAuthMode() {
@@ -743,6 +744,42 @@
       }
     }
 
+    async function startBackgroundGlobalAlertChecker() {
+      setInterval(async () => {
+        loadUserAlerts();
+        if (userAlertsData.length === 0) return;
+
+        const uniqueSymbols = [...new Set(userAlertsData.map(a => a.symbol))];
+        for (const sym of uniqueSymbols) {
+          try {
+            const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${sym}`);
+            const data = await res.json();
+            const livePrice = parseFloat(data.price);
+            if (!isNaN(livePrice)) {
+              let changed = false;
+              for (let i = userAlertsData.length - 1; i >= 0; i--) {
+                const a = userAlertsData[i];
+                if (a.symbol === sym && !a.triggered) {
+                  if (Math.abs(livePrice - a.price) / a.price < 0.0008) {
+                    a.triggered = true;
+                    await sendTelegramNotification(`<b>🚨 PRICE ALERT TRIGGERED!</b>\n\n<b>Asset:</b> ${sym}\n<b>Live Price:</b> $${formatPrice(livePrice)}\n<b>Target Price:</b> $${formatPrice(a.price)}`);
+                    userAlertsData.splice(i, 1);
+                    changed = true;
+                  }
+                }
+              }
+              if (changed) {
+                saveAlertsToStorage();
+                renderUserAlertLines();
+              }
+            }
+          } catch (e) {
+            console.error("Background ticker check failed for", sym, e);
+          }
+        }
+      }, 10000);
+    }
+
     function setupDeveloperTapEvents() {
       let rTaps = 0, rTimer = null;
       document.getElementById('dev-rahul').addEventListener('click', () => {
@@ -857,7 +894,6 @@
       };
     }
 
-    // Naya coin ya timeframe change hone par analysis reset karne ka function
     function resetAnalysisState() {
       clearExistingChartLines();
       document.getElementById('metric-ema').innerText = '--';
@@ -875,7 +911,7 @@
     }
 
     async function loadAssetData() {
-      resetAnalysisState(); // Yahan analysis aur chart lines ko reset kiya ja raha hai
+      resetAnalysisState();
       
       const loadingEl = document.getElementById('chart-loading');
       if (loadingEl) loadingEl.classList.remove('hidden');
@@ -908,7 +944,7 @@
     }
 
     function changeTimeframe(tf) {
-      if (currentTimeframe === tf) return; // Agar same timeframe hai toh dobara load na ho
+      if (currentTimeframe === tf) return;
       currentTimeframe = tf;
       ['5m', '15m', '1h', '4h'].forEach(t => {
         const btn = document.getElementById(`tf-${t}`);
@@ -918,7 +954,7 @@
     }
 
     function changeAsset(symbol, name) {
-      if (currentSymbol === symbol) return; // Agar same coin hai toh dobara load na ho
+      if (currentSymbol === symbol) return;
       currentSymbol = symbol;
       currentAssetName = name;
 
