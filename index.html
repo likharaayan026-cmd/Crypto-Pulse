@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Crypto Pulse Terminal</title>
+  <title>Pulse Alpha</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   
@@ -48,7 +48,7 @@
         C
       </div>
     </div>
-    <h1 class="mt-6 text-2xl font-black tracking-wider text-white">Crypto<span class="text-indigo-500"> Pulse</span></h1>
+    <h1 class="mt-6 text-2xl font-black tracking-wider text-white">Pulse<span class="text-indigo-500"> Alpha</span></h1>
     <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase animate-pulse">Authenticating Session...</p>
   </div>
 
@@ -127,7 +127,7 @@
       <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-500/20">C</div>
-          <span class="text-xl font-black text-white tracking-tight">Crypto<span class="text-indigo-500"> Pulse</span></span>
+          <span class="text-xl font-black text-white tracking-tight">Pulse<span class="text-indigo-500"> Alpha</span></span>
         </div>
         
         <button onclick="handleLogout()" class="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-3.5 py-1.5 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
@@ -146,6 +146,7 @@
           <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">ETH/USDT</button>
           <button onclick="changeAsset('SOLUSDT', 'Solana')" id="btn-SOLUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">SOL/USDT</button>
           <button onclick="changeAsset('XRPUSDT', 'XRP')" id="btn-XRPUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">XRP/USDT</button>
+          <button onclick="changeAsset('TAOUSDT', 'Bittensor')" id="btn-TAOUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">TAO/USDT</button>
         </div>
 
         <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
@@ -153,7 +154,6 @@
           <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition">15m</button>
           <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">1h</button>
           <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">4h</button>
-          <button onclick="changeTimeframe('1d')" id="tf-1d" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">1d</button>
         </div>
 
         <button id="run-ai-btn" onclick="runAnalysisEngine()" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-md transition flex items-center gap-2">
@@ -260,7 +260,7 @@
     let currentCandles = [];
     let userRefListener = null;
 
-    const allSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT'];
+    const allSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'TAOUSDT'];
 
     function hideSplashScreen() {
       const splash = document.getElementById('splash-screen');
@@ -452,13 +452,30 @@
       return price < 10 ? price.toFixed(4) : price.toFixed(2);
     }
 
+    function resetAnalysisUI() {
+      clearCanvasLines();
+      document.getElementById('metric-ema').innerText = "--";
+      document.getElementById('metric-ema').className = "text-slate-300";
+      document.getElementById('metric-sweep').innerText = "--";
+      document.getElementById('metric-sweep').className = "text-slate-300";
+      document.getElementById('metric-volatility').innerText = "--";
+      document.getElementById('metric-volatility').className = "text-slate-300";
+
+      document.getElementById('ai-analysis-output').innerHTML = `
+        <div class="text-center">
+          <h4 class="font-bold text-slate-300 text-xs">Engine Ready</h4>
+          <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to compute real-time signal and plot levels based on closed candle.</p>
+        </div>
+      `;
+    }
+
     function buildDarkCanvasChart() {
       const container = document.getElementById('tv-dark-chart');
       container.innerHTML = '';
       if (darkChart) darkChart.remove();
 
-      const precision = currentSymbol === 'XRPUSDT' ? 4 : 2;
-      const minMove = currentSymbol === 'XRPUSDT' ? 0.0001 : 0.01;
+      const precision = (currentSymbol === 'XRPUSDT') ? 4 : 2;
+      const minMove = (currentSymbol === 'XRPUSDT') ? 0.0001 : 0.01;
 
       darkChart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
@@ -500,11 +517,22 @@
     }
 
     function connectLiveWebSocket() {
-      if (ws) ws.close();
-      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${currentSymbol.toLowerCase()}@kline_${currentTimeframe}`);
+      if (ws) {
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+        ws.close();
+      }
+
+      // Symbol string is formatted to lower-case for Binance WS streams
+      const wsSymbol = currentSymbol.toLowerCase();
+      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${currentTimeframe}`);
 
       ws.onmessage = (event) => {
         const message = JSON.parse(event.data);
+        if (!message || !message.k) return;
+        
         const kline = message.k;
         const candle = {
           time: kline.t / 1000,
@@ -601,7 +629,8 @@
 
     function changeTimeframe(tf) {
       currentTimeframe = tf;
-      ['5m', '15m', '1h', '4h', '1d'].forEach(t => {
+      resetAnalysisUI();
+      ['5m', '15m', '1h', '4h'].forEach(t => {
         const btn = document.getElementById(`tf-${t}`);
         if (btn) {
           btn.className = t === tf 
@@ -616,6 +645,8 @@
       currentSymbol = symbol;
       currentAssetName = name;
 
+      resetAnalysisUI();
+
       allSymbols.forEach(s => {
         const btn = document.getElementById(`btn-${s}`);
         if (btn) {
@@ -629,7 +660,29 @@
       loadAssetData();
     }
 
-    function runAnalysisEngine() {
+    async function fetchGeminiAiAnalysis(promptText) {
+      const apiKey = "AQ.Ab8RN6JlscpiNZxFYALMW4sZrMkvr7i5wmUoQ5X8KRkByWb-2A";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }]
+          })
+        });
+        const data = await response.json();
+        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+          return data.candidates[0].content.parts[0].text;
+        }
+      } catch (e) {
+        console.error("Gemini API Error:", e);
+      }
+      return null;
+    }
+
+    async function runAnalysisEngine() {
       if (isAnalyzing || currentCandles.length < 20) return;
       isAnalyzing = true;
 
@@ -640,104 +693,116 @@
       spinner.classList.remove('hidden');
       btnText.innerText = "Analyzing Setup...";
 
-      setTimeout(() => {
-        spinner.classList.add('hidden');
-        btnText.innerText = "Scan Market Setup";
-        isAnalyzing = false;
+      const len = currentCandles.length;
+      const closedCandle = currentCandles[len - 2];
+      const prevClosedCandle = currentCandles[len - 3];
 
-        const len = currentCandles.length;
-        const closedCandle = currentCandles[len - 2];
-        const prevClosedCandle = currentCandles[len - 3];
+      const ema9Vals = computeEMA(currentCandles, 9);
+      const ema20Vals = computeEMA(currentCandles, 20);
 
-        const ema9Vals = computeEMA(currentCandles, 9);
-        const ema20Vals = computeEMA(currentCandles, 20);
+      const closedEma9 = ema9Vals[len - 2].value;
+      const closedEma20 = ema20Vals[len - 2].value;
 
-        const closedEma9 = ema9Vals[len - 2].value;
-        const closedEma20 = ema20Vals[len - 2].value;
+      const recentClosed = currentCandles.slice(-15, -1);
+      const highMax = Math.max(...recentClosed.map(c => c.high));
+      const lowMin = Math.min(...recentClosed.map(c => c.low));
 
-        const recentClosed = currentCandles.slice(-15, -1);
-        const highMax = Math.max(...recentClosed.map(c => c.high));
-        const lowMin = Math.min(...recentClosed.map(c => c.low));
+      // Gemini AI Prompt Construction
+      const prompt = `Analyze this live crypto market data briefly (max 2 lines):
+Asset: ${currentSymbol}
+Timeframe: ${currentTimeframe}
+Close Price: $${closedCandle.close}
+9 EMA: $${closedEma9.toFixed(2)}
+20 EMA: $${closedEma20.toFixed(2)}
+Support: $${lowMin.toFixed(2)}
+Resistance: $${highMax.toFixed(2)}
+Provide a short professional summary for traders.`;
 
-        // --- SIDEWAYS MARKET DETECTION LOGIC ---
-        const emaDiffRatio = Math.abs(closedEma9 - closedEma20) / closedEma20;
-        const rangePercent = ((highMax - lowMin) / lowMin) * 100;
+      const aiResponse = await fetchGeminiAiAnalysis(prompt);
 
-        const isSideways = emaDiffRatio < 0.0015 || rangePercent < 0.5;
+      spinner.classList.add('hidden');
+      btnText.innerText = "Scan Market Setup";
+      isAnalyzing = false;
 
-        if (isSideways) {
-          document.getElementById('metric-ema').innerText = "Flat / Neutral Trend";
-          document.getElementById('metric-ema').className = "text-amber-400 font-bold";
+      // --- SIDEWAYS MARKET DETECTION LOGIC ---
+      const emaDiffRatio = Math.abs(closedEma9 - closedEma20) / closedEma20;
+      const rangePercent = ((highMax - lowMin) / lowMin) * 100;
 
-          document.getElementById('metric-sweep').innerText = "Range Bound Market";
-          document.getElementById('metric-sweep').className = "text-amber-400 font-bold";
+      const isSideways = emaDiffRatio < 0.0015 || rangePercent < 0.5;
 
-          document.getElementById('metric-volatility').innerText = "Low Volatility (Consolidation)";
-          document.getElementById('metric-volatility').className = "text-amber-400 font-bold";
+      if (isSideways) {
+        document.getElementById('metric-ema').innerText = "Flat / Neutral Trend";
+        document.getElementById('metric-ema').className = "text-amber-400 font-bold";
 
-          output.innerHTML = `
-            <div class="w-full space-y-3">
-              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span class="text-xs font-bold text-slate-400">${currentSymbol} MARKET STATUS:</span>
-                <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">⏳ SIDEWAYS - WAIT FOR BREAKOUT</span>
-              </div>
-              <div class="p-3 bg-slate-900 border border-amber-500/20 rounded-xl text-center space-y-1">
-                <p class="text-xs font-bold text-amber-400">Market is currently in Consolidation Phase.</p>
-                <p class="text-[11px] text-slate-400">No trade entry recommended right now. Only Support and Resistance levels are marked on the chart.</p>
-              </div>
-            </div>
-          `;
+        document.getElementById('metric-sweep').innerText = "Range Bound Market";
+        document.getElementById('metric-sweep').className = "text-amber-400 font-bold";
 
-          renderSetupLines({
-            type: 'sideways',
-            resistanceLevel: highMax,
-            supportLevel: lowMin
-          });
-
-          return;
-        }
-
-        // --- TRENDING MARKET LOGIC ---
-        const isBullishEMA = closedEma9 > closedEma20;
-
-        document.getElementById('metric-ema').innerText = isBullishEMA ? "Confirmed Bullish Trend" : "Confirmed Bearish Trend";
-        document.getElementById('metric-ema').className = isBullishEMA ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-
-        document.getElementById('metric-sweep').innerText = closedCandle.close >= closedCandle.open ? "Closed Green Candle" : "Closed Red Candle";
-        document.getElementById('metric-sweep').className = closedCandle.close >= closedCandle.open ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-
-        document.getElementById('metric-volatility').innerText = "Normal Volatility";
-        document.getElementById('metric-volatility').className = "text-blue-400 font-bold";
-
-        const entry = closedCandle.close;
-        const sl = isBullishEMA 
-          ? Math.min(closedCandle.low, prevClosedCandle.low) * 0.998 
-          : Math.max(closedCandle.high, prevClosedCandle.high) * 1.002;
-        const risk = Math.abs(entry - sl);
-        const tp1 = isBullishEMA ? entry + (risk * 2.0) : entry - (risk * 2.0);
-        const tp2 = isBullishEMA ? entry + (risk * 3.5) : entry - (risk * 3.5);
+        document.getElementById('metric-volatility').innerText = "Low Volatility (Consolidation)";
+        document.getElementById('metric-volatility').className = "text-amber-400 font-bold";
 
         output.innerHTML = `
           <div class="w-full space-y-3">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-              <span class="text-xs font-bold text-slate-400">${currentSymbol} CLOSED CANDLE SETUP:</span>
-              <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullishEMA ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">${isBullishEMA ? '🚀 BULLISH CONFIRMED' : '📉 BEARISH CONFIRMED'}</span>
+              <span class="text-xs font-bold text-slate-400">${currentSymbol} MARKET STATUS:</span>
+              <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">⏳ SIDEWAYS - WAIT FOR BREAKOUT</span>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${formatPrice(entry)}</strong></div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400">$${formatPrice(tp1)}</strong></div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3.5)</span><strong class="text-emerald-300">$${formatPrice(tp2)}</strong></div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400">$${formatPrice(sl)}</strong></div>
+            <div class="p-3 bg-slate-900 border border-amber-500/20 rounded-xl text-center space-y-1">
+              <p class="text-xs font-bold text-amber-400">Market is currently in Consolidation Phase.</p>
+              ${aiResponse ? `<p class="text-[11px] text-indigo-300 italic">🤖 Pulse Alpha Ai: ${aiResponse}</p>` : `<p class="text-[11px] text-slate-400">No trade entry recommended right now. Only Support and Resistance levels are marked on the chart.</p>`}
             </div>
           </div>
         `;
 
         renderSetupLines({
-          type: isBullishEMA ? 'bullish' : 'bearish', 
-          entry, sl, tp1, tp2,
-          resistanceLevel: highMax, supportLevel: lowMin
+          type: 'sideways',
+          resistanceLevel: highMax,
+          supportLevel: lowMin
         });
-      }, 150);
+
+        return;
+      }
+
+      // --- TRENDING MARKET LOGIC ---
+      const isBullishEMA = closedEma9 > closedEma20;
+
+      document.getElementById('metric-ema').innerText = isBullishEMA ? "Confirmed Bullish Trend" : "Confirmed Bearish Trend";
+      document.getElementById('metric-ema').className = isBullishEMA ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+
+      document.getElementById('metric-sweep').innerText = closedCandle.close >= closedCandle.open ? "Closed Green Candle" : "Closed Red Candle";
+      document.getElementById('metric-sweep').className = closedCandle.close >= closedCandle.open ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+
+      document.getElementById('metric-volatility').innerText = "Normal Volatility";
+      document.getElementById('metric-volatility').className = "text-blue-400 font-bold";
+
+      const entry = closedCandle.close;
+      const sl = isBullishEMA 
+        ? Math.min(closedCandle.low, prevClosedCandle.low) * 0.998 
+        : Math.max(closedCandle.high, prevClosedCandle.high) * 1.002;
+      const risk = Math.abs(entry - sl);
+      const tp1 = isBullishEMA ? entry + (risk * 2.0) : entry - (risk * 2.0);
+      const tp2 = isBullishEMA ? entry + (risk * 3.5) : entry - (risk * 3.5);
+
+      output.innerHTML = `
+        <div class="w-full space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-xs font-bold text-slate-400">${currentSymbol} CLOSED CANDLE SETUP:</span>
+            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullishEMA ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">${isBullishEMA ? '🚀 BULLISH CONFIRMED' : '📉 BEARISH CONFIRMED'}</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400">$${formatPrice(entry)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400">$${formatPrice(tp1)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3.5)</span><strong class="text-emerald-300">$${formatPrice(tp2)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400">$${formatPrice(sl)}</strong></div>
+          </div>
+          ${aiResponse ? `<div class="p-2.5 bg-slate-900 rounded-lg border border-indigo-500/30 text-center"><p class="text-[11px] text-indigo-300 italic">🤖 Gemini AI Insight: ${aiResponse}</p></div>` : ''}
+        </div>
+      `;
+
+      renderSetupLines({
+        type: isBullishEMA ? 'bullish' : 'bearish', 
+        entry, sl, tp1, tp2,
+        resistanceLevel: highMax, supportLevel: lowMin
+      });
     }
   </script>
 </body>
