@@ -1,372 +1,910 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mindora</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root { --primary: #6366f1; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --border: #e2e8f0; }
-        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --border: #334155; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; transition: 0.2s; }
-        body { background: var(--bg); color: var(--text); min-height: 100vh; width: 100vw; overflow: hidden; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pulse Alpha · 9/20 EMA Pullback Strategy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 
-        .theme-btn { position: fixed; top: 33px; right: 30px; z-index: 2000; font-size: 1.3rem; color: var(--primary); cursor: pointer; }
-        
-        /* Mobile Responsive View & Smooth Scrolling Fix */
-        .screen { 
-            display: none; 
-            padding: 15px 15px 20px 15px; 
-            height: calc(100vh - 75px); 
-            flex-direction: column; 
-            width: 100vw; 
-            animation: fadeIn 0.3s; 
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch;
-        }
-        .active { display: flex !important; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
-        /* Thinking Animation */
-        .thinking { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 0.85rem; padding: 10px; margin-bottom: 5px; }
-        .dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: bounce 1.4s infinite; }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
-
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .btn { background: var(--primary); border: none; padding: 16px; border-radius: 16px; color: white; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        
-        #chat-box { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 5px; margin-bottom: 10px; }
-        .msg { padding: 12px 18px; border-radius: 18px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; }
-        .user-msg { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .ai-msg { background: var(--border); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; white-space: pre-wrap; }
-
-        /* Bottom Nav Solid Background */
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { color: #94a3b8; font-size: 1.2rem; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-        .nav-item.active { color: var(--primary); }
-        .nav-item span { font-size: 0.7rem; margin-top: 4px; }
-
-        .history-item { border-left: 4px solid var(--primary); padding: 12px; margin-bottom: 10px; background: var(--card); border-radius: 12px; cursor: pointer; font-size: 0.9rem; }
-        input { width: 100%; padding: 15px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text); outline: none; }
-        .hidden { display: none !important; }
-        
-        /* Spacing for UPI payment container */
-        .upi-btn-container {
-            margin-top: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-        }
-    </style>
+  <style>
+    html, body {
+      touch-action: pan-y;
+      user-select: none;
+      overflow-x: hidden;
+      background-color: #030712;
+      height: 100%;
+    }
+    .fade-out {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease-out;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .tv-lightweight-charts-legend {
+      display: none !important;
+    }
+    #chart-wrapper {
+      touch-action: none;
+    }
+    @keyframes radar-scan {
+      0% { transform: translateY(-100%); opacity: 0.3; }
+      50% { opacity: 0.8; }
+      100% { transform: translateY(100%); opacity: 0.3; }
+    }
+    .animate-radar {
+      animation: radar-scan 1.5s infinite ease-in-out;
+    }
+    .price-value {
+      word-break: break-all;
+      white-space: normal;
+    }
+  </style>
 </head>
-<body data-theme="light">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-    <div class="theme-btn" onclick="toggleTheme()"><i class="fas fa-moon" id="t-icon"></i></div>
-
-    <div id="auth" class="screen" style="justify-content: center; height: 100vh;">
-        <h1 style="text-align: center; font-size: 2.5rem; margin-bottom: 10px;">Mindora Ai</h1>
-        <div class="card">
-            <div id="signup-fields"><input type="text" id="reg-name" placeholder="Full Name" style="margin-bottom:12px"></div>
-            <input type="email" id="auth-email" placeholder="Email" style="margin-bottom:12px">
-            <input type="password" id="auth-pass" placeholder="Password" style="margin-bottom:15px">
-            <button class="btn" onclick="handleAuth()">Continue</button>
-            <p onclick="toggleAuth()" style="text-align: center; margin-top: 15px; color: var(--primary); cursor: pointer; font-size: 0.9rem;">Switch Login/Signup</p>
-        </div>
-        <p style="text-align: center; font-size: 0.7rem; color: #94a3b8; margin-top: 20px;">Developer: Aayan Likhar (Aayan Industries)</p>
+  <!-- Splash Screen -->
+  <div id="splash-screen" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
+    <div class="relative flex items-center justify-center">
+      <div class="w-20 h-20 bg-indigo-600 rounded-3xl animate-ping opacity-25 absolute"></div>
+      <div class="w-20 h-20 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-3xl flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-indigo-500/50 animate-bounce">
+        C
+      </div>
     </div>
-    <div id="home" class="screen">
-        <header style="margin-bottom: 20px; margin-top: 10px;">
-            <p style="color: #64748b;">Welcome back,</p>
-            <h2 id="u-display-name">Learner</h2>
-        </header>
-        <div class="card" style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none;">
-            <h3 id="plan-status">Free Plan Solves:</h3>
-            <p style="font-size: 1.2rem; margin: 10px 0;"><span id="daily-count">0</span>/10</p>
-            <button class="btn" id="upgrade-btn" style="background: white; color: var(--primary); padding: 10px;" onclick="changeScreen('pro')">Upgrade Now</button>
+    <h1 class="mt-6 text-2xl font-black tracking-wider text-white">Pulse<span class="text-indigo-500"> Alpha</span></h1>
+    <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase animate-pulse">Authenticating Session...</p>
+  </div>
+
+  <!-- 1. AUTH CONTAINER -->
+  <div id="auth-container" class="hidden fixed inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 transform transition-all duration-300">
+      <div class="text-center space-y-1">
+        <h2 id="auth-title" class="text-2xl font-black text-white tracking-tight">Welcome Back</h2>
+        <p id="auth-subtitle" class="text-xs text-slate-400">Log in to access live market analytics</p>
+      </div>
+
+      <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+        <div id="field-name" class="hidden space-y-1">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+          <input type="text" id="input-name" placeholder="John Doe" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <label class="card" style="text-align: center; cursor: pointer; margin-bottom: 0;">
-                <input type="file" accept="image/*" capture="camera" class="hidden" onchange="handleFile(this)">
-                <i class="fas fa-camera" style="font-size: 1.8rem; color: var(--primary);"></i>
-                <p style="margin-top: 10px; font-weight: 600;">Scan / Gallery</p>
-            </label>
-            <div class="card" onclick="changeScreen('chat')" style="text-align: center; cursor: pointer; margin-bottom: 0;">
-                <i class="fas fa-robot" style="font-size: 1.8rem; color: var(--primary);"></i>
-                <p style="margin-top: 10px; font-weight: 600;">AI Tutor</p>
-            </div>
+
+        <div id="field-mobile" class="hidden space-y-1">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mobile Number</label>
+          <input type="tel" id="input-mobile" placeholder="10-digit mobile number" maxlength="10" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
         </div>
-        <h3 style="margin: 20px 0 10px 0;">Solve History</h3>
-        <div id="history-box"></div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+          <input type="email" id="input-email" required placeholder="trader@cryptopulse.com" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
+          <input type="password" id="input-password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <p id="auth-error" class="text-[11px] text-rose-400 text-center font-bold hidden"></p>
+
+        <button type="submit" id="auth-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition">
+          Log In
+        </button>
+      </form>
+
+      <div class="text-center pt-2 border-t border-slate-800/80">
+        <p class="text-xs text-slate-400">
+          <span id="auth-toggle-text">Don't have an account?</span>
+          <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-indigo-400 font-bold ml-1 hover:underline">Sign Up</button>
+        </p>
+      </div>
     </div>
+  </div>
 
-    <div id="chat" class="screen">
-        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; margin-top: 10px;">
-            <i class="fas fa-arrow-left" onclick="changeScreen('home')" style="cursor: pointer; font-size: 1.2rem;"></i>
-            <h2>Mindora AI</h2>
-        </div>
-        <div id="chat-box"></div>
-        <div id="thinking" class="thinking hidden">
-            <span>Mindora is thinking</span>
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        </div>
-        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
-            <input type="text" id="chat-input" placeholder="Ask anything...">
-            <button class="btn" style="width: 60px; padding: 0;" onclick="askAI('text')"><i class="fas fa-paper-plane"></i></button>
-        </div>
+  <!-- 2. PENDING APPROVAL CONTAINER -->
+  <div id="pending-container" class="hidden fixed inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl text-center space-y-5 border border-amber-500/20">
+      <div class="w-20 h-20 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full flex items-center justify-center mx-auto text-3xl font-bold animate-pulse">
+        ⏳
+      </div>
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-white tracking-tight">Approval Pending</h2>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Your account request has been submitted to the administrator. Once approved, access will be granted automatically.
+        </p>
+      </div>
     </div>
+  </div>
 
-    <div id="pro" class="screen">
-        <div style="margin-top: 10px; margin-bottom: 15px;">
-            <i class="fas fa-arrow-left" onclick="changeScreen('home')" style="cursor: pointer; font-size: 1.2rem;"></i>
+  <!-- 3. MAIN TERMINAL DASHBOARD -->
+  <div id="app-container" class="hidden flex-col min-h-screen">
+
+    <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-500/20">C</div>
+          <span class="text-xl font-black text-white tracking-tight">Pulse<span class="text-indigo-500"> Alpha</span></span>
         </div>
-        <div class="card" style="border: 2px solid #fbbf24;">
-            <h3 style="text-align: center;"><i class="fas fa-crown" style="color:#fbbf24"></i> Pro Benefits</h3>
-            <div style="margin: 20px 0; font-size: 0.9rem;">
-                <p style="margin-bottom: 10px;"><i class="fas fa-check-circle" style="color:green"></i> Unlimited AI Solves (28 Days)</p>
-                <p style="margin-bottom: 10px;"><i class="fas fa-check-circle" style="color:green"></i> Detailed Step-by-Step Solutions</p>
-                <p style="margin-bottom: 10px;"><i class="fas fa-check-circle" style="color:green"></i> Fast Priority AI (No Busy Error)</p>
-                <p style="margin-bottom: 10px;"><i class="fas fa-check-circle" style="color:green"></i> Gallery Solver Upload</p>
-                <p><i class="fas fa-check-circle" style="color:green"></i> Ad-free Premium Experience</p>
-            </div>
-            
-            <div class="upi-btn-container">
-                <button class="btn" onclick="payWithRazorpay()">
-                    <i class="fas fa-mobile-alt"></i> Pay ₹91 Now
-                </button>
-                <p style="font-size: 0.75rem; color: #94a3b8; text-align: center;">Secure payment via Razorpay (UPI, Wallet, Cards)</p>
-            </div>
+
+        <button onclick="handleLogout()" class="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-3.5 py-1.5 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
+          <span>Logout</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full p-3 sm:p-4 space-y-3">
+
+      <!-- Controls -->
+      <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex flex-wrap justify-between items-center gap-2">
+        <div class="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
+          <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap">ETH/USDT</button>
+          <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">BTC/USDT</button>
+          <button onclick="changeAsset('SOLUSDT', 'Solana')" id="btn-SOLUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">SOL/USDT</button>
+          <button onclick="changeAsset('XRPUSDT', 'XRP')" id="btn-XRPUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">XRP/USDT</button>
+          <button onclick="changeAsset('TAOUSDT', 'Bittensor')" id="btn-TAOUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">TAO/USDT</button>
+          <button onclick="changeAsset('AAVEUSDT', 'Aave')" id="btn-AAVEUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">AAVE/USDT</button>
+          <button onclick="changeAsset('AVAXUSDT', 'Avalanche')" id="btn-AVAXUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">AVAX/USDT</button>
+          <button onclick="changeAsset('ZECUSDT', 'Zcash')" id="btn-ZECUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">ZEC/USDT</button>
+          <button onclick="changeAsset('PAXGUSDT', 'PAX Gold')" id="btn-PAXGUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">PAXG/USDT</button>
         </div>
-    </div>
 
-    <div id="nav" class="nav-bar hidden">
-        <div class="nav-item active" id="nav-home" onclick="changeScreen('home')"><i class="fas fa-home"></i><span>Home</span></div>
-        <label class="nav-item">
-            <input type="file" accept="image/*" capture="camera" class="hidden" onchange="handleFile(this)">
-            <i class="fas fa-expand"></i><span>Scan</span>
-        </label>
-        <div class="nav-item" id="nav-pro" onclick="changeScreen('pro')"><i class="fas fa-gem"></i><span>Pro</span></div>
-        <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></div>
-    </div>
+        <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
+          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">5m</button>
+          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition">15m</button>
+          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">1h</button>
+          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">4h</button>
+        </div>
 
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        <button id="run-ai-btn" onclick="runAnalysisEngine()" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-md transition flex items-center gap-2">
+          <span id="btn-spinner" class="hidden animate-spin">⚡</span>
+          <span id="btn-text">Scan Market Setup</span>
+        </button>
+      </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+      <!-- Chart Container -->
+      <div id="chart-wrapper" class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[380px] relative overflow-hidden">
+        <div class="absolute top-3 left-3 z-20 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-md border border-slate-800 text-[11px] font-bold flex items-center gap-3 pointer-events-none">
+          <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-1 bg-blue-500 rounded"></span> 9 EMA</span>
+          <span class="flex items-center gap-1 text-red-500"><span class="w-2.5 h-1 bg-red-600 rounded"></span> 20 EMA</span>
+          <span id="live-indicator" class="text-[10px] text-emerald-400 font-extrabold ml-2">● LIVE FEED</span>
+        </div>
+        <div id="chart-loading" class="hidden absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center">
+          <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-xs font-bold text-slate-300 mt-2">Loading 2-month chart...</span>
+        </div>
+        <div id="tv-dark-chart" class="w-full h-full"></div>
+      </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBt3iYcR4SijEJqtrBlH8mNr292vakgJFQ",
-            authDomain: "figo-movies.firebaseapp.com",
-            databaseURL: "https://figo-movies-default-rtdb.firebaseio.com",
-            projectId: "figo-movies",
-            storageBucket: "figo-movies.firebasestorage.app",
-            messagingSenderId: "425238806262"
+      <!-- Analysis Metrics -->
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-500 block font-bold">9/20 EMA TREND</span>
+            <strong id="metric-ema" class="text-slate-300">--</strong>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-500 block font-bold">LIQUIDITY SWEEP</span>
+            <strong id="metric-sweep" class="text-slate-300">--</strong>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-500 block font-bold">MARKET BIAS</span>
+            <strong id="metric-volatility" class="text-slate-300">--</strong>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-500 block font-bold">VOLUME</span>
+            <strong id="metric-volume" class="text-slate-300">--</strong>
+          </div>
+        </div>
+
+        <div id="ai-analysis-output" class="bg-slate-950 p-4 rounded-xl border border-slate-800 min-h-[110px] flex items-center justify-center relative overflow-hidden">
+          <div class="text-center">
+            <h4 class="font-bold text-slate-300 text-xs">Engine Ready</h4>
+            <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> for 9/20 EMA pullback + rejection + confirmation entries.</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer Hyperlink -->
+    <footer class="bg-slate-900 border-t border-slate-800/80 py-3 mt-auto">
+      <div class="max-w-7xl mx-auto px-4 text-center">
+        <p class="text-[11px] text-slate-500 font-medium">
+          <a href="https://pulse-alpha-privacy-policy.vercel.app" target="_blank" rel="noopener noreferrer" class="text-indigo-400 font-bold hover:underline select-none">
+            Terms and Conditions & Disclaimer
+          </a>
+        </p>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBt3iYcR4SijEJqtrBlH8mNr292vakgJFQ",
+      authDomain: "figo-movies.firebaseapp.com",
+      databaseURL: "https://figo-movies-default-rtdb.firebaseio.com",
+      projectId: "figo-movies",
+      storageBucket: "figo-movies.firebasestorage.app",
+      messagingSenderId: "425238806262",
+      appId: "1:425238806262:web:7d23814e4b550695bb76d7"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentSymbol = 'ETHUSDT';
+    let currentAssetName = 'Ethereum';
+    let currentTimeframe = '15m';
+    let isAnalyzing = false;
+    let darkChart = null;
+    let candleSeries = null;
+    let ema9Series = null;
+    let ema20Series = null;
+    let chartLines = [];
+    let ws = null;
+    let currentCandles = [];
+    let currentVolumes = [];
+
+    const allSymbols = [
+      'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'TAOUSDT',
+      'AAVEUSDT', 'AVAXUSDT', 'ZECUSDT', 'PAXGUSDT'
+    ];
+
+    // Coins that use 2 decimals. All others use 3 decimals.
+    const twoDecimalSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'PAXGUSDT'];
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    function hideSplashScreen() {
+      const splash = document.getElementById('splash-screen');
+      if (splash) {
+        splash.classList.add('fade-out');
+        setTimeout(() => splash.remove(), 500);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      auth.onAuthStateChanged(user => {
+        hideSplashScreen();
+        if (user) {
+          document.getElementById('auth-container').classList.add('hidden');
+          document.getElementById('app-container').classList.remove('hidden');
+          document.getElementById('app-container').classList.add('flex');
+          if (!darkChart) {
+            buildDarkCanvasChart();
+            loadAssetData();
+          }
+        } else {
+          document.getElementById('auth-container').classList.remove('hidden');
+          document.getElementById('app-container').classList.add('hidden');
+        }
+      });
+    });
+
+    // Full price formatter — no truncation, full digits
+    function formatPrice(price, symbol = currentSymbol) {
+      if (price === undefined || price === null || isNaN(price)) {
+        return twoDecimalSymbols.includes(symbol) ? "0.00" : "0.000";
+      }
+      const num = Number(price);
+      if (twoDecimalSymbols.includes(symbol)) {
+        return num.toFixed(2);
+      }
+      return num.toFixed(3);
+    }
+
+    function formatTimeFull(time) {
+      const date = new Date(time * 1000);
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = monthNames[date.getMonth()];
+      let hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const strHours = hours.toString().padStart(2, '0');
+      return `${day} ${month}, ${strHours}:${minutes} ${ampm}`;
+    }
+
+    function buildDarkCanvasChart() {
+      const container = document.getElementById('tv-dark-chart');
+      container.innerHTML = '';
+      if (darkChart) darkChart.remove();
+
+      darkChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        layout: { background: { type: 'solid', color: '#090d16' }, textColor: '#64748b' },
+        grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        priceScale: { borderColor: '#334155' },
+        timeScale: {
+          borderColor: '#334155',
+          timeVisible: true,
+          secondsVisible: false,
+          tickMarkFormatter: (time) => formatTimeFull(time)
+        },
+        localization: {
+          timeFormatter: (time) => formatTimeFull(time)
+        }
+      });
+
+      candleSeries = darkChart.addCandlestickSeries({
+        upColor: '#22c55e', downColor: '#ef4444',
+        borderDownColor: '#ef4444', borderUpColor: '#22c55e',
+        wickDownColor: '#ef4444', wickUpColor: '#22c55e',
+      });
+
+      ema9Series = darkChart.addLineSeries({ color: '#3b82f6', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      ema20Series = darkChart.addLineSeries({ color: '#ef4444', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+    }
+
+    function computeEMA(candles, period) {
+      const k = 2 / (period + 1);
+      let emaArray = [];
+      let prev = candles[0].close;
+
+      for (let i = 0; i < candles.length; i++) {
+        const val = i === 0 ? candles[i].close : (candles[i].close * k) + (prev * (1 - k));
+        emaArray.push({ time: candles[i].time, value: val });
+        prev = val;
+      }
+      return emaArray;
+    }
+
+    function connectLiveWebSocket() {
+      if (ws) {
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+        ws.close();
+      }
+
+      const wsSymbol = currentSymbol.toLowerCase();
+      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${currentTimeframe}`);
+
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if (!message || !message.k) return;
+
+        const kline = message.k;
+        const candle = {
+          time: Math.floor(kline.t / 1000),
+          open: parseFloat(kline.o),
+          high: parseFloat(kline.h),
+          low: parseFloat(kline.l),
+          close: parseFloat(kline.c)
         };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
+        const vol = parseFloat(kline.v);
 
-        let isLogin = false;
-        let isPro = false;
+        if (currentCandles.length > 0) {
+          const lastIdx = currentCandles.length - 1;
+          if (currentCandles[lastIdx].time === candle.time) {
+            currentCandles[lastIdx] = candle;
+            currentVolumes[lastIdx] = vol;
+          } else if (candle.time > currentCandles[lastIdx].time) {
+            currentCandles.push(candle);
+            currentVolumes.push(vol);
+          }
 
-        function toggleAuth() { isLogin = !isLogin; document.getElementById('signup-fields').classList.toggle('hidden', isLogin); }
+          candleSeries.update(candle);
+          ema9Series.setData(computeEMA(currentCandles, 9));
+          ema20Series.setData(computeEMA(currentCandles, 20));
+        }
+      };
+    }
 
-        async function handleAuth() {
-            const e = document.getElementById('auth-email').value;
-            const p = document.getElementById('auth-pass').value;
-            const n = document.getElementById('reg-name').value;
-            try {
-                if(isLogin) { await auth.signInWithEmailAndPassword(e, p); }
-                else {
-                    const res = await auth.createUserWithEmailAndPassword(e, p);
-                    await res.user.updateProfile({ displayName: n });
-                    await db.ref('users/' + res.user.uid).set({ name: n, dailyCount: 0, isPro: false, lastReset: new Date().toDateString() });
-                }
-                localStorage.setItem('gyan_session', 'true');
-            } catch (err) { alert(err.message); }
+    // Support (pink) and Resistance (orange)
+    function calculate2Support2Resistance(candles) {
+      const recent = candles.slice(-40, -1);
+      const sortedHighs = recent.map(c => c.high).sort((a, b) => b - a);
+      const sortedLows = recent.map(c => c.low).sort((a, b) => a - b);
+
+      const R1 = sortedHighs[0];
+      const R2 = sortedHighs[Math.floor(sortedHighs.length * 0.25)] || R1 * 1.008;
+
+      const S1 = sortedLows[0];
+      const S2 = sortedLows[Math.floor(sortedLows.length * 0.25)] || S1 * 0.992;
+
+      return {
+        R1: Math.max(R1, R2),
+        R2: Math.min(R1, R2),
+        S1: Math.min(S1, S2),
+        S2: Math.max(S1, S2)
+      };
+    }
+
+    // ===== STRICT 9/20 EMA PULLBACK + BIGGER REJECTION STRATEGY =====
+    function detectEmaStrategy(candles) {
+      const len = candles.length;
+      if (len < 80) return { valid: false, reason: 'Not enough data' };
+
+      const ema9Vals = computeEMA(candles, 9);
+      const ema20Vals = computeEMA(candles, 20);
+
+      const lookback = 40;
+      const startIdx = len - lookback - 2;
+      if (startIdx < 2) return { valid: false, reason: 'Not enough data' };
+
+      let crossIdx = -1;
+      let crossType = null;
+
+      for (let i = startIdx; i < len - 2; i++) {
+        const e9p = ema9Vals[i - 1].value;
+        const e20p = ema20Vals[i - 1].value;
+        const e9c = ema9Vals[i].value;
+        const e20c = ema20Vals[i].value;
+
+        if (e9p <= e20p && e9c > e20c) {
+          crossIdx = i;
+          crossType = 'BULLISH_CROSSOVER';
+        } else if (e9p >= e20p && e9c < e20c) {
+          crossIdx = i;
+          crossType = 'BEARISH_CROSSOVER';
+        }
+      }
+
+      if (crossIdx === -1) return { valid: false, reason: 'No recent 9/20 EMA crossover' };
+
+      for (let i = crossIdx + 1; i < len - 1; i++) {
+        const e9p = ema9Vals[i - 1].value;
+        const e20p = ema20Vals[i - 1].value;
+        const e9c = ema9Vals[i].value;
+        const e20c = ema20Vals[i].value;
+        if (crossType === 'BULLISH_CROSSOVER' && e9p >= e20p && e9c < e20c) {
+          return { valid: false, reason: 'Opposite crossover cancelled setup' };
+        }
+        if (crossType === 'BEARISH_CROSSOVER' && e9p <= e20p && e9c > e20c) {
+          return { valid: false, reason: 'Opposite crossover cancelled setup' };
+        }
+      }
+
+      for (let i = crossIdx + 3; i < len - 2; i++) {
+        const pullback = candles[i - 1];
+        const rejection = candles[i];
+
+        const pullbackEma9 = ema9Vals[i - 1].value;
+        const pullbackEma20 = ema20Vals[i - 1].value;
+        const rejectEma9 = ema9Vals[i].value;
+
+        const rejectBody = Math.abs(rejection.close - rejection.open);
+        const pullBody = Math.abs(pullback.close - pullback.open);
+
+        if (crossType === 'BULLISH_CROSSOVER') {
+          const isRed = pullback.close < pullback.open;
+          const touchedEMA = pullback.low <= pullbackEma9 * 1.005 || pullback.low <= pullbackEma20 * 1.005;
+
+          const isGreen = rejection.close > rejection.open;
+          const biggerThanPullback = rejectBody > pullBody;
+          const closesAboveEma9 = rejection.close > rejectEma9;
+
+          if (isRed && touchedEMA && isGreen && biggerThanPullback && closesAboveEma9) {
+            const lastClosed = candles[len - 2];
+            const breaksConfirmHigh = lastClosed.close > rejection.high;
+
+            const e9Now = ema9Vals[len - 2].value;
+            const e20Now = ema20Vals[len - 2].value;
+            const aligned = e9Now > e20Now;
+
+            if (breaksConfirmHigh && aligned) {
+              const swingLow = Math.min(pullback.low, rejection.low);
+              const entry = rejection.high;
+              const sl = swingLow * 0.998;
+              return {
+                valid: true,
+                type: 'BULLISH_EMA_SETUP',
+                entry: entry,
+                sl: sl,
+                note: '9/20 EMA Bullish Crossover → Red Pullback → Bigger Green Rejection → Confirmation High Break'
+              };
+            }
+          }
         }
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('u-display-name').innerText = user.displayName || "User";
-                document.getElementById('nav').classList.remove('hidden');
-                checkDailyReset(user.uid);
-                syncDashboard(user.uid);
-                changeScreen('home');
-            } else {
-                if(!localStorage.getItem('gyan_session')) {
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    document.getElementById('auth').classList.add('active');
-                    document.getElementById('nav').classList.add('hidden');
-                }
+        if (crossType === 'BEARISH_CROSSOVER') {
+          const isGreen = pullback.close > pullback.open;
+          const touchedEMA = pullback.high >= pullbackEma9 * 0.995 || pullback.high >= pullbackEma20 * 0.995;
+
+          const isRed = rejection.close < rejection.open;
+          const biggerThanPullback = rejectBody > pullBody;
+          const closesBelowEma9 = rejection.close < rejectEma9;
+
+          if (isGreen && touchedEMA && isRed && biggerThanPullback && closesBelowEma9) {
+            const lastClosed = candles[len - 2];
+            const breaksConfirmLow = lastClosed.close < rejection.low;
+
+            const e9Now = ema9Vals[len - 2].value;
+            const e20Now = ema20Vals[len - 2].value;
+            const aligned = e9Now < e20Now;
+
+            if (breaksConfirmLow && aligned) {
+              const swingHigh = Math.max(pullback.high, rejection.high);
+              const entry = rejection.low;
+              const sl = swingHigh * 1.002;
+              return {
+                valid: true,
+                type: 'BEARISH_EMA_SETUP',
+                entry: entry,
+                sl: sl,
+                note: '9/20 EMA Bearish Crossover → Green Pullback → Bigger Red Rejection → Confirmation Low Break'
+              };
             }
+          }
+        }
+      }
+
+      return { valid: false, reason: 'Waiting for pullback + bigger rejection candle + confirmation' };
+    }
+
+    // Choppy market detection
+    function detectChoppyMarket(candles) {
+      const len = candles.length;
+      if (len < 40) return false;
+
+      const ema9Vals = computeEMA(candles, 9);
+      const ema20Vals = computeEMA(candles, 20);
+
+      let crosses = 0;
+      for (let i = len - 30; i < len - 1; i++) {
+        const e9p = ema9Vals[i - 1].value;
+        const e20p = ema20Vals[i - 1].value;
+        const e9c = ema9Vals[i].value;
+        const e20c = ema20Vals[i].value;
+        if ((e9p <= e20p && e9c > e20c) || (e9p >= e20p && e9c < e20c)) {
+          crosses++;
+        }
+      }
+
+      const e9Now = ema9Vals[len - 2].value;
+      const e20Now = ema20Vals[len - 2].value;
+      const sep = Math.abs(e9Now - e20Now) / e20Now;
+
+      if (crosses >= 3 || sep < 0.0015) return true;
+      return false;
+    }
+
+    // Liquidity Sweep
+    function detectLiquiditySweep(candles) {
+      const len = candles.length;
+      if (len < 30) return { swept: false, type: 'NONE' };
+
+      const sweepCandle = candles[len - 2];
+      const prevCandles = candles.slice(len - 30, len - 2);
+
+      const lowestLow = Math.min(...prevCandles.map(c => c.low));
+      const highestHigh = Math.max(...prevCandles.map(c => c.high));
+
+      const ema9Vals = computeEMA(candles, 9);
+      const ema20Vals = computeEMA(candles, 20);
+      const ema9 = ema9Vals[len - 2].value;
+      const ema20 = ema20Vals[len - 2].value;
+
+      if (sweepCandle.low < lowestLow && sweepCandle.close > lowestLow && sweepCandle.close > ema9 && ema9 > ema20) {
+        return { swept: true, type: 'BULLISH_SWEEP', sweepLevel: lowestLow };
+      }
+      if (sweepCandle.high > highestHigh && sweepCandle.close < highestHigh && sweepCandle.close < ema9 && ema9 < ema20) {
+        return { swept: true, type: 'BEARISH_SWEEP', sweepLevel: highestHigh };
+      }
+      return { swept: false, type: 'NONE' };
+    }
+
+    // Volume label
+    function calculateVolumeMeter(volumes) {
+      if (volumes.length < 30) return { label: '--' };
+
+      const recent = volumes.slice(-30, -1);
+      const current = volumes[volumes.length - 2];
+      const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+      const ratio = current / avg;
+
+      if (ratio >= 1.8) return { label: 'High' };
+      if (ratio <= 0.6) return { label: 'Low' };
+      return { label: 'Normal' };
+    }
+
+    // Load 1500 candles (~2 months on 1h)
+    async function loadAssetData() {
+      resetAnalysisUI();
+
+      const loadingEl = document.getElementById('chart-loading');
+      if (loadingEl) loadingEl.classList.remove('hidden');
+
+      try {
+        const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&limit=1500`;
+        const res = await fetch(url);
+        const raw = await res.json();
+
+        currentCandles = raw.map(d => ({
+          time: Math.floor(d[0] / 1000),
+          open: parseFloat(d[1]),
+          high: parseFloat(d[2]),
+          low: parseFloat(d[3]),
+          close: parseFloat(d[4])
+        }));
+        currentVolumes = raw.map(d => parseFloat(d[5]));
+
+        candleSeries.setData(currentCandles);
+        ema9Series.setData(computeEMA(currentCandles, 9));
+        ema20Series.setData(computeEMA(currentCandles, 20));
+
+        darkChart.timeScale().fitContent();
+        connectLiveWebSocket();
+      } catch (err) {
+        console.error("Binance Data Fetch Error", err);
+      } finally {
+        if (loadingEl) loadingEl.classList.add('hidden');
+      }
+    }
+
+    function resetAnalysisUI() {
+      clearCanvasLines();
+
+      const out = document.getElementById('ai-analysis-output');
+      if (out) {
+        out.innerHTML = `
+          <div class="text-center">
+            <h4 class="font-bold text-slate-300 text-xs">New Market Loaded</h4>
+            <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to analyze ${currentSymbol} on ${currentTimeframe}.</p>
+          </div>
+        `;
+      }
+
+      document.getElementById('metric-ema').innerText = '--';
+      document.getElementById('metric-ema').className = 'text-slate-300';
+      document.getElementById('metric-sweep').innerText = '--';
+      document.getElementById('metric-sweep').className = 'text-slate-300';
+      document.getElementById('metric-volatility').innerText = '--';
+      document.getElementById('metric-volatility').className = 'text-slate-300';
+      document.getElementById('metric-volume').innerText = '--';
+      document.getElementById('metric-volume').className = 'text-slate-300';
+    }
+
+    function clearCanvasLines() {
+      if (!candleSeries) return;
+      chartLines.forEach(l => candleSeries.removePriceLine(l));
+      chartLines = [];
+    }
+
+    async function fetchGeminiAiAnalysis(promptText) {
+      const apiKey = "AQ.Ab8RN6JlscpiNZxFYALMW4sZrMkvr7i5wmUoQ5X8KRkByWb-2A";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
         });
+        const data = await response.json();
+        return data.candidates[0].content.parts[0].text;
+      } catch (e) {
+        return null;
+      }
+    }
 
-        async function checkDailyReset(uid) {
-            const snap = await db.ref('users/' + uid).get();
-            const data = snap.val();
-            const today = new Date().toDateString();
-            if (data && data.lastReset !== today) {
-                await db.ref('users/' + uid).update({ dailyCount: 0, lastReset: today });
-            }
+    // ===== MAIN ANALYSIS ENGINE =====
+    async function runAnalysisEngine() {
+      if (isAnalyzing || currentCandles.length < 80) return;
+      isAnalyzing = true;
+
+      const output = document.getElementById('ai-analysis-output');
+      const spinner = document.getElementById('btn-spinner');
+      const btnText = document.getElementById('btn-text');
+
+      spinner.classList.remove('hidden');
+      btnText.innerText = "Scanning (3s)...";
+
+      output.innerHTML = `
+        <div class="flex flex-col items-center justify-center p-4 space-y-3 w-full">
+          <div class="relative w-full max-w-xs h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-full animate-radar"></div>
+          </div>
+          <div class="flex items-center gap-2 text-amber-400 font-bold text-xs animate-pulse">
+            <span>⚡ AI checking crossover → pullback → bigger rejection → confirmation...</span>
+          </div>
+        </div>
+      `;
+
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      const len = currentCandles.length;
+      const ema9Vals = computeEMA(currentCandles, 9);
+      const ema20Vals = computeEMA(currentCandles, 20);
+
+      const closedEma9 = ema9Vals[len - 2].value;
+      const closedEma20 = ema20Vals[len - 2].value;
+
+      const sr = calculate2Support2Resistance(currentCandles);
+      const sweep = detectLiquiditySweep(currentCandles);
+      const strategy = detectEmaStrategy(currentCandles);
+      const volInfo = calculateVolumeMeter(currentVolumes);
+      const isChoppy = detectChoppyMarket(currentCandles);
+
+      const isBullishTrend = closedEma9 > closedEma20;
+
+      document.getElementById('metric-ema').innerText = isBullishTrend ? "Bullish (9 > 20 EMA)" : "Bearish (9 < 20 EMA)";
+      document.getElementById('metric-ema').className = isBullishTrend ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+
+      if (sweep.swept) {
+        document.getElementById('metric-sweep').innerText = sweep.type === 'BULLISH_SWEEP' ? "Bullish Sweep" : "Bearish Sweep";
+        document.getElementById('metric-sweep').className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+      } else {
+        document.getElementById('metric-sweep').innerText = "No Sweep";
+        document.getElementById('metric-sweep').className = "text-slate-300";
+      }
+
+      const biasText = strategy.valid
+        ? (strategy.type.includes('BULLISH') ? 'BULLISH SETUP' : 'BEARISH SETUP')
+        : (isBullishTrend ? 'BULLISH BIAS' : 'BEARISH BIAS');
+      document.getElementById('metric-volatility').innerText = biasText;
+      document.getElementById('metric-volatility').className = biasText.includes('BULLISH') ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+
+      document.getElementById('metric-volume').innerText = volInfo.label;
+      document.getElementById('metric-volume').className = volInfo.label === 'High'
+        ? 'text-emerald-400 font-bold'
+        : (volInfo.label === 'Low' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
+
+      clearCanvasLines();
+
+      chartLines.push(candleSeries.createPriceLine({ price: sr.R1, color: '#f97316', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title: 'R1' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sr.R2, color: '#fb923c', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'R2' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sr.S1, color: '#ec4899', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title: 'S1' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sr.S2, color: '#f472b6', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'S2' }));
+
+      const prompt = `Crypto Analysis (9/20 EMA Pullback Strategy):
+Asset: ${currentSymbol}
+Timeframe: ${currentTimeframe}
+EMA Trend: ${isBullishTrend ? 'Bullish 9>20' : 'Bearish 9<20'}
+Liquidity Sweep: ${sweep.swept ? sweep.type : 'NO SWEEP'}
+EMA Setup: ${strategy.valid ? strategy.note : 'No valid setup'}
+Market Condition: ${isChoppy ? 'Choppy / No-Trade zone' : 'Trending'}
+Volume: ${volInfo.label}
+Explain in 2 short lines in English. If no valid entry: say only "No valid entry right now. Wait for a clear setup." If entry exists: briefly describe the pullback + bigger rejection candle + confirmation logic and volume context.`;
+
+      const aiResponse = await fetchGeminiAiAnalysis(prompt);
+
+      spinner.classList.add('hidden');
+      btnText.innerText = "Scan Market Setup";
+      isAnalyzing = false;
+
+      if (!strategy.valid || isChoppy) {
+        let waitReason = 'No valid entry right now. Wait for a clear setup.';
+        if (isChoppy) waitReason = 'Choppy market — no-trade zone. Wait for a clean 9/20 EMA trend, then a pullback.';
+        else if (strategy.reason) waitReason = strategy.reason + '. Wait for a clear setup.';
+
+        output.innerHTML = `
+          <div class="w-full space-y-3">
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
+              <span class="text-xs font-bold text-slate-400">${currentSymbol} (${currentTimeframe}):</span>
+              <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">⏳ NO VALID ENTRY — WAIT</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center font-mono text-[11px]">
+              <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                <span class="block text-slate-500 text-[10px]">TREND</span>
+                <strong class="${isBullishTrend ? 'text-emerald-400' : 'text-rose-400'}">${isBullishTrend ? 'Bullish' : 'Bearish'}</strong>
+              </div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                <span class="block text-slate-500 text-[10px]">SWEEP</span>
+                <strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong>
+              </div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                <span class="block text-slate-500 text-[10px]">VOLUME</span>
+                <strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong>
+              </div>
+            </div>
+
+            <div class="p-2.5 bg-slate-900 rounded-lg border border-white/20 text-center">
+              <p class="text-[11px] text-white italic">🤖 AI: ${aiResponse || waitReason}</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const entry = strategy.entry;
+      const sl = strategy.sl;
+      const risk = Math.abs(entry - sl);
+      const tp1 = strategy.type.includes('BULLISH') ? entry + (risk * 2) : entry - (risk * 2);
+      const tp2 = strategy.type.includes('BULLISH') ? entry + (risk * 3) : entry - (risk * 3);
+      const isBullish = strategy.type.includes('BULLISH');
+
+      output.innerHTML = `
+        <div class="w-full space-y-3">
+          <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
+            <span class="text-xs font-bold text-slate-400">${currentSymbol} (${currentTimeframe}):</span>
+            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullish ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">
+              ${isBullish ? '🚀 LIVE BUY ENTRY' : '📉 LIVE SELL ENTRY'}
+            </span>
+          </div>
+
+          <div class="text-[11px] text-slate-400 font-bold">📍 ${strategy.note}</div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+              <span class="block text-slate-500 text-[10px]">ENTRY</span>
+              <strong class="text-blue-400 price-value">$${formatPrice(entry)}</strong>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+              <span class="block text-slate-500 text-[10px]">TP1 (1:2)</span>
+              <strong class="text-emerald-400 price-value">$${formatPrice(tp1)}</strong>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+              <span class="block text-slate-500 text-[10px]">TP2 (1:3)</span>
+              <strong class="text-emerald-300 price-value">$${formatPrice(tp2)}</strong>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+              <span class="block text-slate-500 text-[10px]">STOP LOSS</span>
+              <strong class="text-rose-400 price-value">$${formatPrice(sl)}</strong>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-center font-mono text-[11px]">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+              <span class="block text-slate-500 text-[10px]">VOLUME</span>
+              <strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+              <span class="block text-slate-500 text-[10px]">SWEEP</span>
+              <strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong>
+            </div>
+          </div>
+
+          ${aiResponse ? `<div class="p-2.5 bg-slate-900 rounded-lg border border-indigo-500/30 text-center"><p class="text-[11px] text-indigo-300 italic">🤖 AI: ${aiResponse}</p></div>` : ''}
+        </div>
+      `;
+
+      chartLines.push(candleSeries.createPriceLine({ price: entry, color: '#2563eb', lineWidth: 2, title: 'ENTRY' }));
+      chartLines.push(candleSeries.createPriceLine({ price: tp1, color: '#22c55e', lineWidth: 2, title: 'TP1' }));
+      chartLines.push(candleSeries.createPriceLine({ price: tp2, color: '#16a34a', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'TP2' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 2, title: 'SL' }));
+
+      if (sweep.swept) {
+        chartLines.push(candleSeries.createPriceLine({
+          price: sweep.sweepLevel, color: '#ffffff', lineWidth: 1,
+          lineStyle: LightweightCharts.LineStyle.Dotted, title: 'SWEEP'
+        }));
+      }
+    }
+
+    function changeTimeframe(tf) {
+      currentTimeframe = tf;
+      ['5m', '15m', '1h', '4h'].forEach(t => {
+        const btn = document.getElementById(`tf-${t}`);
+        if (btn) btn.className = t === tf ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition" : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition";
+      });
+      loadAssetData();
+    }
+
+    function changeAsset(symbol, name) {
+      currentSymbol = symbol;
+      currentAssetName = name;
+
+      allSymbols.forEach(s => {
+        const btn = document.getElementById(`btn-${s}`);
+        if (btn) {
+          btn.className = s === symbol
+            ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap'
+            : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
         }
+      });
 
-        function syncDashboard(uid) {
-            db.ref('users/' + uid).on('value', snap => {
-                const data = snap.val();
-                if(!data) return;
-                isPro = data.isPro || false;
-                if(isPro) {
-                    document.getElementById('plan-status').innerText = "Premium Active (28 Days)";
-                    document.getElementById('daily-count').innerText = "Unlimited";
-                    document.getElementById('upgrade-btn').classList.add('hidden');
-                } else {
-                    document.getElementById('daily-count').innerText = data.dailyCount || 0;
-                }
-            });
-
-            db.ref('history/' + uid).on('value', snap => {
-                const box = document.getElementById('history-box'); box.innerHTML = "";
-                snap.forEach(child => {
-                    const item = child.val();
-                    box.innerHTML += `<div class="history-item" onclick="openHistoryItem('${item.q.replace(/'/g, "\\'")}', '${item.a.replace(/'/g, "\\'")}')"><b>${item.q.substring(0,30)}...</b><br><small>${item.date}</small></div>`;
-                });
-            });
-        }
-
-        function openHistoryItem(q, a) {
-            changeScreen('chat');
-            document.getElementById('chat-box').innerHTML = `<div class="msg user-msg">${q}</div><div class="msg ai-msg">${a}</div>`;
-        }
-
-        async function askAI(type, qText = "") {
-            const input = document.getElementById('chat-input');
-            const box = document.getElementById('chat-box');
-            const query = type === 'text' ? input.value : qText;
-            if(!query) return;
-
-            const uid = auth.currentUser.uid;
-            const snap = await db.ref('users/' + uid).get();
-            const count = snap.val()?.dailyCount || 0;
-
-            if(!isPro && count >= 10) { alert("Daily Limit Reached! Upgrade to Pro."); changeScreen('pro'); return; }
-
-            changeScreen('chat');
-            if(type === 'text') { box.innerHTML += `<div class="msg user-msg">${query}</div>`; input.value = ""; }
-            else { box.innerHTML += `<div class="msg user-msg">Problem from Photo Upload</div>`; }
-            
-            document.getElementById('thinking').classList.remove('hidden');
-            box.scrollTop = box.scrollHeight;
-
-            const currentDateTimeString = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
-            const promptModifier = `[System Context: Today's real-world current date/time is ${currentDateTimeString}]. Step-by-step plain text: `;
-
-            try {
-                const res = await fetch('https://chatgpt-42.p.rapidapi.com/conversationgpt4-2', {
-                    method: 'POST',
-                    headers: { 
-                        'x-rapidapi-key': 'c9a4334923msh39b1b369ff92fedp14d6dcjsn71b3c1fef91b', 
-                        'x-rapidapi-host': 'chatgpt-42.p.rapidapi.com', 
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify({ messages: [{ role: 'user', content: promptModifier + query }], web_access: false })
-                });
-                const data = await res.json();
-                const answer = data.result || "AI server is busy..";
-                
-                document.getElementById('thinking').classList.add('hidden');
-                box.innerHTML += `<div class="msg ai-msg">${answer}</div>`;
-                box.scrollTop = box.scrollHeight;
-
-                await db.ref('history/' + uid).push({ q: query, a: answer, date: new Date().toLocaleString() });
-                if(!isPro) await db.ref('users/' + uid).update({ dailyCount: count + 1 });
-            } catch (e) { document.getElementById('thinking').classList.add('hidden'); }
-        }
-
-        // Razorpay Payment Handler
-        function payWithRazorpay() {
-            const user = auth.currentUser;
-            if (!user) {
-                alert("Please login first!");
-                changeScreen('auth');
-                return;
-            }
-
-            const options = {
-                "key": "rzp_live_T5OZeAeTkrB7YG", // Aapki Live Key
-                "amount": 100, // Amount paise mein hota hai (91 INR = 9100 paise)
-                "currency": "INR",
-                "name": "Mindora AI",
-                "description": "Pro Plan Upgrade - 28 Days",
-                "image": "https://img.icons8.com/color/100/artificial-intelligence.png",
-                "handler": async function (response) {
-                    alert("Payment Successful! Id: " + response.razorpay_payment_id);
-                    try {
-                        // Firebase Database mein user ko Pro mark kar rhe hain
-                        await db.ref('users/' + user.uid).update({ isPro: true });
-                        alert("Mindora Pro Activated Successfully!");
-                        changeScreen('home');
-                    } catch (err) {
-                        alert("Database Update Error: " + err.message);
-                    }
-                },
-                "prefill": {
-                    "name": user.displayName || "",
-                    "email": user.email || ""
-                },
-                "theme": {
-                    "color": "#6366f1"
-                }
-            };
-
-            const rzp = new Razorpay(options);
-            rzp.on('payment.failed', function (response){
-                alert("Payment Failed: " + response.error.description);
-            });
-            rzp.open();
-        }
-
-        function handleFile(input) {
-            if (input.files && input.files[0]) {
-                alert("Wait, Mindora is solving this problem...");
-                askAI('scan', "Problem from Gallery Capture");
-            }
-        }
-
-        function changeScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            const activeNavItem = document.getElementById('nav-' + id);
-            if (activeNavItem) activeNavItem.classList.add('active');
-
-            if(id === 'chat') {
-                const box = document.getElementById('chat-box');
-                if(box.innerHTML === "") {
-                    box.innerHTML = `<div class="msg ai-msg">Namaste! Main Mindora AI hoon. Puchiye kya madad chahiye?</div>`;
-                }
-                setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
-            }
-        }
-
-        function toggleTheme() {
-            const b = document.body; const isDark = b.getAttribute('data-theme') === 'dark';
-            b.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            document.getElementById('t-icon').className = isDark ? 'fas fa-moon' : 'fas fa-sun';
-        }
-
-        // Live reset storage session
-        function logout() { 
-            localStorage.removeItem('gyan_session'); 
-            auth.signOut().then(() => location.reload()); 
-        }
-    </script>
+      buildDarkCanvasChart();
+      loadAssetData();
+    }
+  </script>
 </body>
 </html>
