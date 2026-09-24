@@ -240,6 +240,7 @@
     let ws = null;
     let currentCandles = [], currentVolumes = [];
     let chartBootstrapped = false;
+    let isLoggingOut = false;
 
     const allSymbols = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','TAOUSDT','AAVEUSDT','AVAXUSDT','ZECUSDT','PAXGUSDT'];
     const twoDecimalSymbols = ['BTCUSDT','ETHUSDT','SOLUSDT','PAXGUSDT'];
@@ -292,14 +293,12 @@
       }
     };
 
-    // ===== EMAIL KEY (matches admin panel format) =====
+    // ===== EMAIL KEY =====
     function emailToKey(email) {
       return email.toLowerCase().trim().replace(/\./g, '_dot_').replace(/@/g, '_at_');
     }
 
     // ===== NORMALIZE STATUS =====
-    // Accepts: "approved", "Approved", "APPROVED " -> true
-    // Also accepts boolean approved:true / string "true"
     function isUserApproved(data) {
       if (!data) return false;
       const st = data.status ? data.status.toString().toLowerCase().trim() : '';
@@ -334,14 +333,11 @@
           const cred = await auth.createUserWithEmailAndPassword(email, password);
           const uid = cred.user.uid;
 
-          // Check if this email was pre-approved by admin
           let isPreApproved = false;
           try {
             const preSnap = await db.ref('pre_approved_emails/' + emailToKey(email)).once('value');
             isPreApproved = preSnap.exists();
-          } catch (e) {
-            console.warn('Pre-approval check failed:', e);
-          }
+          } catch (e) { console.warn('Pre-approval check failed:', e); }
 
           await db.ref('users/' + uid).set({
             name: name,
@@ -351,7 +347,6 @@
             approved: isPreApproved,
             createdAt: firebase.database.ServerValue.TIMESTAMP
           });
-          // onAuthStateChanged will handle screen switch
         } catch (err) {
           console.error('Signup error:', err);
           let msg = 'Signup failed. Please try again.';
@@ -368,7 +363,6 @@
         btn.disabled = true;
         try {
           await auth.signInWithEmailAndPassword(email, password);
-          // onAuthStateChanged will handle screen switch
         } catch (err) {
           console.error('Login error:', err);
           let msg = 'Login failed. Check your email and password.';
@@ -385,14 +379,48 @@
       }
     };
 
-    // ===== LOGOUT =====
+    // ===== LOGOUT (fully resets app state) =====
     window.handleLogout = async function () {
+      if (isLoggingOut) return;
+      isLoggingOut = true;
+
       try {
-        if (userStatusListener) { userStatusListener.off(); userStatusListener = null; }
-        if (ws) { try { ws.onclose = null; ws.close(); } catch(e){} ws = null; }
+        // 1. Remove DB listener
+        if (userStatusListener) {
+          try { userStatusListener.off(); } catch(e){}
+          userStatusListener = null;
+        }
+
+        // 2. Close websocket
+        if (ws) {
+          try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){}
+          ws = null;
+        }
+
+        // 3. Destroy chart instance so next login rebuilds fresh
+        if (darkChart) {
+          try { darkChart.remove(); } catch(e){}
+        }
+        darkChart = null;
+        candleSeries = null;
+        ema9Series = null;
+        ema20Series = null;
+        chartLines = [];
+        currentCandles = [];
+        currentVolumes = [];
+        chartBootstrapped = false;
+
+        // 4. Sign out from Firebase
         await auth.signOut();
+
+        // 5. Immediately force auth screen (don't rely only on listener)
+        showScreen('auth');
       } catch (err) {
         console.error('Logout error:', err);
+        showScreen('auth');
+      } finally {
+        // Reset flag after a short delay so subsequent login works
+        setTimeout(() => { isLoggingOut = false; }, 800);
       }
     };
 
@@ -418,6 +446,11 @@
         btn.disabled = false;
         document.getElementById('auth-toggle-text').innerText = "Don't have an account?";
         document.getElementById('auth-toggle-btn').innerText = 'Sign Up';
+        // Clear form fields
+        document.getElementById('input-email').value = '';
+        document.getElementById('input-password').value = '';
+        document.getElementById('input-name').value = '';
+        document.getElementById('input-mobile').value = '';
         showAuthError('');
         authEl.classList.remove('hidden');
       } else if (screen === 'pending') {
@@ -425,7 +458,7 @@
       } else if (screen === 'app') {
         appEl.classList.remove('hidden');
         appEl.classList.add('flex');
-        if (!chartBootstrapped) {
+        if (!chartBootstrapped || !darkChart) {
           chartBootstrapped = true;
           setTimeout(() => {
             buildDarkCanvasChart();
@@ -442,7 +475,8 @@
       if (userStatusListener) { try { userStatusListener.off(); } catch(e){} userStatusListener = null; }
 
       if (!user) {
-        showScreen('auth');
+        // If we are mid-logout, let handleLogout control the screen
+        if (!isLoggingOut) showScreen('auth');
         return;
       }
 
@@ -559,7 +593,7 @@
           low: parseFloat(kline.l), close: parseFloat(kline.c)
         };
         const vol = parseFloat(kline.v);
-        if (currentCandles.length > 0) {
+        if (currentCandles.length > 0 && candleSeries) {
           const lastIdx = currentCandles.length - 1;
           if (currentCandles[lastIdx].time === candle.time) {
             currentCandles[lastIdx] = candle; currentVolumes[lastIdx] = vol;
@@ -711,11 +745,13 @@
           low: parseFloat(d[3]), close: parseFloat(d[4])
         }));
         currentVolumes = raw.map(d => parseFloat(d[5]));
-        candleSeries.setData(currentCandles);
-        ema9Series.setData(computeEMA(currentCandles, 9));
-        ema20Series.setData(computeEMA(currentCandles, 20));
-        darkChart.timeScale().fitContent();
-        connectLiveWebSocket();
+        if (candleSeries) {
+          candleSeries.setData(currentCandles);
+          ema9Series.setData(computeEMA(currentCandles, 9));
+          ema20Series.setData(computeEMA(currentCandles, 20));
+          darkChart.timeScale().fitContent();
+          connectLiveWebSocket();
+        }
       } catch (err) {
         console.error("Binance Data Fetch Error", err);
       } finally {
@@ -918,7 +954,6 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
       const pendingLogout = document.getElementById('pending-logout-btn');
       if (pendingLogout) pendingLogout.addEventListener('click', window.handleLogout);
 
-      // Manual re-check button on pending screen
       const pendingRecheck = document.getElementById('pending-recheck-btn');
       if (pendingRecheck) {
         pendingRecheck.addEventListener('click', async () => {
@@ -944,7 +979,6 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
         });
       }
 
-      // Safety timeout — show auth if nothing rendered in 3s
       setTimeout(() => {
         hideSplashScreen();
         const authEl = document.getElementById('auth-container');
