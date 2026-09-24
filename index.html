@@ -121,6 +121,9 @@
           Your account request has been submitted to the administrator. Once approved, access will be granted automatically.
         </p>
       </div>
+      <button onclick="handleLogout()" class="mt-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-4 py-2 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
+        Logout
+      </button>
     </div>
   </div>
 
@@ -244,6 +247,11 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
+    // ===== AUTH STATE =====
+    let isSignupMode = false;
+    let currentUser = null;
+    let userStatusListener = null;
+
     let currentSymbol = 'ETHUSDT';
     let currentAssetName = 'Ethereum';
     let currentTimeframe = '15m';
@@ -262,9 +270,7 @@
       'AAVEUSDT', 'AVAXUSDT', 'ZECUSDT', 'PAXGUSDT'
     ];
 
-    // Coins that use 2 decimals. All others use 3 decimals.
     const twoDecimalSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'PAXGUSDT'];
-
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     function hideSplashScreen() {
@@ -275,33 +281,248 @@
       }
     }
 
+    // ===== AUTH UI HELPERS =====
+    function showAuthError(msg) {
+      const el = document.getElementById('auth-error');
+      if (!el) return;
+      if (msg) {
+        el.innerText = msg;
+        el.classList.remove('hidden');
+      } else {
+        el.innerText = '';
+        el.classList.add('hidden');
+      }
+    }
+
+    function toggleAuthMode() {
+      isSignupMode = !isSignupMode;
+      showAuthError('');
+
+      const title = document.getElementById('auth-title');
+      const subtitle = document.getElementById('auth-subtitle');
+      const nameField = document.getElementById('field-name');
+      const mobileField = document.getElementById('field-mobile');
+      const btn = document.getElementById('auth-btn');
+      const toggleText = document.getElementById('auth-toggle-text');
+      const toggleBtn = document.getElementById('auth-toggle-btn');
+
+      if (isSignupMode) {
+        title.innerText = 'Create Account';
+        subtitle.innerText = 'Request access to live market analytics';
+        nameField.classList.remove('hidden');
+        mobileField.classList.remove('hidden');
+        btn.innerText = 'Request Access';
+        toggleText.innerText = 'Already have an account?';
+        toggleBtn.innerText = 'Log In';
+      } else {
+        title.innerText = 'Welcome Back';
+        subtitle.innerText = 'Log in to access live market analytics';
+        nameField.classList.add('hidden');
+        mobileField.classList.add('hidden');
+        btn.innerText = 'Log In';
+        toggleText.innerText = "Don't have an account?";
+        toggleBtn.innerText = 'Sign Up';
+      }
+    }
+
+    // ===== HANDLE AUTH (LOGIN + SIGNUP) =====
+    async function handleAuth(event) {
+      event.preventDefault();
+      showAuthError('');
+
+      const email = document.getElementById('input-email').value.trim();
+      const password = document.getElementById('input-password').value;
+      const btn = document.getElementById('auth-btn');
+      const originalText = btn.innerText;
+
+      if (isSignupMode) {
+        const name = document.getElementById('input-name').value.trim();
+        const mobile = document.getElementById('input-mobile').value.trim();
+
+        if (!name || name.length < 2) {
+          showAuthError('Please enter your full name.');
+          return;
+        }
+        if (!/^[0-9]{10}$/.test(mobile)) {
+          showAuthError('Please enter a valid 10-digit mobile number.');
+          return;
+        }
+        if (password.length < 6) {
+          showAuthError('Password must be at least 6 characters.');
+          return;
+        }
+
+        btn.innerText = 'Creating...';
+        btn.disabled = true;
+
+        try {
+          const cred = await auth.createUserWithEmailAndPassword(email, password);
+          const uid = cred.user.uid;
+
+          await db.ref('users/' + uid).set({
+            name: name,
+            mobile: mobile,
+            email: email,
+            status: 'pending',
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+          // onAuthStateChanged handles the rest
+        } catch (err) {
+          console.error('Signup error:', err);
+          let msg = 'Signup failed. Please try again.';
+          if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please log in.';
+          else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+          else if (err.code === 'auth/weak-password') msg = 'Password is too weak.';
+          showAuthError(msg);
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
+      } else {
+        btn.innerText = 'Logging in...';
+        btn.disabled = true;
+        try {
+          await auth.signInWithEmailAndPassword(email, password);
+          // onAuthStateChanged handles the rest
+        } catch (err) {
+          console.error('Login error:', err);
+          let msg = 'Login failed. Check your email and password.';
+          if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+          else if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';
+          else if (err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+          else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+          showAuthError(msg);
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
+      }
+    }
+
+    // ===== LOGOUT =====
+    async function handleLogout() {
+      try {
+        if (userStatusListener) {
+          userStatusListener.off();
+          userStatusListener = null;
+        }
+        if (ws) {
+          ws.onclose = null;
+          ws.close();
+          ws = null;
+        }
+        await auth.signOut();
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
+    }
+
+    // ===== SHOW/HIDE SCREENS =====
+    function showScreen(screen) {
+      const authEl = document.getElementById('auth-container');
+      const pendingEl = document.getElementById('pending-container');
+      const appEl = document.getElementById('app-container');
+
+      authEl.classList.add('hidden');
+      pendingEl.classList.add('hidden');
+      appEl.classList.add('hidden');
+      appEl.classList.remove('flex');
+
+      if (screen === 'auth') {
+        // reset form UI
+        isSignupMode = false;
+        const title = document.getElementById('auth-title');
+        const subtitle = document.getElementById('auth-subtitle');
+        const nameField = document.getElementById('field-name');
+        const mobileField = document.getElementById('field-mobile');
+        const btn = document.getElementById('auth-btn');
+        const toggleText = document.getElementById('auth-toggle-text');
+        const toggleBtn = document.getElementById('auth-toggle-btn');
+        if (title) title.innerText = 'Welcome Back';
+        if (subtitle) subtitle.innerText = 'Log in to access live market analytics';
+        if (nameField) nameField.classList.add('hidden');
+        if (mobileField) mobileField.classList.add('hidden');
+        if (btn) { btn.innerText = 'Log In'; btn.disabled = false; }
+        if (toggleText) toggleText.innerText = "Don't have an account?";
+        if (toggleBtn) toggleBtn.innerText = 'Sign Up';
+        showAuthError('');
+
+        authEl.classList.remove('hidden');
+      } else if (screen === 'pending') {
+        pendingEl.classList.remove('hidden');
+      } else if (screen === 'app') {
+        appEl.classList.remove('hidden');
+        appEl.classList.add('flex');
+        if (!darkChart) {
+          buildDarkCanvasChart();
+          loadAssetData();
+        }
+      }
+    }
+
+    // ===== AUTH STATE CHANGE =====
     window.addEventListener('DOMContentLoaded', () => {
-      auth.onAuthStateChanged(user => {
+      auth.onAuthStateChanged(async (user) => {
         hideSplashScreen();
-        if (user) {
-          document.getElementById('auth-container').classList.add('hidden');
-          document.getElementById('app-container').classList.remove('hidden');
-          document.getElementById('app-container').classList.add('flex');
-          if (!darkChart) {
-            buildDarkCanvasChart();
-            loadAssetData();
+
+        if (userStatusListener) {
+          userStatusListener.off();
+          userStatusListener = null;
+        }
+
+        if (!user) {
+          currentUser = null;
+          showScreen('auth');
+          return;
+        }
+
+        currentUser = user;
+
+        const userRef = db.ref('users/' + user.uid);
+
+        try {
+          const snap = await userRef.once('value');
+          let data = snap.val();
+
+          // If no DB record exists (e.g. old account), create a pending record
+          if (!data) {
+            await userRef.set({
+              name: user.displayName || 'User',
+              mobile: '',
+              email: user.email,
+              status: 'pending',
+              createdAt: firebase.database.ServerValue.TIMESTAMP
+            });
+            data = { status: 'pending' };
           }
-        } else {
-          document.getElementById('auth-container').classList.remove('hidden');
-          document.getElementById('app-container').classList.add('hidden');
+
+          if (data.status === 'approved') {
+            showScreen('app');
+          } else {
+            showScreen('pending');
+          }
+
+          // Live listener for admin approval
+          userStatusListener = userRef.on('value', (s) => {
+            const val = s.val();
+            if (val && val.status === 'approved') {
+              showScreen('app');
+            } else {
+              showScreen('pending');
+            }
+          });
+        } catch (err) {
+          console.error('Status check failed:', err);
+          showScreen('pending');
         }
       });
     });
 
-    // Full price formatter — no truncation, full digits
+    // ===== PRICE / TIME FORMATTERS =====
     function formatPrice(price, symbol = currentSymbol) {
       if (price === undefined || price === null || isNaN(price)) {
         return twoDecimalSymbols.includes(symbol) ? "0.00" : "0.000";
       }
       const num = Number(price);
-      if (twoDecimalSymbols.includes(symbol)) {
-        return num.toFixed(2);
-      }
+      if (twoDecimalSymbols.includes(symbol)) return num.toFixed(2);
       return num.toFixed(3);
     }
 
@@ -318,8 +539,10 @@
       return `${day} ${month}, ${strHours}:${minutes} ${ampm}`;
     }
 
+    // ===== CHART =====
     function buildDarkCanvasChart() {
       const container = document.getElementById('tv-dark-chart');
+      if (!container) return;
       container.innerHTML = '';
       if (darkChart) darkChart.remove();
 
@@ -355,7 +578,6 @@
       const k = 2 / (period + 1);
       let emaArray = [];
       let prev = candles[0].close;
-
       for (let i = 0; i < candles.length; i++) {
         const val = i === 0 ? candles[i].close : (candles[i].close * k) + (prev * (1 - k));
         emaArray.push({ time: candles[i].time, value: val });
@@ -372,14 +594,12 @@
         ws.onclose = null;
         ws.close();
       }
-
       const wsSymbol = currentSymbol.toLowerCase();
       ws = new WebSocket(`wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${currentTimeframe}`);
 
       ws.onmessage = (event) => {
         const message = JSON.parse(event.data);
         if (!message || !message.k) return;
-
         const kline = message.k;
         const candle = {
           time: Math.floor(kline.t / 1000),
@@ -399,7 +619,6 @@
             currentCandles.push(candle);
             currentVolumes.push(vol);
           }
-
           candleSeries.update(candle);
           ema9Series.setData(computeEMA(currentCandles, 9));
           ema20Series.setData(computeEMA(currentCandles, 20));
@@ -407,56 +626,37 @@
       };
     }
 
-    // Support (pink) and Resistance (orange)
+    // ===== STRATEGY HELPERS =====
     function calculate2Support2Resistance(candles) {
       const recent = candles.slice(-40, -1);
       const sortedHighs = recent.map(c => c.high).sort((a, b) => b - a);
       const sortedLows = recent.map(c => c.low).sort((a, b) => a - b);
-
       const R1 = sortedHighs[0];
       const R2 = sortedHighs[Math.floor(sortedHighs.length * 0.25)] || R1 * 1.008;
-
       const S1 = sortedLows[0];
       const S2 = sortedLows[Math.floor(sortedLows.length * 0.25)] || S1 * 0.992;
-
-      return {
-        R1: Math.max(R1, R2),
-        R2: Math.min(R1, R2),
-        S1: Math.min(S1, S2),
-        S2: Math.max(S1, S2)
-      };
+      return { R1: Math.max(R1, R2), R2: Math.min(R1, R2), S1: Math.min(S1, S2), S2: Math.max(S1, S2) };
     }
 
-    // ===== STRICT 9/20 EMA PULLBACK + BIGGER REJECTION STRATEGY =====
     function detectEmaStrategy(candles) {
       const len = candles.length;
       if (len < 80) return { valid: false, reason: 'Not enough data' };
-
       const ema9Vals = computeEMA(candles, 9);
       const ema20Vals = computeEMA(candles, 20);
-
       const lookback = 40;
       const startIdx = len - lookback - 2;
       if (startIdx < 2) return { valid: false, reason: 'Not enough data' };
 
       let crossIdx = -1;
       let crossType = null;
-
       for (let i = startIdx; i < len - 2; i++) {
         const e9p = ema9Vals[i - 1].value;
         const e20p = ema20Vals[i - 1].value;
         const e9c = ema9Vals[i].value;
         const e20c = ema20Vals[i].value;
-
-        if (e9p <= e20p && e9c > e20c) {
-          crossIdx = i;
-          crossType = 'BULLISH_CROSSOVER';
-        } else if (e9p >= e20p && e9c < e20c) {
-          crossIdx = i;
-          crossType = 'BEARISH_CROSSOVER';
-        }
+        if (e9p <= e20p && e9c > e20c) { crossIdx = i; crossType = 'BULLISH_CROSSOVER'; }
+        else if (e9p >= e20p && e9c < e20c) { crossIdx = i; crossType = 'BEARISH_CROSSOVER'; }
       }
-
       if (crossIdx === -1) return { valid: false, reason: 'No recent 9/20 EMA crossover' };
 
       for (let i = crossIdx + 1; i < len - 1; i++) {
@@ -464,52 +664,34 @@
         const e20p = ema20Vals[i - 1].value;
         const e9c = ema9Vals[i].value;
         const e20c = ema20Vals[i].value;
-        if (crossType === 'BULLISH_CROSSOVER' && e9p >= e20p && e9c < e20c) {
-          return { valid: false, reason: 'Opposite crossover cancelled setup' };
-        }
-        if (crossType === 'BEARISH_CROSSOVER' && e9p <= e20p && e9c > e20c) {
-          return { valid: false, reason: 'Opposite crossover cancelled setup' };
-        }
+        if (crossType === 'BULLISH_CROSSOVER' && e9p >= e20p && e9c < e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
+        if (crossType === 'BEARISH_CROSSOVER' && e9p <= e20p && e9c > e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
       }
 
       for (let i = crossIdx + 3; i < len - 2; i++) {
         const pullback = candles[i - 1];
         const rejection = candles[i];
-
         const pullbackEma9 = ema9Vals[i - 1].value;
         const pullbackEma20 = ema20Vals[i - 1].value;
         const rejectEma9 = ema9Vals[i].value;
-
         const rejectBody = Math.abs(rejection.close - rejection.open);
         const pullBody = Math.abs(pullback.close - pullback.open);
 
         if (crossType === 'BULLISH_CROSSOVER') {
           const isRed = pullback.close < pullback.open;
           const touchedEMA = pullback.low <= pullbackEma9 * 1.005 || pullback.low <= pullbackEma20 * 1.005;
-
           const isGreen = rejection.close > rejection.open;
           const biggerThanPullback = rejectBody > pullBody;
           const closesAboveEma9 = rejection.close > rejectEma9;
-
           if (isRed && touchedEMA && isGreen && biggerThanPullback && closesAboveEma9) {
             const lastClosed = candles[len - 2];
             const breaksConfirmHigh = lastClosed.close > rejection.high;
-
             const e9Now = ema9Vals[len - 2].value;
             const e20Now = ema20Vals[len - 2].value;
             const aligned = e9Now > e20Now;
-
             if (breaksConfirmHigh && aligned) {
               const swingLow = Math.min(pullback.low, rejection.low);
-              const entry = rejection.high;
-              const sl = swingLow * 0.998;
-              return {
-                valid: true,
-                type: 'BULLISH_EMA_SETUP',
-                entry: entry,
-                sl: sl,
-                note: '9/20 EMA Bullish Crossover → Red Pullback → Bigger Green Rejection → Confirmation High Break'
-              };
+              return { valid: true, type: 'BULLISH_EMA_SETUP', entry: rejection.high, sl: swingLow * 0.998, note: '9/20 EMA Bullish Crossover → Red Pullback → Bigger Green Rejection → Confirmation High Break' };
             }
           }
         }
@@ -517,81 +699,56 @@
         if (crossType === 'BEARISH_CROSSOVER') {
           const isGreen = pullback.close > pullback.open;
           const touchedEMA = pullback.high >= pullbackEma9 * 0.995 || pullback.high >= pullbackEma20 * 0.995;
-
           const isRed = rejection.close < rejection.open;
           const biggerThanPullback = rejectBody > pullBody;
           const closesBelowEma9 = rejection.close < rejectEma9;
-
           if (isGreen && touchedEMA && isRed && biggerThanPullback && closesBelowEma9) {
             const lastClosed = candles[len - 2];
             const breaksConfirmLow = lastClosed.close < rejection.low;
-
             const e9Now = ema9Vals[len - 2].value;
             const e20Now = ema20Vals[len - 2].value;
             const aligned = e9Now < e20Now;
-
             if (breaksConfirmLow && aligned) {
               const swingHigh = Math.max(pullback.high, rejection.high);
-              const entry = rejection.low;
-              const sl = swingHigh * 1.002;
-              return {
-                valid: true,
-                type: 'BEARISH_EMA_SETUP',
-                entry: entry,
-                sl: sl,
-                note: '9/20 EMA Bearish Crossover → Green Pullback → Bigger Red Rejection → Confirmation Low Break'
-              };
+              return { valid: true, type: 'BEARISH_EMA_SETUP', entry: rejection.low, sl: swingHigh * 1.002, note: '9/20 EMA Bearish Crossover → Green Pullback → Bigger Red Rejection → Confirmation Low Break' };
             }
           }
         }
       }
-
       return { valid: false, reason: 'Waiting for pullback + bigger rejection candle + confirmation' };
     }
 
-    // Choppy market detection
     function detectChoppyMarket(candles) {
       const len = candles.length;
       if (len < 40) return false;
-
       const ema9Vals = computeEMA(candles, 9);
       const ema20Vals = computeEMA(candles, 20);
-
       let crosses = 0;
       for (let i = len - 30; i < len - 1; i++) {
         const e9p = ema9Vals[i - 1].value;
         const e20p = ema20Vals[i - 1].value;
         const e9c = ema9Vals[i].value;
         const e20c = ema20Vals[i].value;
-        if ((e9p <= e20p && e9c > e20c) || (e9p >= e20p && e9c < e20c)) {
-          crosses++;
-        }
+        if ((e9p <= e20p && e9c > e20c) || (e9p >= e20p && e9c < e20c)) crosses++;
       }
-
       const e9Now = ema9Vals[len - 2].value;
       const e20Now = ema20Vals[len - 2].value;
       const sep = Math.abs(e9Now - e20Now) / e20Now;
-
       if (crosses >= 3 || sep < 0.0015) return true;
       return false;
     }
 
-    // Liquidity Sweep
     function detectLiquiditySweep(candles) {
       const len = candles.length;
       if (len < 30) return { swept: false, type: 'NONE' };
-
       const sweepCandle = candles[len - 2];
       const prevCandles = candles.slice(len - 30, len - 2);
-
       const lowestLow = Math.min(...prevCandles.map(c => c.low));
       const highestHigh = Math.max(...prevCandles.map(c => c.high));
-
       const ema9Vals = computeEMA(candles, 9);
       const ema20Vals = computeEMA(candles, 20);
       const ema9 = ema9Vals[len - 2].value;
       const ema20 = ema20Vals[len - 2].value;
-
       if (sweepCandle.low < lowestLow && sweepCandle.close > lowestLow && sweepCandle.close > ema9 && ema9 > ema20) {
         return { swept: true, type: 'BULLISH_SWEEP', sweepLevel: lowestLow };
       }
@@ -601,24 +758,19 @@
       return { swept: false, type: 'NONE' };
     }
 
-    // Volume label
     function calculateVolumeMeter(volumes) {
       if (volumes.length < 30) return { label: '--' };
-
       const recent = volumes.slice(-30, -1);
       const current = volumes[volumes.length - 2];
       const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
       const ratio = current / avg;
-
       if (ratio >= 1.8) return { label: 'High' };
       if (ratio <= 0.6) return { label: 'Low' };
       return { label: 'Normal' };
     }
 
-    // Load 1500 candles (~2 months on 1h)
     async function loadAssetData() {
       resetAnalysisUI();
-
       const loadingEl = document.getElementById('chart-loading');
       if (loadingEl) loadingEl.classList.remove('hidden');
 
@@ -639,7 +791,6 @@
         candleSeries.setData(currentCandles);
         ema9Series.setData(computeEMA(currentCandles, 9));
         ema20Series.setData(computeEMA(currentCandles, 20));
-
         darkChart.timeScale().fitContent();
         connectLiveWebSocket();
       } catch (err) {
@@ -651,7 +802,6 @@
 
     function resetAnalysisUI() {
       clearCanvasLines();
-
       const out = document.getElementById('ai-analysis-output');
       if (out) {
         out.innerHTML = `
@@ -661,7 +811,6 @@
           </div>
         `;
       }
-
       document.getElementById('metric-ema').innerText = '--';
       document.getElementById('metric-ema').className = 'text-slate-300';
       document.getElementById('metric-sweep').innerText = '--';
@@ -681,7 +830,6 @@
     async function fetchGeminiAiAnalysis(promptText) {
       const apiKey = "AQ.Ab8RN6JlscpiNZxFYALMW4sZrMkvr7i5wmUoQ5X8KRkByWb-2A";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
-
       try {
         const response = await fetch(url, {
           method: 'POST',
@@ -695,18 +843,14 @@
       }
     }
 
-    // ===== MAIN ANALYSIS ENGINE =====
     async function runAnalysisEngine() {
       if (isAnalyzing || currentCandles.length < 80) return;
       isAnalyzing = true;
-
       const output = document.getElementById('ai-analysis-output');
       const spinner = document.getElementById('btn-spinner');
       const btnText = document.getElementById('btn-text');
-
       spinner.classList.remove('hidden');
       btnText.innerText = "Scanning (3s)...";
-
       output.innerHTML = `
         <div class="flex flex-col items-center justify-center p-4 space-y-3 w-full">
           <div class="relative w-full max-w-xs h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -717,22 +861,18 @@
           </div>
         </div>
       `;
-
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       const len = currentCandles.length;
       const ema9Vals = computeEMA(currentCandles, 9);
       const ema20Vals = computeEMA(currentCandles, 20);
-
       const closedEma9 = ema9Vals[len - 2].value;
       const closedEma20 = ema20Vals[len - 2].value;
-
       const sr = calculate2Support2Resistance(currentCandles);
       const sweep = detectLiquiditySweep(currentCandles);
       const strategy = detectEmaStrategy(currentCandles);
       const volInfo = calculateVolumeMeter(currentVolumes);
       const isChoppy = detectChoppyMarket(currentCandles);
-
       const isBullishTrend = closedEma9 > closedEma20;
 
       document.getElementById('metric-ema').innerText = isBullishTrend ? "Bullish (9 > 20 EMA)" : "Bearish (9 < 20 EMA)";
@@ -758,7 +898,6 @@
         : (volInfo.label === 'Low' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
 
       clearCanvasLines();
-
       chartLines.push(candleSeries.createPriceLine({ price: sr.R1, color: '#f97316', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title: 'R1' }));
       chartLines.push(candleSeries.createPriceLine({ price: sr.R2, color: '#fb923c', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'R2' }));
       chartLines.push(candleSeries.createPriceLine({ price: sr.S1, color: '#ec4899', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title: 'S1' }));
@@ -775,7 +914,6 @@ Volume: ${volInfo.label}
 Explain in 2 short lines in English. If no valid entry: say only "No valid entry right now. Wait for a clear setup." If entry exists: briefly describe the pullback + bigger rejection candle + confirmation logic and volume context.`;
 
       const aiResponse = await fetchGeminiAiAnalysis(prompt);
-
       spinner.classList.add('hidden');
       btnText.innerText = "Scan Market Setup";
       isAnalyzing = false;
@@ -791,7 +929,6 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
               <span class="text-xs font-bold text-slate-400">${currentSymbol} (${currentTimeframe}):</span>
               <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">⏳ NO VALID ENTRY — WAIT</span>
             </div>
-
             <div class="grid grid-cols-3 gap-2 text-center font-mono text-[11px]">
               <div class="bg-slate-900 p-2 rounded border border-slate-800">
                 <span class="block text-slate-500 text-[10px]">TREND</span>
@@ -806,7 +943,6 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
                 <strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong>
               </div>
             </div>
-
             <div class="p-2.5 bg-slate-900 rounded-lg border border-white/20 text-center">
               <p class="text-[11px] text-white italic">🤖 AI: ${aiResponse || waitReason}</p>
             </div>
@@ -830,9 +966,7 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
               ${isBullish ? '🚀 LIVE BUY ENTRY' : '📉 LIVE SELL ENTRY'}
             </span>
           </div>
-
           <div class="text-[11px] text-slate-400 font-bold">📍 ${strategy.note}</div>
-
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
             <div class="bg-slate-900 p-2 rounded border border-slate-800">
               <span class="block text-slate-500 text-[10px]">ENTRY</span>
@@ -851,7 +985,6 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
               <strong class="text-rose-400 price-value">$${formatPrice(sl)}</strong>
             </div>
           </div>
-
           <div class="grid grid-cols-2 gap-2 text-center font-mono text-[11px]">
             <div class="bg-slate-900 p-2 rounded border border-slate-800">
               <span class="block text-slate-500 text-[10px]">VOLUME</span>
@@ -862,7 +995,6 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
               <strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong>
             </div>
           </div>
-
           ${aiResponse ? `<div class="p-2.5 bg-slate-900 rounded-lg border border-indigo-500/30 text-center"><p class="text-[11px] text-indigo-300 italic">🤖 AI: ${aiResponse}</p></div>` : ''}
         </div>
       `;
@@ -892,7 +1024,6 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
     function changeAsset(symbol, name) {
       currentSymbol = symbol;
       currentAssetName = name;
-
       allSymbols.forEach(s => {
         const btn = document.getElementById(`btn-${s}`);
         if (btn) {
@@ -901,7 +1032,6 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
             : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
         }
       });
-
       buildDarkCanvasChart();
       loadAssetData();
     }
