@@ -47,7 +47,7 @@
       </div>
     </div>
     <h1 class="mt-6 text-2xl font-black tracking-wider text-white">Pulse<span class="text-indigo-500"> Alpha</span></h1>
-    <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase animate-pulse">Authenticating Session...</p>
+    <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase animate-pulse">Restoring Session...</p>
   </div>
 
   <!-- 1. AUTH CONTAINER -->
@@ -225,7 +225,7 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // Persist login across refresh
+    // ✅ Persist login across refresh & browser restart (IndexedDB)
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => console.warn('persistence', e));
 
     // ===== STATE =====
@@ -253,6 +253,34 @@
         splash.classList.add('fade-out');
         setTimeout(() => splash.remove(), 500);
       }
+    }
+
+    function setSplashStatus(text) {
+      const el = document.getElementById('splash-status');
+      if (el) el.innerText = text;
+    }
+
+    // ===== LOCAL STORAGE USER CACHE =====
+    // User data ko localStorage mein rakhte hain taaki splash screen par
+    // turant UI decide kar sakein — baar-baar login nahi maangega.
+    const LS_USER_KEY = 'pulse_alpha_user';
+
+    function cacheUser(data) {
+      try {
+        if (data) localStorage.setItem(LS_USER_KEY, JSON.stringify(data));
+        else localStorage.removeItem(LS_USER_KEY);
+      } catch(e){}
+    }
+
+    function getCachedUser() {
+      try {
+        const raw = localStorage.getItem(LS_USER_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch(e){ return null; }
+    }
+
+    function clearUserCache() {
+      try { localStorage.removeItem(LS_USER_KEY); } catch(e){}
     }
 
     // ===== AUTH UI =====
@@ -339,14 +367,16 @@
             isPreApproved = preSnap.exists();
           } catch (e) { console.warn('Pre-approval check failed:', e); }
 
-          await db.ref('users/' + uid).set({
+          const userData = {
             name: name,
             mobile: mobile,
             email: email,
             status: isPreApproved ? 'approved' : 'pending',
             approved: isPreApproved,
-            createdAt: firebase.database.ServerValue.TIMESTAMP
-          });
+            createdAt: Date.now()
+          };
+          await db.ref('users/' + uid).set(userData);
+          cacheUser(userData);
         } catch (err) {
           console.error('Signup error:', err);
           let msg = 'Signup failed. Please try again.';
@@ -363,6 +393,7 @@
         btn.disabled = true;
         try {
           await auth.signInWithEmailAndPassword(email, password);
+          // onAuthStateChanged handles the rest
         } catch (err) {
           console.error('Login error:', err);
           let msg = 'Login failed. Check your email and password.';
@@ -379,47 +410,31 @@
       }
     };
 
-    // ===== LOGOUT (fully resets app state) =====
+    // ===== LOGOUT =====
     window.handleLogout = async function () {
       if (isLoggingOut) return;
       isLoggingOut = true;
 
       try {
-        // 1. Remove DB listener
         if (userStatusListener) {
           try { userStatusListener.off(); } catch(e){}
           userStatusListener = null;
         }
-
-        // 2. Close websocket
         if (ws) {
           try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){}
           ws = null;
         }
+        if (darkChart) { try { darkChart.remove(); } catch(e){} }
+        darkChart = null; candleSeries = null; ema9Series = null; ema20Series = null;
+        chartLines = []; currentCandles = []; currentVolumes = []; chartBootstrapped = false;
 
-        // 3. Destroy chart instance so next login rebuilds fresh
-        if (darkChart) {
-          try { darkChart.remove(); } catch(e){}
-        }
-        darkChart = null;
-        candleSeries = null;
-        ema9Series = null;
-        ema20Series = null;
-        chartLines = [];
-        currentCandles = [];
-        currentVolumes = [];
-        chartBootstrapped = false;
-
-        // 4. Sign out from Firebase
+        clearUserCache();
         await auth.signOut();
-
-        // 5. Immediately force auth screen (don't rely only on listener)
         showScreen('auth');
       } catch (err) {
         console.error('Logout error:', err);
         showScreen('auth');
       } finally {
-        // Reset flag after a short delay so subsequent login works
         setTimeout(() => { isLoggingOut = false; }, 800);
       }
     };
@@ -446,7 +461,6 @@
         btn.disabled = false;
         document.getElementById('auth-toggle-text').innerText = "Don't have an account?";
         document.getElementById('auth-toggle-btn').innerText = 'Sign Up';
-        // Clear form fields
         document.getElementById('input-email').value = '';
         document.getElementById('input-password').value = '';
         document.getElementById('input-name').value = '';
@@ -468,55 +482,71 @@
       }
     }
 
-    // ===== AUTH STATE LISTENER =====
+    // ===== AUTH STATE LISTENER (runs immediately on page load) =====
+    // Firebase yahan session ko localStorage/IndexedDB se restore karta hai.
+    // User ko dobara login karne ki zaroorat nahi padti.
     auth.onAuthStateChanged(async (user) => {
-      hideSplashScreen();
-
       if (userStatusListener) { try { userStatusListener.off(); } catch(e){} userStatusListener = null; }
 
+      // ---------- NO USER ----------
       if (!user) {
-        // If we are mid-logout, let handleLogout control the screen
+        clearUserCache();
+        hideSplashScreen();
         if (!isLoggingOut) showScreen('auth');
         return;
       }
 
-      console.log('🔐 Logged in UID:', user.uid);
-      const userRef = db.ref('users/' + user.uid);
+      // ---------- USER EXISTS ----------
+      setSplashStatus('Loading your profile...');
 
+      // Step 1: Cached data se turant screen decide karo (fast path)
+      const cached = getCachedUser();
+      if (cached && cached.uid === user.uid) {
+        showScreen(isUserApproved(cached) ? 'app' : 'pending');
+        hideSplashScreen();
+      }
+
+      // Step 2: Fresh data from DB (background) & update cache
+      const userRef = db.ref('users/' + user.uid);
       try {
         const snap = await userRef.once('value');
         let data = snap.val();
         console.log('📦 DB data for users/' + user.uid + ':', data);
 
         if (!data) {
-          console.warn('⚠️ No user record found — creating pending record');
-          await userRef.set({
+          console.warn('⚠️ No user record — creating pending record');
+          data = {
             name: user.displayName || 'User',
             mobile: '',
             email: user.email,
             status: 'pending',
             approved: false,
-            createdAt: firebase.database.ServerValue.TIMESTAMP
-          });
-          data = { status: 'pending', approved: false };
+            createdAt: Date.now()
+          };
+          await userRef.set(data);
         }
 
+        data.uid = user.uid;
+        cacheUser(data);
+
         const ok = isUserApproved(data);
-        console.log('✅ Approval check →', ok, '| raw status:', data.status, '| approved:', data.approved);
+        console.log('✅ Approval check →', ok, '| raw:', data.status, data.approved);
 
-        if (ok) showScreen('app');
-        else showScreen('pending');
+        showScreen(ok ? 'app' : 'pending');
 
+        // Step 3: Live status updates
         userStatusListener = userRef.on('value', (s) => {
           const val = s.val();
+          if (val) { val.uid = user.uid; cacheUser(val); }
           const okLive = isUserApproved(val);
-          console.log('🔔 Status changed →', { status: val && val.status, approved: val && val.approved, final: okLive });
-          if (okLive) showScreen('app');
-          else showScreen('pending');
+          console.log('🔔 Status changed →', { status: val && val.status, final: okLive });
+          showScreen(okLive ? 'app' : 'pending');
         });
       } catch (err) {
         console.error('❌ Status check failed:', err);
-        showScreen('pending');
+        if (!cached) showScreen('pending');
+      } finally {
+        hideSplashScreen();
       }
     });
 
@@ -979,15 +1009,8 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
         });
       }
 
-      setTimeout(() => {
-        hideSplashScreen();
-        const authEl = document.getElementById('auth-container');
-        const pendingEl = document.getElementById('pending-container');
-        const appEl = document.getElementById('app-container');
-        if (authEl.classList.contains('hidden') && pendingEl.classList.contains('hidden') && appEl.classList.contains('hidden')) {
-          showScreen('auth');
-        }
-      }, 3000);
+      // ⚠️ Yahan pehle ek 3-second fallback tha jo galat screen dikhata tha.
+      // Ab yeh hata diya — sirf onAuthStateChanged screen decide karega.
     });
   </script>
 </body>
