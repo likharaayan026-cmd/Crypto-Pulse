@@ -105,7 +105,12 @@
           Your account request has been submitted to the administrator. Once approved, access will be granted automatically.
         </p>
       </div>
-      <button type="button" id="pending-logout-btn" class="mt-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-4 py-2 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
+
+      <button type="button" id="pending-recheck-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition active:scale-95">
+        🔄 Check Approval Status
+      </button>
+
+      <button type="button" id="pending-logout-btn" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-4 py-2 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
         Logout
       </button>
     </div>
@@ -287,6 +292,24 @@
       }
     };
 
+    // ===== EMAIL KEY (matches admin panel format) =====
+    function emailToKey(email) {
+      return email.toLowerCase().trim().replace(/\./g, '_dot_').replace(/@/g, '_at_');
+    }
+
+    // ===== NORMALIZE STATUS =====
+    // Accepts: "approved", "Approved", "APPROVED " -> true
+    // Also accepts boolean approved:true / string "true"
+    function isUserApproved(data) {
+      if (!data) return false;
+      const st = data.status ? data.status.toString().toLowerCase().trim() : '';
+      if (st === 'approved') return true;
+      const ap = data.approved;
+      if (ap === true) return true;
+      if (typeof ap === 'string' && ap.toLowerCase().trim() === 'true') return true;
+      return false;
+    }
+
     // ===== SIGN UP / LOGIN =====
     window.handleAuth = async function (event) {
       event.preventDefault();
@@ -310,12 +333,25 @@
         try {
           const cred = await auth.createUserWithEmailAndPassword(email, password);
           const uid = cred.user.uid;
+
+          // Check if this email was pre-approved by admin
+          let isPreApproved = false;
+          try {
+            const preSnap = await db.ref('pre_approved_emails/' + emailToKey(email)).once('value');
+            isPreApproved = preSnap.exists();
+          } catch (e) {
+            console.warn('Pre-approval check failed:', e);
+          }
+
           await db.ref('users/' + uid).set({
-            name: name, mobile: mobile, email: email,
-            status: 'pending',
+            name: name,
+            mobile: mobile,
+            email: email,
+            status: isPreApproved ? 'approved' : 'pending',
+            approved: isPreApproved,
             createdAt: firebase.database.ServerValue.TIMESTAMP
           });
-          // Auth listener handles screen switch
+          // onAuthStateChanged will handle screen switch
         } catch (err) {
           console.error('Signup error:', err);
           let msg = 'Signup failed. Please try again.';
@@ -332,7 +368,7 @@
         btn.disabled = true;
         try {
           await auth.signInWithEmailAndPassword(email, password);
-          // Auth listener handles screen switch
+          // onAuthStateChanged will handle screen switch
         } catch (err) {
           console.error('Login error:', err);
           let msg = 'Login failed. Check your email and password.';
@@ -372,7 +408,6 @@
       appEl.classList.remove('flex');
 
       if (screen === 'auth') {
-        // reset UI to login mode
         isSignupMode = false;
         document.getElementById('auth-title').innerText = 'Welcome Back';
         document.getElementById('auth-subtitle').innerText = 'Log in to access live market analytics';
@@ -411,33 +446,42 @@
         return;
       }
 
+      console.log('🔐 Logged in UID:', user.uid);
       const userRef = db.ref('users/' + user.uid);
 
       try {
         const snap = await userRef.once('value');
         let data = snap.val();
+        console.log('📦 DB data for users/' + user.uid + ':', data);
 
         if (!data) {
+          console.warn('⚠️ No user record found — creating pending record');
           await userRef.set({
             name: user.displayName || 'User',
             mobile: '',
             email: user.email,
             status: 'pending',
+            approved: false,
             createdAt: firebase.database.ServerValue.TIMESTAMP
           });
-          data = { status: 'pending' };
+          data = { status: 'pending', approved: false };
         }
 
-        if (data.status === 'approved') showScreen('app');
+        const ok = isUserApproved(data);
+        console.log('✅ Approval check →', ok, '| raw status:', data.status, '| approved:', data.approved);
+
+        if (ok) showScreen('app');
         else showScreen('pending');
 
         userStatusListener = userRef.on('value', (s) => {
           const val = s.val();
-          if (val && val.status === 'approved') showScreen('app');
+          const okLive = isUserApproved(val);
+          console.log('🔔 Status changed →', { status: val && val.status, approved: val && val.approved, final: okLive });
+          if (okLive) showScreen('app');
           else showScreen('pending');
         });
       } catch (err) {
-        console.error('Status check failed:', err);
+        console.error('❌ Status check failed:', err);
         showScreen('pending');
       }
     });
@@ -860,7 +904,7 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
       loadAssetData();
     };
 
-    // ===== WIRE UP BUTTONS & FORM =====
+    // ===== WIRE UP BUTTONS =====
     window.addEventListener('DOMContentLoaded', () => {
       const authForm = document.getElementById('auth-form');
       if (authForm) authForm.addEventListener('submit', window.handleAuth);
@@ -874,7 +918,33 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
       const pendingLogout = document.getElementById('pending-logout-btn');
       if (pendingLogout) pendingLogout.addEventListener('click', window.handleLogout);
 
-      // Safety timeout: if auth hasn't resolved in 3s, hide splash and show auth
+      // Manual re-check button on pending screen
+      const pendingRecheck = document.getElementById('pending-recheck-btn');
+      if (pendingRecheck) {
+        pendingRecheck.addEventListener('click', async () => {
+          const user = auth.currentUser;
+          if (!user) return;
+          const orig = '🔄 Check Approval Status';
+          pendingRecheck.innerText = 'Checking...';
+          try {
+            const snap = await db.ref('users/' + user.uid).once('value');
+            const data = snap.val();
+            console.log('🔄 Manual recheck:', data);
+            if (isUserApproved(data)) {
+              showScreen('app');
+            } else {
+              pendingRecheck.innerText = '⏳ Still Pending — Try Again';
+              setTimeout(() => { pendingRecheck.innerText = orig; }, 2000);
+            }
+          } catch (e) {
+            console.error(e);
+            pendingRecheck.innerText = '❌ Error — Try Again';
+            setTimeout(() => { pendingRecheck.innerText = orig; }, 2000);
+          }
+        });
+      }
+
+      // Safety timeout — show auth if nothing rendered in 3s
       setTimeout(() => {
         hideSplashScreen();
         const authEl = document.getElementById('auth-container');
