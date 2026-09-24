@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -20,34 +19,21 @@
       background-color: #030712;
       height: 100%;
     }
-    .fade-out {
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s ease-out;
-    }
+    .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
     .glass-card {
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .tv-lightweight-charts-legend {
-      display: none !important;
-    }
-    #chart-wrapper {
-      touch-action: none;
-    }
+    .tv-lightweight-charts-legend { display: none !important; }
+    #chart-wrapper { touch-action: none; }
     @keyframes radar-scan {
       0% { transform: translateY(-100%); opacity: 0.3; }
       50% { opacity: 0.8; }
       100% { transform: translateY(100%); opacity: 0.3; }
     }
-    .animate-radar {
-      animation: radar-scan 1.5s infinite ease-in-out;
-    }
-    .price-value {
-      word-break: break-all;
-      white-space: normal;
-    }
+    .animate-radar { animation: radar-scan 1.5s infinite ease-in-out; }
+    .price-value { word-break: break-all; white-space: normal; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
@@ -66,13 +52,13 @@
 
   <!-- 1. AUTH CONTAINER -->
   <div id="auth-container" class="hidden fixed inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="glass-card w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 transform transition-all duration-300">
+    <div class="glass-card w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6">
       <div class="text-center space-y-1">
         <h2 id="auth-title" class="text-2xl font-black text-white tracking-tight">Welcome Back</h2>
         <p id="auth-subtitle" class="text-xs text-slate-400">Log in to access live market analytics</p>
       </div>
 
-      <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+      <form id="auth-form" class="space-y-4">
         <div id="field-name" class="hidden space-y-1">
           <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
           <input type="text" id="input-name" placeholder="John Doe" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
@@ -103,49 +89,43 @@
       <div class="text-center pt-2 border-t border-slate-800/80">
         <p class="text-xs text-slate-400">
           <span id="auth-toggle-text">Don't have an account?</span>
-          <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-indigo-400 font-bold ml-1 hover:underline">Sign Up</button>
+          <button type="button" id="auth-toggle-btn" class="text-indigo-400 font-bold ml-1 hover:underline">Sign Up</button>
         </p>
       </div>
     </div>
   </div>
 
-  <!-- 2. PENDING APPROVAL CONTAINER -->
+  <!-- 2. PENDING APPROVAL -->
   <div id="pending-container" class="hidden fixed inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl text-center space-y-5 border border-amber-500/20">
-      <div class="w-20 h-20 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full flex items-center justify-center mx-auto text-3xl font-bold animate-pulse">
-        ⏳
-      </div>
+      <div class="w-20 h-20 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full flex items-center justify-center mx-auto text-3xl font-bold animate-pulse">⏳</div>
       <div class="space-y-2">
         <h2 class="text-2xl font-black text-white tracking-tight">Approval Pending</h2>
         <p class="text-xs text-slate-400 leading-relaxed">
           Your account request has been submitted to the administrator. Once approved, access will be granted automatically.
         </p>
       </div>
-      <button onclick="handleLogout()" class="mt-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-4 py-2 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
+      <button type="button" id="pending-logout-btn" class="mt-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-4 py-2 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
         Logout
       </button>
     </div>
   </div>
 
-  <!-- 3. MAIN TERMINAL DASHBOARD -->
+  <!-- 3. MAIN DASHBOARD -->
   <div id="app-container" class="hidden flex-col min-h-screen">
-
     <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
       <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-500/20">C</div>
           <span class="text-xl font-black text-white tracking-tight">Pulse<span class="text-indigo-500"> Alpha</span></span>
         </div>
-
-        <button onclick="handleLogout()" class="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-3.5 py-1.5 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
+        <button type="button" id="header-logout-btn" class="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-3.5 py-1.5 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
           <span>Logout</span>
         </button>
       </div>
     </header>
 
     <main class="flex-grow max-w-7xl mx-auto w-full p-3 sm:p-4 space-y-3">
-
-      <!-- Controls -->
       <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex flex-wrap justify-between items-center gap-2">
         <div class="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
           <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap">ETH/USDT</button>
@@ -172,7 +152,6 @@
         </button>
       </div>
 
-      <!-- Chart Container -->
       <div id="chart-wrapper" class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[380px] relative overflow-hidden">
         <div class="absolute top-3 left-3 z-20 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-md border border-slate-800 text-[11px] font-bold flex items-center gap-3 pointer-events-none">
           <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-1 bg-blue-500 rounded"></span> 9 EMA</span>
@@ -186,7 +165,6 @@
         <div id="tv-dark-chart" class="w-full h-full"></div>
       </div>
 
-      <!-- Analysis Metrics -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
           <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
@@ -214,10 +192,8 @@
           </div>
         </div>
       </div>
-
     </main>
 
-    <!-- Footer Hyperlink -->
     <footer class="bg-slate-900 border-t border-slate-800/80 py-3 mt-auto">
       <div class="max-w-7xl mx-auto px-4 text-center">
         <p class="text-[11px] text-slate-500 font-medium">
@@ -227,7 +203,6 @@
         </p>
       </div>
     </footer>
-
   </div>
 
   <script>
@@ -241,63 +216,50 @@
       appId: "1:425238806262:web:7d23814e4b550695bb76d7"
     };
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // ===== AUTH STATE =====
-    let isSignupMode = false;
-    let currentUser = null;
-    let userStatusListener = null;
+    // Persist login across refresh
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => console.warn('persistence', e));
 
+    // ===== STATE =====
+    let isSignupMode = false;
+    let userStatusListener = null;
     let currentSymbol = 'ETHUSDT';
     let currentAssetName = 'Ethereum';
     let currentTimeframe = '15m';
     let isAnalyzing = false;
-    let darkChart = null;
-    let candleSeries = null;
-    let ema9Series = null;
-    let ema20Series = null;
+    let darkChart = null, candleSeries = null, ema9Series = null, ema20Series = null;
     let chartLines = [];
     let ws = null;
-    let currentCandles = [];
-    let currentVolumes = [];
+    let currentCandles = [], currentVolumes = [];
+    let chartBootstrapped = false;
 
-    const allSymbols = [
-      'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'TAOUSDT',
-      'AAVEUSDT', 'AVAXUSDT', 'ZECUSDT', 'PAXGUSDT'
-    ];
+    const allSymbols = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','TAOUSDT','AAVEUSDT','AVAXUSDT','ZECUSDT','PAXGUSDT'];
+    const twoDecimalSymbols = ['BTCUSDT','ETHUSDT','SOLUSDT','PAXGUSDT'];
+    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-    const twoDecimalSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'PAXGUSDT'];
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
+    // ===== SPLASH =====
     function hideSplashScreen() {
       const splash = document.getElementById('splash-screen');
-      if (splash) {
+      if (splash && !splash.classList.contains('fade-out')) {
         splash.classList.add('fade-out');
         setTimeout(() => splash.remove(), 500);
       }
     }
 
-    // ===== AUTH UI HELPERS =====
+    // ===== AUTH UI =====
     function showAuthError(msg) {
       const el = document.getElementById('auth-error');
       if (!el) return;
-      if (msg) {
-        el.innerText = msg;
-        el.classList.remove('hidden');
-      } else {
-        el.innerText = '';
-        el.classList.add('hidden');
-      }
+      if (msg) { el.innerText = msg; el.classList.remove('hidden'); }
+      else { el.innerText = ''; el.classList.add('hidden'); }
     }
 
-    function toggleAuthMode() {
+    window.toggleAuthMode = function () {
       isSignupMode = !isSignupMode;
       showAuthError('');
-
       const title = document.getElementById('auth-title');
       const subtitle = document.getElementById('auth-subtitle');
       const nameField = document.getElementById('field-name');
@@ -323,10 +285,10 @@
         toggleText.innerText = "Don't have an account?";
         toggleBtn.innerText = 'Sign Up';
       }
-    }
+    };
 
-    // ===== HANDLE AUTH (LOGIN + SIGNUP) =====
-    async function handleAuth(event) {
+    // ===== SIGN UP / LOGIN =====
+    window.handleAuth = async function (event) {
       event.preventDefault();
       showAuthError('');
 
@@ -339,40 +301,28 @@
         const name = document.getElementById('input-name').value.trim();
         const mobile = document.getElementById('input-mobile').value.trim();
 
-        if (!name || name.length < 2) {
-          showAuthError('Please enter your full name.');
-          return;
-        }
-        if (!/^[0-9]{10}$/.test(mobile)) {
-          showAuthError('Please enter a valid 10-digit mobile number.');
-          return;
-        }
-        if (password.length < 6) {
-          showAuthError('Password must be at least 6 characters.');
-          return;
-        }
+        if (!name || name.length < 2) return showAuthError('Please enter your full name.');
+        if (!/^[0-9]{10}$/.test(mobile)) return showAuthError('Please enter a valid 10-digit mobile number.');
+        if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
 
         btn.innerText = 'Creating...';
         btn.disabled = true;
-
         try {
           const cred = await auth.createUserWithEmailAndPassword(email, password);
           const uid = cred.user.uid;
-
           await db.ref('users/' + uid).set({
-            name: name,
-            mobile: mobile,
-            email: email,
+            name: name, mobile: mobile, email: email,
             status: 'pending',
             createdAt: firebase.database.ServerValue.TIMESTAMP
           });
-          // onAuthStateChanged handles the rest
+          // Auth listener handles screen switch
         } catch (err) {
           console.error('Signup error:', err);
           let msg = 'Signup failed. Please try again.';
           if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please log in.';
           else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
           else if (err.code === 'auth/weak-password') msg = 'Password is too weak.';
+          else if (err.code === 'auth/operation-not-allowed') msg = 'Email/Password sign-in is disabled in Firebase Console. Enable it.';
           showAuthError(msg);
           btn.innerText = originalText;
           btn.disabled = false;
@@ -382,40 +332,35 @@
         btn.disabled = true;
         try {
           await auth.signInWithEmailAndPassword(email, password);
-          // onAuthStateChanged handles the rest
+          // Auth listener handles screen switch
         } catch (err) {
           console.error('Login error:', err);
           let msg = 'Login failed. Check your email and password.';
           if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
           else if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';
           else if (err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+          else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
           else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+          else if (err.code === 'auth/operation-not-allowed') msg = 'Email/Password sign-in is disabled in Firebase Console.';
           showAuthError(msg);
           btn.innerText = originalText;
           btn.disabled = false;
         }
       }
-    }
+    };
 
     // ===== LOGOUT =====
-    async function handleLogout() {
+    window.handleLogout = async function () {
       try {
-        if (userStatusListener) {
-          userStatusListener.off();
-          userStatusListener = null;
-        }
-        if (ws) {
-          ws.onclose = null;
-          ws.close();
-          ws = null;
-        }
+        if (userStatusListener) { userStatusListener.off(); userStatusListener = null; }
+        if (ws) { try { ws.onclose = null; ws.close(); } catch(e){} ws = null; }
         await auth.signOut();
       } catch (err) {
         console.error('Logout error:', err);
       }
-    }
+    };
 
-    // ===== SHOW/HIDE SCREENS =====
+    // ===== SCREENS =====
     function showScreen(screen) {
       const authEl = document.getElementById('auth-container');
       const pendingEl = document.getElementById('pending-container');
@@ -427,105 +372,82 @@
       appEl.classList.remove('flex');
 
       if (screen === 'auth') {
-        // reset form UI
+        // reset UI to login mode
         isSignupMode = false;
-        const title = document.getElementById('auth-title');
-        const subtitle = document.getElementById('auth-subtitle');
-        const nameField = document.getElementById('field-name');
-        const mobileField = document.getElementById('field-mobile');
+        document.getElementById('auth-title').innerText = 'Welcome Back';
+        document.getElementById('auth-subtitle').innerText = 'Log in to access live market analytics';
+        document.getElementById('field-name').classList.add('hidden');
+        document.getElementById('field-mobile').classList.add('hidden');
         const btn = document.getElementById('auth-btn');
-        const toggleText = document.getElementById('auth-toggle-text');
-        const toggleBtn = document.getElementById('auth-toggle-btn');
-        if (title) title.innerText = 'Welcome Back';
-        if (subtitle) subtitle.innerText = 'Log in to access live market analytics';
-        if (nameField) nameField.classList.add('hidden');
-        if (mobileField) mobileField.classList.add('hidden');
-        if (btn) { btn.innerText = 'Log In'; btn.disabled = false; }
-        if (toggleText) toggleText.innerText = "Don't have an account?";
-        if (toggleBtn) toggleBtn.innerText = 'Sign Up';
+        btn.innerText = 'Log In';
+        btn.disabled = false;
+        document.getElementById('auth-toggle-text').innerText = "Don't have an account?";
+        document.getElementById('auth-toggle-btn').innerText = 'Sign Up';
         showAuthError('');
-
         authEl.classList.remove('hidden');
       } else if (screen === 'pending') {
         pendingEl.classList.remove('hidden');
       } else if (screen === 'app') {
         appEl.classList.remove('hidden');
         appEl.classList.add('flex');
-        if (!darkChart) {
-          buildDarkCanvasChart();
-          loadAssetData();
+        if (!chartBootstrapped) {
+          chartBootstrapped = true;
+          setTimeout(() => {
+            buildDarkCanvasChart();
+            loadAssetData();
+          }, 50);
         }
       }
     }
 
-    // ===== AUTH STATE CHANGE =====
-    window.addEventListener('DOMContentLoaded', () => {
-      auth.onAuthStateChanged(async (user) => {
-        hideSplashScreen();
+    // ===== AUTH STATE LISTENER =====
+    auth.onAuthStateChanged(async (user) => {
+      hideSplashScreen();
 
-        if (userStatusListener) {
-          userStatusListener.off();
-          userStatusListener = null;
-        }
+      if (userStatusListener) { try { userStatusListener.off(); } catch(e){} userStatusListener = null; }
 
-        if (!user) {
-          currentUser = null;
-          showScreen('auth');
-          return;
-        }
+      if (!user) {
+        showScreen('auth');
+        return;
+      }
 
-        currentUser = user;
+      const userRef = db.ref('users/' + user.uid);
 
-        const userRef = db.ref('users/' + user.uid);
+      try {
+        const snap = await userRef.once('value');
+        let data = snap.val();
 
-        try {
-          const snap = await userRef.once('value');
-          let data = snap.val();
-
-          // If no DB record exists (e.g. old account), create a pending record
-          if (!data) {
-            await userRef.set({
-              name: user.displayName || 'User',
-              mobile: '',
-              email: user.email,
-              status: 'pending',
-              createdAt: firebase.database.ServerValue.TIMESTAMP
-            });
-            data = { status: 'pending' };
-          }
-
-          if (data.status === 'approved') {
-            showScreen('app');
-          } else {
-            showScreen('pending');
-          }
-
-          // Live listener for admin approval
-          userStatusListener = userRef.on('value', (s) => {
-            const val = s.val();
-            if (val && val.status === 'approved') {
-              showScreen('app');
-            } else {
-              showScreen('pending');
-            }
+        if (!data) {
+          await userRef.set({
+            name: user.displayName || 'User',
+            mobile: '',
+            email: user.email,
+            status: 'pending',
+            createdAt: firebase.database.ServerValue.TIMESTAMP
           });
-        } catch (err) {
-          console.error('Status check failed:', err);
-          showScreen('pending');
+          data = { status: 'pending' };
         }
-      });
+
+        if (data.status === 'approved') showScreen('app');
+        else showScreen('pending');
+
+        userStatusListener = userRef.on('value', (s) => {
+          const val = s.val();
+          if (val && val.status === 'approved') showScreen('app');
+          else showScreen('pending');
+        });
+      } catch (err) {
+        console.error('Status check failed:', err);
+        showScreen('pending');
+      }
     });
 
-    // ===== PRICE / TIME FORMATTERS =====
+    // ===== FORMATTERS =====
     function formatPrice(price, symbol = currentSymbol) {
-      if (price === undefined || price === null || isNaN(price)) {
-        return twoDecimalSymbols.includes(symbol) ? "0.00" : "0.000";
-      }
+      if (price === undefined || price === null || isNaN(price)) return twoDecimalSymbols.includes(symbol) ? "0.00" : "0.000";
       const num = Number(price);
-      if (twoDecimalSymbols.includes(symbol)) return num.toFixed(2);
-      return num.toFixed(3);
+      return twoDecimalSymbols.includes(symbol) ? num.toFixed(2) : num.toFixed(3);
     }
-
     function formatTimeFull(time) {
       const date = new Date(time * 1000);
       const day = date.getDate().toString().padStart(2, '0');
@@ -533,10 +455,8 @@
       let hours = date.getHours();
       const minutes = date.getMinutes().toString().padStart(2, '0');
       const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-      const strHours = hours.toString().padStart(2, '0');
-      return `${day} ${month}, ${strHours}:${minutes} ${ampm}`;
+      hours = hours % 12 || 12;
+      return `${day} ${month}, ${hours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
     }
 
     // ===== CHART =====
@@ -544,7 +464,7 @@
       const container = document.getElementById('tv-dark-chart');
       if (!container) return;
       container.innerHTML = '';
-      if (darkChart) darkChart.remove();
+      if (darkChart) { try { darkChart.remove(); } catch(e){} darkChart = null; }
 
       darkChart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
@@ -554,14 +474,10 @@
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
         priceScale: { borderColor: '#334155' },
         timeScale: {
-          borderColor: '#334155',
-          timeVisible: true,
-          secondsVisible: false,
+          borderColor: '#334155', timeVisible: true, secondsVisible: false,
           tickMarkFormatter: (time) => formatTimeFull(time)
         },
-        localization: {
-          timeFormatter: (time) => formatTimeFull(time)
-        }
+        localization: { timeFormatter: (time) => formatTimeFull(time) }
       });
 
       candleSeries = darkChart.addCandlestickSeries({
@@ -569,55 +485,42 @@
         borderDownColor: '#ef4444', borderUpColor: '#22c55e',
         wickDownColor: '#ef4444', wickUpColor: '#22c55e',
       });
-
       ema9Series = darkChart.addLineSeries({ color: '#3b82f6', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
       ema20Series = darkChart.addLineSeries({ color: '#ef4444', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
     }
 
     function computeEMA(candles, period) {
       const k = 2 / (period + 1);
-      let emaArray = [];
+      const arr = [];
       let prev = candles[0].close;
       for (let i = 0; i < candles.length; i++) {
         const val = i === 0 ? candles[i].close : (candles[i].close * k) + (prev * (1 - k));
-        emaArray.push({ time: candles[i].time, value: val });
+        arr.push({ time: candles[i].time, value: val });
         prev = val;
       }
-      return emaArray;
+      return arr;
     }
 
     function connectLiveWebSocket() {
-      if (ws) {
-        ws.onopen = null;
-        ws.onmessage = null;
-        ws.onerror = null;
-        ws.onclose = null;
-        ws.close();
-      }
+      if (ws) { try { ws.onclose = null; ws.close(); } catch(e){} }
       const wsSymbol = currentSymbol.toLowerCase();
       ws = new WebSocket(`wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${currentTimeframe}`);
-
       ws.onmessage = (event) => {
         const message = JSON.parse(event.data);
         if (!message || !message.k) return;
         const kline = message.k;
         const candle = {
           time: Math.floor(kline.t / 1000),
-          open: parseFloat(kline.o),
-          high: parseFloat(kline.h),
-          low: parseFloat(kline.l),
-          close: parseFloat(kline.c)
+          open: parseFloat(kline.o), high: parseFloat(kline.h),
+          low: parseFloat(kline.l), close: parseFloat(kline.c)
         };
         const vol = parseFloat(kline.v);
-
         if (currentCandles.length > 0) {
           const lastIdx = currentCandles.length - 1;
           if (currentCandles[lastIdx].time === candle.time) {
-            currentCandles[lastIdx] = candle;
-            currentVolumes[lastIdx] = vol;
+            currentCandles[lastIdx] = candle; currentVolumes[lastIdx] = vol;
           } else if (candle.time > currentCandles[lastIdx].time) {
-            currentCandles.push(candle);
-            currentVolumes.push(vol);
+            currentCandles.push(candle); currentVolumes.push(vol);
           }
           candleSeries.update(candle);
           ema9Series.setData(computeEMA(currentCandles, 9));
@@ -626,7 +529,7 @@
       };
     }
 
-    // ===== STRATEGY HELPERS =====
+    // ===== STRATEGY =====
     function calculate2Support2Resistance(candles) {
       const recent = candles.slice(-40, -1);
       const sortedHighs = recent.map(c => c.high).sort((a, b) => b - a);
@@ -643,27 +546,21 @@
       if (len < 80) return { valid: false, reason: 'Not enough data' };
       const ema9Vals = computeEMA(candles, 9);
       const ema20Vals = computeEMA(candles, 20);
-      const lookback = 40;
-      const startIdx = len - lookback - 2;
+      const startIdx = len - 40 - 2;
       if (startIdx < 2) return { valid: false, reason: 'Not enough data' };
 
-      let crossIdx = -1;
-      let crossType = null;
+      let crossIdx = -1, crossType = null;
       for (let i = startIdx; i < len - 2; i++) {
-        const e9p = ema9Vals[i - 1].value;
-        const e20p = ema20Vals[i - 1].value;
-        const e9c = ema9Vals[i].value;
-        const e20c = ema20Vals[i].value;
+        const e9p = ema9Vals[i - 1].value, e20p = ema20Vals[i - 1].value;
+        const e9c = ema9Vals[i].value, e20c = ema20Vals[i].value;
         if (e9p <= e20p && e9c > e20c) { crossIdx = i; crossType = 'BULLISH_CROSSOVER'; }
         else if (e9p >= e20p && e9c < e20c) { crossIdx = i; crossType = 'BEARISH_CROSSOVER'; }
       }
       if (crossIdx === -1) return { valid: false, reason: 'No recent 9/20 EMA crossover' };
 
       for (let i = crossIdx + 1; i < len - 1; i++) {
-        const e9p = ema9Vals[i - 1].value;
-        const e20p = ema20Vals[i - 1].value;
-        const e9c = ema9Vals[i].value;
-        const e20c = ema20Vals[i].value;
+        const e9p = ema9Vals[i - 1].value, e20p = ema20Vals[i - 1].value;
+        const e9c = ema9Vals[i].value, e20c = ema20Vals[i].value;
         if (crossType === 'BULLISH_CROSSOVER' && e9p >= e20p && e9c < e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
         if (crossType === 'BEARISH_CROSSOVER' && e9p <= e20p && e9c > e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
       }
@@ -681,34 +578,29 @@
           const isRed = pullback.close < pullback.open;
           const touchedEMA = pullback.low <= pullbackEma9 * 1.005 || pullback.low <= pullbackEma20 * 1.005;
           const isGreen = rejection.close > rejection.open;
-          const biggerThanPullback = rejectBody > pullBody;
-          const closesAboveEma9 = rejection.close > rejectEma9;
-          if (isRed && touchedEMA && isGreen && biggerThanPullback && closesAboveEma9) {
+          const bigger = rejectBody > pullBody;
+          const closesAbove = rejection.close > rejectEma9;
+          if (isRed && touchedEMA && isGreen && bigger && closesAbove) {
             const lastClosed = candles[len - 2];
-            const breaksConfirmHigh = lastClosed.close > rejection.high;
-            const e9Now = ema9Vals[len - 2].value;
-            const e20Now = ema20Vals[len - 2].value;
-            const aligned = e9Now > e20Now;
-            if (breaksConfirmHigh && aligned) {
+            const breaks = lastClosed.close > rejection.high;
+            const aligned = ema9Vals[len - 2].value > ema20Vals[len - 2].value;
+            if (breaks && aligned) {
               const swingLow = Math.min(pullback.low, rejection.low);
               return { valid: true, type: 'BULLISH_EMA_SETUP', entry: rejection.high, sl: swingLow * 0.998, note: '9/20 EMA Bullish Crossover → Red Pullback → Bigger Green Rejection → Confirmation High Break' };
             }
           }
         }
-
         if (crossType === 'BEARISH_CROSSOVER') {
           const isGreen = pullback.close > pullback.open;
           const touchedEMA = pullback.high >= pullbackEma9 * 0.995 || pullback.high >= pullbackEma20 * 0.995;
           const isRed = rejection.close < rejection.open;
-          const biggerThanPullback = rejectBody > pullBody;
-          const closesBelowEma9 = rejection.close < rejectEma9;
-          if (isGreen && touchedEMA && isRed && biggerThanPullback && closesBelowEma9) {
+          const bigger = rejectBody > pullBody;
+          const closesBelow = rejection.close < rejectEma9;
+          if (isGreen && touchedEMA && isRed && bigger && closesBelow) {
             const lastClosed = candles[len - 2];
-            const breaksConfirmLow = lastClosed.close < rejection.low;
-            const e9Now = ema9Vals[len - 2].value;
-            const e20Now = ema20Vals[len - 2].value;
-            const aligned = e9Now < e20Now;
-            if (breaksConfirmLow && aligned) {
+            const breaks = lastClosed.close < rejection.low;
+            const aligned = ema9Vals[len - 2].value < ema20Vals[len - 2].value;
+            if (breaks && aligned) {
               const swingHigh = Math.max(pullback.high, rejection.high);
               return { valid: true, type: 'BEARISH_EMA_SETUP', entry: rejection.low, sl: swingHigh * 1.002, note: '9/20 EMA Bearish Crossover → Green Pullback → Bigger Red Rejection → Confirmation Low Break' };
             }
@@ -725,17 +617,12 @@
       const ema20Vals = computeEMA(candles, 20);
       let crosses = 0;
       for (let i = len - 30; i < len - 1; i++) {
-        const e9p = ema9Vals[i - 1].value;
-        const e20p = ema20Vals[i - 1].value;
-        const e9c = ema9Vals[i].value;
-        const e20c = ema20Vals[i].value;
+        const e9p = ema9Vals[i - 1].value, e20p = ema20Vals[i - 1].value;
+        const e9c = ema9Vals[i].value, e20c = ema20Vals[i].value;
         if ((e9p <= e20p && e9c > e20c) || (e9p >= e20p && e9c < e20c)) crosses++;
       }
-      const e9Now = ema9Vals[len - 2].value;
-      const e20Now = ema20Vals[len - 2].value;
-      const sep = Math.abs(e9Now - e20Now) / e20Now;
-      if (crosses >= 3 || sep < 0.0015) return true;
-      return false;
+      const sep = Math.abs(ema9Vals[len - 2].value - ema20Vals[len - 2].value) / ema20Vals[len - 2].value;
+      return crosses >= 3 || sep < 0.0015;
     }
 
     function detectLiquiditySweep(candles) {
@@ -747,14 +634,11 @@
       const highestHigh = Math.max(...prevCandles.map(c => c.high));
       const ema9Vals = computeEMA(candles, 9);
       const ema20Vals = computeEMA(candles, 20);
-      const ema9 = ema9Vals[len - 2].value;
-      const ema20 = ema20Vals[len - 2].value;
-      if (sweepCandle.low < lowestLow && sweepCandle.close > lowestLow && sweepCandle.close > ema9 && ema9 > ema20) {
+      const ema9 = ema9Vals[len - 2].value, ema20 = ema20Vals[len - 2].value;
+      if (sweepCandle.low < lowestLow && sweepCandle.close > lowestLow && sweepCandle.close > ema9 && ema9 > ema20)
         return { swept: true, type: 'BULLISH_SWEEP', sweepLevel: lowestLow };
-      }
-      if (sweepCandle.high > highestHigh && sweepCandle.close < highestHigh && sweepCandle.close < ema9 && ema9 < ema20) {
+      if (sweepCandle.high > highestHigh && sweepCandle.close < highestHigh && sweepCandle.close < ema9 && ema9 < ema20)
         return { swept: true, type: 'BEARISH_SWEEP', sweepLevel: highestHigh };
-      }
       return { swept: false, type: 'NONE' };
     }
 
@@ -773,21 +657,16 @@
       resetAnalysisUI();
       const loadingEl = document.getElementById('chart-loading');
       if (loadingEl) loadingEl.classList.remove('hidden');
-
       try {
         const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&limit=1500`;
         const res = await fetch(url);
         const raw = await res.json();
-
         currentCandles = raw.map(d => ({
           time: Math.floor(d[0] / 1000),
-          open: parseFloat(d[1]),
-          high: parseFloat(d[2]),
-          low: parseFloat(d[3]),
-          close: parseFloat(d[4])
+          open: parseFloat(d[1]), high: parseFloat(d[2]),
+          low: parseFloat(d[3]), close: parseFloat(d[4])
         }));
         currentVolumes = raw.map(d => parseFloat(d[5]));
-
         candleSeries.setData(currentCandles);
         ema9Series.setData(computeEMA(currentCandles, 9));
         ema20Series.setData(computeEMA(currentCandles, 20));
@@ -803,27 +682,20 @@
     function resetAnalysisUI() {
       clearCanvasLines();
       const out = document.getElementById('ai-analysis-output');
-      if (out) {
-        out.innerHTML = `
-          <div class="text-center">
-            <h4 class="font-bold text-slate-300 text-xs">New Market Loaded</h4>
-            <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to analyze ${currentSymbol} on ${currentTimeframe}.</p>
-          </div>
-        `;
-      }
-      document.getElementById('metric-ema').innerText = '--';
-      document.getElementById('metric-ema').className = 'text-slate-300';
-      document.getElementById('metric-sweep').innerText = '--';
-      document.getElementById('metric-sweep').className = 'text-slate-300';
-      document.getElementById('metric-volatility').innerText = '--';
-      document.getElementById('metric-volatility').className = 'text-slate-300';
-      document.getElementById('metric-volume').innerText = '--';
-      document.getElementById('metric-volume').className = 'text-slate-300';
+      if (out) out.innerHTML = `
+        <div class="text-center">
+          <h4 class="font-bold text-slate-300 text-xs">New Market Loaded</h4>
+          <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to analyze ${currentSymbol} on ${currentTimeframe}.</p>
+        </div>`;
+      ['metric-ema','metric-sweep','metric-volatility','metric-volume'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.innerText = '--'; el.className = 'text-slate-300'; }
+      });
     }
 
     function clearCanvasLines() {
       if (!candleSeries) return;
-      chartLines.forEach(l => candleSeries.removePriceLine(l));
+      chartLines.forEach(l => { try { candleSeries.removePriceLine(l); } catch(e){} });
       chartLines = [];
     }
 
@@ -838,12 +710,10 @@
         });
         const data = await response.json();
         return data.candidates[0].content.parts[0].text;
-      } catch (e) {
-        return null;
-      }
+      } catch (e) { return null; }
     }
 
-    async function runAnalysisEngine() {
+    window.runAnalysisEngine = async function () {
       if (isAnalyzing || currentCandles.length < 80) return;
       isAnalyzing = true;
       const output = document.getElementById('ai-analysis-output');
@@ -859,43 +729,39 @@
           <div class="flex items-center gap-2 text-amber-400 font-bold text-xs animate-pulse">
             <span>⚡ AI checking crossover → pullback → bigger rejection → confirmation...</span>
           </div>
-        </div>
-      `;
-      await new Promise(resolve => setTimeout(resolve, 3000));
+        </div>`;
+      await new Promise(r => setTimeout(r, 3000));
 
       const len = currentCandles.length;
       const ema9Vals = computeEMA(currentCandles, 9);
       const ema20Vals = computeEMA(currentCandles, 20);
-      const closedEma9 = ema9Vals[len - 2].value;
-      const closedEma20 = ema20Vals[len - 2].value;
+      const isBullishTrend = ema9Vals[len - 2].value > ema20Vals[len - 2].value;
       const sr = calculate2Support2Resistance(currentCandles);
       const sweep = detectLiquiditySweep(currentCandles);
       const strategy = detectEmaStrategy(currentCandles);
       const volInfo = calculateVolumeMeter(currentVolumes);
       const isChoppy = detectChoppyMarket(currentCandles);
-      const isBullishTrend = closedEma9 > closedEma20;
 
-      document.getElementById('metric-ema').innerText = isBullishTrend ? "Bullish (9 > 20 EMA)" : "Bearish (9 < 20 EMA)";
-      document.getElementById('metric-ema').className = isBullishTrend ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+      const emaEl = document.getElementById('metric-ema');
+      emaEl.innerText = isBullishTrend ? "Bullish (9 > 20 EMA)" : "Bearish (9 < 20 EMA)";
+      emaEl.className = isBullishTrend ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
 
+      const swEl = document.getElementById('metric-sweep');
       if (sweep.swept) {
-        document.getElementById('metric-sweep').innerText = sweep.type === 'BULLISH_SWEEP' ? "Bullish Sweep" : "Bearish Sweep";
-        document.getElementById('metric-sweep').className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-      } else {
-        document.getElementById('metric-sweep').innerText = "No Sweep";
-        document.getElementById('metric-sweep').className = "text-slate-300";
-      }
+        swEl.innerText = sweep.type === 'BULLISH_SWEEP' ? "Bullish Sweep" : "Bearish Sweep";
+        swEl.className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+      } else { swEl.innerText = "No Sweep"; swEl.className = "text-slate-300"; }
 
       const biasText = strategy.valid
         ? (strategy.type.includes('BULLISH') ? 'BULLISH SETUP' : 'BEARISH SETUP')
         : (isBullishTrend ? 'BULLISH BIAS' : 'BEARISH BIAS');
-      document.getElementById('metric-volatility').innerText = biasText;
-      document.getElementById('metric-volatility').className = biasText.includes('BULLISH') ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+      const volEl = document.getElementById('metric-volatility');
+      volEl.innerText = biasText;
+      volEl.className = biasText.includes('BULLISH') ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
 
-      document.getElementById('metric-volume').innerText = volInfo.label;
-      document.getElementById('metric-volume').className = volInfo.label === 'High'
-        ? 'text-emerald-400 font-bold'
-        : (volInfo.label === 'Low' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
+      const vmEl = document.getElementById('metric-volume');
+      vmEl.innerText = volInfo.label;
+      vmEl.className = volInfo.label === 'High' ? 'text-emerald-400 font-bold' : (volInfo.label === 'Low' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
 
       clearCanvasLines();
       chartLines.push(candleSeries.createPriceLine({ price: sr.R1, color: '#f97316', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title: 'R1' }));
@@ -930,24 +796,12 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
               <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">⏳ NO VALID ENTRY — WAIT</span>
             </div>
             <div class="grid grid-cols-3 gap-2 text-center font-mono text-[11px]">
-              <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                <span class="block text-slate-500 text-[10px]">TREND</span>
-                <strong class="${isBullishTrend ? 'text-emerald-400' : 'text-rose-400'}">${isBullishTrend ? 'Bullish' : 'Bearish'}</strong>
-              </div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                <span class="block text-slate-500 text-[10px]">SWEEP</span>
-                <strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong>
-              </div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                <span class="block text-slate-500 text-[10px]">VOLUME</span>
-                <strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong>
-              </div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TREND</span><strong class="${isBullishTrend ? 'text-emerald-400' : 'text-rose-400'}">${isBullishTrend ? 'Bullish' : 'Bearish'}</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong></div>
             </div>
-            <div class="p-2.5 bg-slate-900 rounded-lg border border-white/20 text-center">
-              <p class="text-[11px] text-white italic">🤖 AI: ${aiResponse || waitReason}</p>
-            </div>
-          </div>
-        `;
+            <div class="p-2.5 bg-slate-900 rounded-lg border border-white/20 text-center"><p class="text-[11px] text-white italic">🤖 AI: ${aiResponse || waitReason}</p></div>
+          </div>`;
         return;
       }
 
@@ -962,79 +816,75 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
         <div class="w-full space-y-3">
           <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
             <span class="text-xs font-bold text-slate-400">${currentSymbol} (${currentTimeframe}):</span>
-            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullish ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">
-              ${isBullish ? '🚀 LIVE BUY ENTRY' : '📉 LIVE SELL ENTRY'}
-            </span>
+            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullish ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">${isBullish ? '🚀 LIVE BUY ENTRY' : '📉 LIVE SELL ENTRY'}</span>
           </div>
           <div class="text-[11px] text-slate-400 font-bold">📍 ${strategy.note}</div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
-              <span class="block text-slate-500 text-[10px]">ENTRY</span>
-              <strong class="text-blue-400 price-value">$${formatPrice(entry)}</strong>
-            </div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
-              <span class="block text-slate-500 text-[10px]">TP1 (1:2)</span>
-              <strong class="text-emerald-400 price-value">$${formatPrice(tp1)}</strong>
-            </div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
-              <span class="block text-slate-500 text-[10px]">TP2 (1:3)</span>
-              <strong class="text-emerald-300 price-value">$${formatPrice(tp2)}</strong>
-            </div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
-              <span class="block text-slate-500 text-[10px]">STOP LOSS</span>
-              <strong class="text-rose-400 price-value">$${formatPrice(sl)}</strong>
-            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400 price-value">$${formatPrice(entry)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400 price-value">$${formatPrice(tp1)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3)</span><strong class="text-emerald-300 price-value">$${formatPrice(tp2)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400 price-value">$${formatPrice(sl)}</strong></div>
           </div>
           <div class="grid grid-cols-2 gap-2 text-center font-mono text-[11px]">
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
-              <span class="block text-slate-500 text-[10px]">VOLUME</span>
-              <strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong>
-            </div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
-              <span class="block text-slate-500 text-[10px]">SWEEP</span>
-              <strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong>
-            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
           </div>
           ${aiResponse ? `<div class="p-2.5 bg-slate-900 rounded-lg border border-indigo-500/30 text-center"><p class="text-[11px] text-indigo-300 italic">🤖 AI: ${aiResponse}</p></div>` : ''}
-        </div>
-      `;
+        </div>`;
 
       chartLines.push(candleSeries.createPriceLine({ price: entry, color: '#2563eb', lineWidth: 2, title: 'ENTRY' }));
       chartLines.push(candleSeries.createPriceLine({ price: tp1, color: '#22c55e', lineWidth: 2, title: 'TP1' }));
       chartLines.push(candleSeries.createPriceLine({ price: tp2, color: '#16a34a', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'TP2' }));
       chartLines.push(candleSeries.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 2, title: 'SL' }));
+      if (sweep.swept) chartLines.push(candleSeries.createPriceLine({ price: sweep.sweepLevel, color: '#ffffff', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, title: 'SWEEP' }));
+    };
 
-      if (sweep.swept) {
-        chartLines.push(candleSeries.createPriceLine({
-          price: sweep.sweepLevel, color: '#ffffff', lineWidth: 1,
-          lineStyle: LightweightCharts.LineStyle.Dotted, title: 'SWEEP'
-        }));
-      }
-    }
-
-    function changeTimeframe(tf) {
+    window.changeTimeframe = function (tf) {
       currentTimeframe = tf;
-      ['5m', '15m', '1h', '4h'].forEach(t => {
+      ['5m','15m','1h','4h'].forEach(t => {
         const btn = document.getElementById(`tf-${t}`);
         if (btn) btn.className = t === tf ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition" : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition";
       });
       loadAssetData();
-    }
+    };
 
-    function changeAsset(symbol, name) {
-      currentSymbol = symbol;
-      currentAssetName = name;
+    window.changeAsset = function (symbol, name) {
+      currentSymbol = symbol; currentAssetName = name;
       allSymbols.forEach(s => {
         const btn = document.getElementById(`btn-${s}`);
-        if (btn) {
-          btn.className = s === symbol
-            ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap'
-            : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
-        }
+        if (btn) btn.className = s === symbol
+          ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap'
+          : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
       });
       buildDarkCanvasChart();
       loadAssetData();
-    }
+    };
+
+    // ===== WIRE UP BUTTONS & FORM =====
+    window.addEventListener('DOMContentLoaded', () => {
+      const authForm = document.getElementById('auth-form');
+      if (authForm) authForm.addEventListener('submit', window.handleAuth);
+
+      const toggleBtn = document.getElementById('auth-toggle-btn');
+      if (toggleBtn) toggleBtn.addEventListener('click', window.toggleAuthMode);
+
+      const headerLogout = document.getElementById('header-logout-btn');
+      if (headerLogout) headerLogout.addEventListener('click', window.handleLogout);
+
+      const pendingLogout = document.getElementById('pending-logout-btn');
+      if (pendingLogout) pendingLogout.addEventListener('click', window.handleLogout);
+
+      // Safety timeout: if auth hasn't resolved in 3s, hide splash and show auth
+      setTimeout(() => {
+        hideSplashScreen();
+        const authEl = document.getElementById('auth-container');
+        const pendingEl = document.getElementById('pending-container');
+        const appEl = document.getElementById('app-container');
+        if (authEl.classList.contains('hidden') && pendingEl.classList.contains('hidden') && appEl.classList.contains('hidden')) {
+          showScreen('auth');
+        }
+      }, 3000);
+    });
   </script>
 </body>
 </html>
