@@ -238,6 +238,7 @@
     // ===== STATE =====
     let isSignupMode = false;
     let userStatusListener = null;
+    let preApprovalListener = null;
     let currentSymbol = 'ETHUSDT';
     let currentAssetName = 'Ethereum';
     let currentTimeframe = '15m';
@@ -254,7 +255,6 @@
     let entryMarkerData = null;
 
     let lockedSignal = null;
-    // ✅ Track last closed signal to prevent re-detection
     let lastClosedSignalKey = null;
 
     const LS_KEYS = {
@@ -268,7 +268,6 @@
 
     function resetLockedSignal() { lockedSignal = null; }
 
-    // ✅ Notification sound function
     function playNotificationSound() {
       try {
         const audio = document.getElementById('notification-sound');
@@ -374,6 +373,26 @@
       return false;
     }
 
+    // ✅ NEW: Check pre_approved_emails and auto-approve user if found
+    async function checkAndAutoApproveByEmail(user, userData) {
+      if (!user || !user.email) return userData;
+      if (isUserApproved(userData)) return userData;
+      try {
+        const emailKey = emailToKey(user.email);
+        const preSnap = await db.ref('pre_approved_emails/' + emailKey).once('value');
+        if (preSnap.exists()) {
+          await db.ref('users/' + user.uid).update({
+            approved: true,
+            status: 'approved'
+          });
+          return { ...(userData || {}), approved: true, status: 'approved' };
+        }
+      } catch (e) {
+        console.warn('Pre-approval check failed:', e);
+      }
+      return userData;
+    }
+
     window.handleAuth = async function (event) {
       event.preventDefault();
       showAuthError('');
@@ -436,6 +455,7 @@
       isLoggingOut = true;
       try {
         if (userStatusListener) { try { userStatusListener.off(); } catch(e){} userStatusListener = null; }
+        if (preApprovalListener) { try { preApprovalListener.off(); } catch(e){} preApprovalListener = null; }
         if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
         if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
         if (darkChart) { try { darkChart.remove(); } catch(e){} }
@@ -523,6 +543,7 @@
 
     auth.onAuthStateChanged(async (user) => {
       if (userStatusListener) { try { userStatusListener.off(); } catch(e){} userStatusListener = null; }
+      if (preApprovalListener) { try { preApprovalListener.off(); } catch(e){} preApprovalListener = null; }
 
       if (!user) {
         const cached = loadUserFromLocal();
@@ -559,19 +580,53 @@
           });
           data = { status: 'pending', approved: false };
         }
+
+        // ✅ NEW: Check pre-approval and auto-approve if email is in pre_approved_emails
+        data = await checkAndAutoApproveByEmail(user, data);
+
         saveUserToLocal(user, data);
         const ok = isUserApproved(data);
         hideSplashScreen();
         if (ok) showScreen('app');
         else showScreen('pending');
 
-        userStatusListener = userRef.on('value', (s) => {
-          const val = s.val();
-          const okLive = isUserApproved(val);
+        // Live listener on user record
+        userStatusListener = userRef.on('value', async (s) => {
+          let val = s.val();
+          let okLive = isUserApproved(val);
+
+          // ✅ NEW: Live listener also checks pre-approval
+          if (!okLive && user.email) {
+            try {
+              const emailKey = emailToKey(user.email);
+              const preSnap = await db.ref('pre_approved_emails/' + emailKey).once('value');
+              if (preSnap.exists()) {
+                await userRef.update({ approved: true, status: 'approved' });
+                okLive = true;
+                val = { ...(val || {}), approved: true, status: 'approved' };
+              }
+            } catch (e) {}
+          }
+
           if (val) saveUserToLocal(user, val);
           if (okLive) showScreen('app');
           else showScreen('pending');
         });
+
+        // ✅ NEW: Live listener on pre_approved_emails/{emailKey}
+        // If admin pre-approves this email while user is waiting, auto-approve instantly
+        if (user.email) {
+          const emailKey = emailToKey(user.email);
+          preApprovalListener = db.ref('pre_approved_emails/' + emailKey).on('value', async (s) => {
+            if (s.exists()) {
+              const currentSnap = await userRef.once('value');
+              const currentData = currentSnap.val();
+              if (currentData && !isUserApproved(currentData)) {
+                await userRef.update({ approved: true, status: 'approved' });
+              }
+            }
+          });
+        }
       } catch (err) {
         hideSplashScreen();
         showScreen('pending');
@@ -766,15 +821,13 @@
       }
 
       if (result) {
-        // ✅ Save the closed signal key so it won't be re-detected
         lastClosedSignalKey = `${lockedSignal.symbol}_${lockedSignal.timeframe}_${lockedSignal.confirmCandleTime}`;
-        
+
         resetLockedSignal();
         entryMarkerData = null;
         if (candleSeries) candleSeries.setMarkers([]);
         clearCanvasLines();
-        
-        // ✅ Purana banner hatao aur "Ready to Scan" dikhao
+
         const output = document.getElementById('ai-analysis-output');
         if (output) {
           output.innerHTML = `
@@ -785,8 +838,6 @@
         }
       }
     }
-
-    // ✅ showSignalClosedBanner ko completely hata diya gaya hai
 
     function findSwingHighs(candles, lookback = 5) {
       const highs = [];
@@ -881,8 +932,7 @@
         const rejection = candles[i];
         const confirmation = candles[i + 1];
         if (i + 1 > lastClosed) continue;
-        
-        // ✅ Skip if this confirmation candle was already closed as a signal
+
         const confirmKey = `${currentSymbol}_${currentTimeframe}_${confirmation.time}`;
         if (lastClosedSignalKey === confirmKey) continue;
 
@@ -1135,7 +1185,7 @@
       if (isAnalyzing || currentCandles.length < 80) return;
       isAnalyzing = true;
       const output = document.getElementById('ai-analysis-output');
-      
+
       output.innerHTML = '';
 
       const spinner = document.getElementById('btn-spinner');
@@ -1176,7 +1226,7 @@
           drawSweepLine(sweep);
           drawEntryMarker(lockedSignal);
           renderLockedSignal(output, lockedSignal, volInfo, sweep, null);
-          playNotificationSound(); // ✅ Play sound
+          playNotificationSound();
           return;
         }
       }
@@ -1225,7 +1275,7 @@ Give a short, helpful wait message (max 15 words).`;
               <p class="text-[11px] text-white italic">🤖 <strong class="text-indigo-400">AI:</strong> ${aiWait || waitReason}</p>
             </div>
           </div>`;
-        playNotificationSound(); // ✅ Play sound
+        playNotificationSound();
         return;
       }
 
@@ -1269,7 +1319,7 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
       drawSignalLines(lockedSignal);
       drawSweepLine(sweep);
       drawEntryMarker(lockedSignal);
-      playNotificationSound(); // ✅ Play sound
+      playNotificationSound();
     };
 
     function drawSignalLines(sig) {
@@ -1427,8 +1477,10 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
           const orig = '🔄 Check Approval Status';
           pendingRecheck.innerText = 'Checking...';
           try {
+            // ✅ NEW: Also check pre_approved_emails on manual recheck
             const snap = await db.ref('users/' + user.uid).once('value');
-            const data = snap.val();
+            let data = snap.val();
+            data = await checkAndAutoApproveByEmail(user, data);
             if (isUserApproved(data)) {
               saveUserToLocal(user, data);
               showScreen('app');
