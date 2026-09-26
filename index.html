@@ -212,6 +212,9 @@
     </footer>
   </div>
 
+  <!-- ✅ Audio element for notification sound -->
+  <audio id="notification-sound" src="nothing.mp3" preload="auto"></audio>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBt3iYcR4SijEJqtrBlH8mNr292vakgJFQ",
@@ -264,6 +267,19 @@
     const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
     function resetLockedSignal() { lockedSignal = null; }
+
+    // ✅ Notification sound function
+    function playNotificationSound() {
+      try {
+        const audio = document.getElementById('notification-sound');
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(e => console.warn('Audio play failed:', e));
+        }
+      } catch (e) {
+        console.warn('Audio error:', e);
+      }
+    }
 
     function saveUserToLocal(user, userData) {
       try {
@@ -1160,6 +1176,7 @@
           drawSweepLine(sweep);
           drawEntryMarker(lockedSignal);
           renderLockedSignal(output, lockedSignal, volInfo, sweep, null);
+          playNotificationSound(); // ✅ Play sound
           return;
         }
       }
@@ -1208,6 +1225,7 @@ Give a short, helpful wait message (max 15 words).`;
               <p class="text-[11px] text-white italic">🤖 <strong class="text-indigo-400">AI:</strong> ${aiWait || waitReason}</p>
             </div>
           </div>`;
+        playNotificationSound(); // ✅ Play sound
         return;
       }
 
@@ -1251,6 +1269,7 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
       drawSignalLines(lockedSignal);
       drawSweepLine(sweep);
       drawEntryMarker(lockedSignal);
+      playNotificationSound(); // ✅ Play sound
     };
 
     function drawSignalLines(sig) {
