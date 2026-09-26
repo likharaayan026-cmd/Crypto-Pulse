@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pulse Alpha · 9/20 EMA Pullback Strategy</title>
+  <title>Pulse Alpha</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 
@@ -34,6 +34,16 @@
     }
     .animate-radar { animation: radar-scan 1.5s infinite ease-in-out; }
     .price-value { word-break: break-all; white-space: normal; }
+    @keyframes win-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+      50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    }
+    @keyframes loss-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+      50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+    .win-badge { animation: win-pulse 2s infinite; }
+    .loss-badge { animation: loss-pulse 2s infinite; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
@@ -47,7 +57,7 @@
       </div>
     </div>
     <h1 class="mt-6 text-2xl font-black tracking-wider text-white">Pulse<span class="text-indigo-500"> Alpha</span></h1>
-    <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase animate-pulse">Restoring Session...</p>
+    <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase animate-pulse">Authenticating Session...</p>
   </div>
 
   <!-- 1. AUTH CONTAINER -->
@@ -144,20 +154,21 @@
           <button onclick="changeAsset('PAXGUSDT', 'PAX Gold')" id="btn-PAXGUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">PAXG/USDT</button>
         </div>
 
-        <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
-          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">5m</button>
-          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition">15m</button>
-          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">1h</button>
-          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition">4h</button>
+        <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 overflow-x-auto">
+          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap">5m</button>
+          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition whitespace-nowrap">15m</button>
+          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap">1h</button>
+          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap">4h</button>
+          <button onclick="changeTimeframe('1d')" id="tf-1d" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap">1D</button>
         </div>
 
         <button id="run-ai-btn" onclick="runAnalysisEngine()" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-md transition flex items-center gap-2">
           <span id="btn-spinner" class="hidden animate-spin">⚡</span>
-          <span id="btn-text">Scan Market Setup</span>
+          <span id="btn-text">Scan Setup</span>
         </button>
       </div>
 
-      <div id="chart-wrapper" class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[380px] relative overflow-hidden">
+      <div id="chart-wrapper" class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[420px] relative overflow-hidden">
         <div class="absolute top-3 left-3 z-20 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-md border border-slate-800 text-[11px] font-bold flex items-center gap-3 pointer-events-none">
           <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-1 bg-blue-500 rounded"></span> 9 EMA</span>
           <span class="flex items-center gap-1 text-red-500"><span class="w-2.5 h-1 bg-red-600 rounded"></span> 20 EMA</span>
@@ -165,7 +176,7 @@
         </div>
         <div id="chart-loading" class="hidden absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center">
           <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-xs font-bold text-slate-300 mt-2">Loading 2-month chart...</span>
+          <span class="text-xs font-bold text-slate-300 mt-2">Loading Chart...</span>
         </div>
         <div id="tv-dark-chart" class="w-full h-full"></div>
       </div>
@@ -200,12 +211,13 @@
     </main>
 
     <footer class="bg-slate-900 border-t border-slate-800/80 py-3 mt-auto">
-      <div class="max-w-7xl mx-auto px-4 text-center">
+      <div class="max-w-7xl mx-auto px-4 text-center space-y-1">
         <p class="text-[11px] text-slate-500 font-medium">
           <a href="https://pulse-alpha-privacy-policy.vercel.app" target="_blank" rel="noopener noreferrer" class="text-indigo-400 font-bold hover:underline select-none">
             Terms and Conditions & Disclaimer
           </a>
         </p>
+        <p class="text-[10px] text-slate-600 font-medium">Developer <span class="text-slate-400 font-bold">Aayan Likhar</span></p>
       </div>
     </footer>
   </div>
@@ -221,11 +233,13 @@
       appId: "1:425238806262:web:7d23814e4b550695bb76d7"
     };
 
+    const GEMINI_API_KEY = "AQ.Ab8RN6JlscpiNZxFYALMW4sZrMkvr7i5wmUoQ5X8KRkByWb-2A";
+    const GEMINI_MODEL = "gemini-flash-latest";
+
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // ✅ Persist login across refresh & browser restart (IndexedDB)
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => console.warn('persistence', e));
 
     // ===== STATE =====
@@ -237,16 +251,62 @@
     let isAnalyzing = false;
     let darkChart = null, candleSeries = null, ema9Series = null, ema20Series = null;
     let chartLines = [];
+    let sweepLines = [];
     let ws = null;
+    let wsReconnectTimer = null;
     let currentCandles = [], currentVolumes = [];
     let chartBootstrapped = false;
     let isLoggingOut = false;
+    let userScrolledTimeScale = false;
+    let entryMarkerData = null;
+
+    let lockedSignal = null;
+
+    const LS_KEYS = {
+      lastEmail: 'pulsealpha_last_email',
+      cachedUser: 'pulsealpha_cached_user'
+    };
 
     const allSymbols = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','TAOUSDT','AAVEUSDT','AVAXUSDT','ZECUSDT','PAXGUSDT'];
-    const twoDecimalSymbols = ['BTCUSDT','ETHUSDT','SOLUSDT','PAXGUSDT'];
+    const twoDecimalSymbols = ['BTCUSDT','ETHUSDT','PAXGUSDT'];
     const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-    // ===== SPLASH =====
+    function resetLockedSignal() { lockedSignal = null; }
+
+    function saveUserToLocal(user, userData) {
+      try {
+        localStorage.setItem(LS_KEYS.cachedUser, JSON.stringify({
+          uid: user.uid, email: user.email,
+          name: userData ? userData.name : '',
+          status: userData ? userData.status : 'pending',
+          approved: userData ? userData.approved : false,
+          savedAt: Date.now()
+        }));
+        localStorage.setItem(LS_KEYS.lastEmail, user.email || '');
+      } catch (e) {}
+    }
+
+    function loadUserFromLocal() {
+      try {
+        const raw = localStorage.getItem(LS_KEYS.cachedUser);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (Date.now() - (obj.savedAt || 0) > 30 * 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(LS_KEYS.cachedUser);
+          return null;
+        }
+        return obj;
+      } catch (e) { return null; }
+    }
+
+    function clearUserLocal() { try { localStorage.removeItem(LS_KEYS.cachedUser); } catch (e) {} }
+    function loadLastEmail() { try { return localStorage.getItem(LS_KEYS.lastEmail) || ''; } catch (e) { return ''; } }
+
+    function setSplashStatus(text) {
+      const el = document.getElementById('splash-status');
+      if (el) el.innerText = text;
+    }
+
     function hideSplashScreen() {
       const splash = document.getElementById('splash-screen');
       if (splash && !splash.classList.contains('fade-out')) {
@@ -255,35 +315,6 @@
       }
     }
 
-    function setSplashStatus(text) {
-      const el = document.getElementById('splash-status');
-      if (el) el.innerText = text;
-    }
-
-    // ===== LOCAL STORAGE USER CACHE =====
-    // User data ko localStorage mein rakhte hain taaki splash screen par
-    // turant UI decide kar sakein — baar-baar login nahi maangega.
-    const LS_USER_KEY = 'pulse_alpha_user';
-
-    function cacheUser(data) {
-      try {
-        if (data) localStorage.setItem(LS_USER_KEY, JSON.stringify(data));
-        else localStorage.removeItem(LS_USER_KEY);
-      } catch(e){}
-    }
-
-    function getCachedUser() {
-      try {
-        const raw = localStorage.getItem(LS_USER_KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch(e){ return null; }
-    }
-
-    function clearUserCache() {
-      try { localStorage.removeItem(LS_USER_KEY); } catch(e){}
-    }
-
-    // ===== AUTH UI =====
     function showAuthError(msg) {
       const el = document.getElementById('auth-error');
       if (!el) return;
@@ -321,12 +352,10 @@
       }
     };
 
-    // ===== EMAIL KEY =====
     function emailToKey(email) {
       return email.toLowerCase().trim().replace(/\./g, '_dot_').replace(/@/g, '_at_');
     }
 
-    // ===== NORMALIZE STATUS =====
     function isUserApproved(data) {
       if (!data) return false;
       const st = data.status ? data.status.toString().toLowerCase().trim() : '';
@@ -337,11 +366,9 @@
       return false;
     }
 
-    // ===== SIGN UP / LOGIN =====
     window.handleAuth = async function (event) {
       event.preventDefault();
       showAuthError('');
-
       const email = document.getElementById('input-email').value.trim();
       const password = document.getElementById('input-password').value;
       const btn = document.getElementById('auth-btn');
@@ -350,96 +377,74 @@
       if (isSignupMode) {
         const name = document.getElementById('input-name').value.trim();
         const mobile = document.getElementById('input-mobile').value.trim();
-
         if (!name || name.length < 2) return showAuthError('Please enter your full name.');
         if (!/^[0-9]{10}$/.test(mobile)) return showAuthError('Please enter a valid 10-digit mobile number.');
         if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
 
-        btn.innerText = 'Creating...';
-        btn.disabled = true;
+        btn.innerText = 'Creating...'; btn.disabled = true;
         try {
           const cred = await auth.createUserWithEmailAndPassword(email, password);
           const uid = cred.user.uid;
-
           let isPreApproved = false;
           try {
             const preSnap = await db.ref('pre_approved_emails/' + emailToKey(email)).once('value');
             isPreApproved = preSnap.exists();
-          } catch (e) { console.warn('Pre-approval check failed:', e); }
-
+          } catch (e) {}
           const userData = {
-            name: name,
-            mobile: mobile,
-            email: email,
+            name, mobile, email,
             status: isPreApproved ? 'approved' : 'pending',
             approved: isPreApproved,
-            createdAt: Date.now()
+            createdAt: firebase.database.ServerValue.TIMESTAMP
           };
           await db.ref('users/' + uid).set(userData);
-          cacheUser(userData);
+          saveUserToLocal(cred.user, userData);
         } catch (err) {
-          console.error('Signup error:', err);
           let msg = 'Signup failed. Please try again.';
           if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please log in.';
           else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
           else if (err.code === 'auth/weak-password') msg = 'Password is too weak.';
-          else if (err.code === 'auth/operation-not-allowed') msg = 'Email/Password sign-in is disabled in Firebase Console. Enable it.';
           showAuthError(msg);
-          btn.innerText = originalText;
-          btn.disabled = false;
+          btn.innerText = originalText; btn.disabled = false;
         }
       } else {
-        btn.innerText = 'Logging in...';
-        btn.disabled = true;
+        btn.innerText = 'Logging in...'; btn.disabled = true;
         try {
           await auth.signInWithEmailAndPassword(email, password);
-          // onAuthStateChanged handles the rest
         } catch (err) {
-          console.error('Login error:', err);
           let msg = 'Login failed. Check your email and password.';
           if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
           else if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';
           else if (err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
           else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
           else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
-          else if (err.code === 'auth/operation-not-allowed') msg = 'Email/Password sign-in is disabled in Firebase Console.';
           showAuthError(msg);
-          btn.innerText = originalText;
-          btn.disabled = false;
+          btn.innerText = originalText; btn.disabled = false;
         }
       }
     };
 
-    // ===== LOGOUT =====
     window.handleLogout = async function () {
       if (isLoggingOut) return;
       isLoggingOut = true;
-
       try {
-        if (userStatusListener) {
-          try { userStatusListener.off(); } catch(e){}
-          userStatusListener = null;
-        }
-        if (ws) {
-          try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){}
-          ws = null;
-        }
+        if (userStatusListener) { try { userStatusListener.off(); } catch(e){} userStatusListener = null; }
+        if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+        if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
         if (darkChart) { try { darkChart.remove(); } catch(e){} }
         darkChart = null; candleSeries = null; ema9Series = null; ema20Series = null;
-        chartLines = []; currentCandles = []; currentVolumes = []; chartBootstrapped = false;
-
-        clearUserCache();
+        chartLines = []; sweepLines = []; currentCandles = []; currentVolumes = [];
+        entryMarkerData = null;
+        chartBootstrapped = false; resetLockedSignal(); clearUserLocal();
+        userScrolledTimeScale = false;
         await auth.signOut();
         showScreen('auth');
       } catch (err) {
-        console.error('Logout error:', err);
         showScreen('auth');
       } finally {
         setTimeout(() => { isLoggingOut = false; }, 800);
       }
     };
 
-    // ===== SCREENS =====
     function showScreen(screen) {
       const authEl = document.getElementById('auth-container');
       const pendingEl = document.getElementById('pending-container');
@@ -457,11 +462,10 @@
         document.getElementById('field-name').classList.add('hidden');
         document.getElementById('field-mobile').classList.add('hidden');
         const btn = document.getElementById('auth-btn');
-        btn.innerText = 'Log In';
-        btn.disabled = false;
+        btn.innerText = 'Log In'; btn.disabled = false;
         document.getElementById('auth-toggle-text').innerText = "Don't have an account?";
         document.getElementById('auth-toggle-btn').innerText = 'Sign Up';
-        document.getElementById('input-email').value = '';
+        document.getElementById('input-email').value = loadLastEmail();
         document.getElementById('input-password').value = '';
         document.getElementById('input-name').value = '';
         document.getElementById('input-mobile').value = '';
@@ -472,6 +476,21 @@
       } else if (screen === 'app') {
         appEl.classList.remove('hidden');
         appEl.classList.add('flex');
+
+        currentSymbol = 'ETHUSDT';
+        currentTimeframe = '15m';
+
+        allSymbols.forEach(s => {
+          const btn = document.getElementById(`btn-${s}`);
+          if (btn) btn.className = s === currentSymbol
+            ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap'
+            : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
+        });
+        ['5m','15m','1h','4h','1d'].forEach(t => {
+          const btn = document.getElementById(`tf-${t}`);
+          if (btn) btn.className = t === currentTimeframe ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition whitespace-nowrap" : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap";
+        });
+
         if (!chartBootstrapped || !darkChart) {
           chartBootstrapped = true;
           setTimeout(() => {
@@ -482,75 +501,75 @@
       }
     }
 
-    // ===== AUTH STATE LISTENER (runs immediately on page load) =====
-    // Firebase yahan session ko localStorage/IndexedDB se restore karta hai.
-    // User ko dobara login karne ki zaroorat nahi padti.
+    async function bootstrapFromLocal() {
+      setSplashStatus('Loading session...');
+      const cached = loadUserFromLocal();
+      if (!cached) {
+        setSplashStatus('Please log in...');
+        setTimeout(() => { hideSplashScreen(); showScreen('auth'); }, 800);
+        return false;
+      }
+      setSplashStatus('Welcome back, ' + (cached.name || 'Trader'));
+      return true;
+    }
+
     auth.onAuthStateChanged(async (user) => {
       if (userStatusListener) { try { userStatusListener.off(); } catch(e){} userStatusListener = null; }
 
-      // ---------- NO USER ----------
       if (!user) {
-        clearUserCache();
+        const cached = loadUserFromLocal();
+        if (cached && cached.approved === true) {
+          setSplashStatus('Welcome back');
+          hideSplashScreen();
+          setTimeout(() => {
+            if (!isLoggingOut) showScreen('app');
+          }, 600);
+          return;
+        }
         hideSplashScreen();
         if (!isLoggingOut) showScreen('auth');
         return;
       }
 
-      // ---------- USER EXISTS ----------
-      setSplashStatus('Loading your profile...');
-
-      // Step 1: Cached data se turant screen decide karo (fast path)
-      const cached = getCachedUser();
-      if (cached && cached.uid === user.uid) {
-        showScreen(isUserApproved(cached) ? 'app' : 'pending');
-        hideSplashScreen();
-      }
-
-      // Step 2: Fresh data from DB (background) & update cache
+      setSplashStatus('Verifying access...');
       const userRef = db.ref('users/' + user.uid);
       try {
-        const snap = await userRef.once('value');
-        let data = snap.val();
-        console.log('📦 DB data for users/' + user.uid + ':', data);
-
-        if (!data) {
-          console.warn('⚠️ No user record — creating pending record');
-          data = {
-            name: user.displayName || 'User',
-            mobile: '',
-            email: user.email,
-            status: 'pending',
-            approved: false,
-            createdAt: Date.now()
-          };
-          await userRef.set(data);
+        const cached = loadUserFromLocal();
+        if (cached && cached.uid === user.uid && (cached.approved === true || cached.status === 'approved')) {
+          hideSplashScreen();
+          showScreen('app');
         }
 
-        data.uid = user.uid;
-        cacheUser(data);
-
+        const snap = await userRef.once('value');
+        let data = snap.val();
+        if (!data) {
+          await userRef.set({
+            name: user.displayName || 'User',
+            mobile: '', email: user.email,
+            status: 'pending', approved: false,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+          data = { status: 'pending', approved: false };
+        }
+        saveUserToLocal(user, data);
         const ok = isUserApproved(data);
-        console.log('✅ Approval check →', ok, '| raw:', data.status, data.approved);
+        hideSplashScreen();
+        if (ok) showScreen('app');
+        else showScreen('pending');
 
-        showScreen(ok ? 'app' : 'pending');
-
-        // Step 3: Live status updates
         userStatusListener = userRef.on('value', (s) => {
           const val = s.val();
-          if (val) { val.uid = user.uid; cacheUser(val); }
           const okLive = isUserApproved(val);
-          console.log('🔔 Status changed →', { status: val && val.status, final: okLive });
-          showScreen(okLive ? 'app' : 'pending');
+          if (val) saveUserToLocal(user, val);
+          if (okLive) showScreen('app');
+          else showScreen('pending');
         });
       } catch (err) {
-        console.error('❌ Status check failed:', err);
-        if (!cached) showScreen('pending');
-      } finally {
         hideSplashScreen();
+        showScreen('pending');
       }
     });
 
-    // ===== FORMATTERS =====
     function formatPrice(price, symbol = currentSymbol) {
       if (price === undefined || price === null || isNaN(price)) return twoDecimalSymbols.includes(symbol) ? "0.00" : "0.000";
       const num = Number(price);
@@ -567,7 +586,6 @@
       return `${day} ${month}, ${hours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
     }
 
-    // ===== CHART =====
     function buildDarkCanvasChart() {
       const container = document.getElementById('tv-dark-chart');
       if (!container) return;
@@ -577,27 +595,64 @@
       darkChart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
         height: container.clientHeight,
-        layout: { background: { type: 'solid', color: '#090d16' }, textColor: '#64748b' },
+        layout: { background: { type: 'solid', color: '#090d16' }, textColor: '#94a3b8' },
         grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        priceScale: { borderColor: '#334155' },
+        priceScale: {
+          borderColor: '#334155',
+          scaleMargins: { top: 0.1, bottom: 0.1 }
+        },
         timeScale: {
-          borderColor: '#334155', timeVisible: true, secondsVisible: false,
+          borderColor: '#334155',
+          timeVisible: true,
+          secondsVisible: false,
+          rightOffset: 8,
+          barSpacing: 6,
+          minBarSpacing: 1,
+          fixLeftEdge: false,
+          fixRightEdge: false,
+          lockVisibleTimeRangeOnResize: false,
+          shiftVisibleRangeOnNewBar: true,
+          allowShiftVisibleRangeOnWhitespaceReplacement: true,
           tickMarkFormatter: (time) => formatTimeFull(time)
         },
-        localization: { timeFormatter: (time) => formatTimeFull(time) }
+        localization: { timeFormatter: (time) => formatTimeFull(time) },
+        handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
+        handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
+        kineticScroll: { touch: true, mouse: false }
       });
 
       candleSeries = darkChart.addCandlestickSeries({
         upColor: '#22c55e', downColor: '#ef4444',
         borderDownColor: '#ef4444', borderUpColor: '#22c55e',
         wickDownColor: '#ef4444', wickUpColor: '#22c55e',
+        priceFormat: {
+          type: 'price',
+          precision: twoDecimalSymbols.includes(currentSymbol) ? 2 : 3,
+          minMove: twoDecimalSymbols.includes(currentSymbol) ? 0.01 : 0.001
+        }
       });
       ema9Series = darkChart.addLineSeries({ color: '#3b82f6', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
       ema20Series = darkChart.addLineSeries({ color: '#ef4444', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+
+      darkChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+        if (!range) return;
+        const totalBars = currentCandles.length;
+        if (totalBars > 0 && range.to < totalBars - 3) {
+          userScrolledTimeScale = true;
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        if (darkChart && container) {
+          darkChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+          rerenderEntryMarker();
+        }
+      });
     }
 
     function computeEMA(candles, period) {
+      if (!candles || candles.length === 0) return [];
       const k = 2 / (period + 1);
       const arr = [];
       let prev = candles[0].close;
@@ -609,44 +664,202 @@
       return arr;
     }
 
+    // ✅ REAL-TIME WebSocket — properly updates last candle & price
     function connectLiveWebSocket() {
-      if (ws) { try { ws.onclose = null; ws.close(); } catch(e){} }
+      if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+      if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
+
       const wsSymbol = currentSymbol.toLowerCase();
-      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${currentTimeframe}`);
+      const wsInterval = currentTimeframe;
+      const url = `wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${wsInterval}`;
+      console.log('🔌 WS connecting:', url);
+
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        console.log('✅ WS OPEN');
+        const ind = document.getElementById('live-indicator');
+        if (ind) { ind.className = 'text-[10px] text-emerald-400 font-extrabold ml-2'; ind.innerText = '● LIVE FEED'; }
+      };
+
       ws.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        if (!message || !message.k) return;
-        const kline = message.k;
-        const candle = {
-          time: Math.floor(kline.t / 1000),
-          open: parseFloat(kline.o), high: parseFloat(kline.h),
-          low: parseFloat(kline.l), close: parseFloat(kline.c)
-        };
-        const vol = parseFloat(kline.v);
-        if (currentCandles.length > 0 && candleSeries) {
+        try {
+          const message = JSON.parse(event.data);
+          if (!message || !message.k) return;
+          const kline = message.k;
+
+          const candleTime = Math.floor(kline.t / 1000);
+          const candle = {
+            time: candleTime,
+            open: parseFloat(kline.o),
+            high: parseFloat(kline.h),
+            low: parseFloat(kline.l),
+            close: parseFloat(kline.c)
+          };
+          const vol = parseFloat(kline.v);
+
+          if (currentCandles.length === 0 || !candleSeries) return;
+
           const lastIdx = currentCandles.length - 1;
-          if (currentCandles[lastIdx].time === candle.time) {
-            currentCandles[lastIdx] = candle; currentVolumes[lastIdx] = vol;
-          } else if (candle.time > currentCandles[lastIdx].time) {
-            currentCandles.push(candle); currentVolumes.push(vol);
+          const lastCandle = currentCandles[lastIdx];
+
+          if (lastCandle.time === candleTime) {
+            // Same candle — update in place (real-time tick)
+            currentCandles[lastIdx] = candle;
+            currentVolumes[lastIdx] = vol;
+            candleSeries.update(candle);
+          } else if (candleTime > lastCandle.time) {
+            // New candle opened — push & update
+            currentCandles.push(candle);
+            currentVolumes.push(vol);
+            candleSeries.update(candle);
+          } else {
+            // Stale data, ignore
+            return;
           }
-          candleSeries.update(candle);
-          ema9Series.setData(computeEMA(currentCandles, 9));
-          ema20Series.setData(computeEMA(currentCandles, 20));
-        }
+
+          // Efficient EMA update — only last 200 candles
+          const recent = currentCandles.slice(-200);
+          ema9Series.setData(computeEMA(recent, 9));
+          ema20Series.setData(computeEMA(recent, 20));
+
+          // Auto-scroll to real time if user hasn't scrolled
+          if (!userScrolledTimeScale) {
+            try { darkChart.timeScale().scrollToRealTime(); } catch(e){}
+          }
+
+          checkLockedSignalLive();
+        } catch (e) { console.warn('WS parse err', e); }
+      };
+
+      ws.onerror = () => {
+        const ind = document.getElementById('live-indicator');
+        if (ind) { ind.className = 'text-[10px] text-rose-400 font-extrabold ml-2'; ind.innerText = '● ERROR'; }
+      };
+
+      ws.onclose = () => {
+        console.warn('🔌 WS closed — reconnect in 2s');
+        const ind = document.getElementById('live-indicator');
+        if (ind) { ind.className = 'text-[10px] text-amber-400 font-extrabold ml-2'; ind.innerText = '● RECONNECTING'; }
+        wsReconnectTimer = setTimeout(() => connectLiveWebSocket(), 2000);
       };
     }
 
-    // ===== STRATEGY =====
-    function calculate2Support2Resistance(candles) {
-      const recent = candles.slice(-40, -1);
-      const sortedHighs = recent.map(c => c.high).sort((a, b) => b - a);
-      const sortedLows = recent.map(c => c.low).sort((a, b) => a - b);
-      const R1 = sortedHighs[0];
-      const R2 = sortedHighs[Math.floor(sortedHighs.length * 0.25)] || R1 * 1.008;
-      const S1 = sortedLows[0];
-      const S2 = sortedLows[Math.floor(sortedLows.length * 0.25)] || S1 * 0.992;
-      return { R1: Math.max(R1, R2), R2: Math.min(R1, R2), S1: Math.min(S1, S2), S2: Math.max(S1, S2) };
+    function checkLockedSignalLive() {
+      if (!lockedSignal) return;
+      const len = currentCandles.length;
+      if (len < 2) return;
+      const lastClosed = currentCandles[len - 2];
+      const isBull = lockedSignal.type === 'BULLISH_EMA_SETUP';
+      let result = null;
+
+      if (isBull) {
+        if (lastClosed.low <= lockedSignal.sl) result = { outcome: 'SL_HIT', exitPrice: lockedSignal.sl };
+        else if (lastClosed.high >= lockedSignal.tp2) result = { outcome: 'TP2_HIT', exitPrice: lockedSignal.tp2 };
+        else if (lastClosed.high >= lockedSignal.tp1) result = { outcome: 'TP1_HIT', exitPrice: lockedSignal.tp1 };
+      } else {
+        if (lastClosed.high >= lockedSignal.sl) result = { outcome: 'SL_HIT', exitPrice: lockedSignal.sl };
+        else if (lastClosed.low <= lockedSignal.tp2) result = { outcome: 'TP2_HIT', exitPrice: lockedSignal.tp2 };
+        else if (lastClosed.low <= lockedSignal.tp1) result = { outcome: 'TP1_HIT', exitPrice: lockedSignal.tp1 };
+      }
+
+      if (result) {
+        resetLockedSignal();
+        entryMarkerData = null;
+        if (candleSeries) candleSeries.setMarkers([]);
+        showSignalClosedBanner(result.outcome, result.exitPrice);
+        clearCanvasLines();
+      }
+    }
+
+    function showSignalClosedBanner(outcome, exitPrice) {
+      const output = document.getElementById('ai-analysis-output');
+      if (!output) return;
+      const isWin = outcome.includes('TP');
+      const isTP2 = outcome === 'TP2_HIT';
+      const badgeColor = isWin ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border-rose-500/40';
+      const pulseClass = isWin ? 'win-badge' : 'loss-badge';
+      const icon = isWin ? (isTP2 ? '🎯' : '✅') : '🛑';
+      const title = isWin ? (isTP2 ? 'TP2 HIT — SIGNAL CLOSED' : 'TP1 HIT — SIGNAL CLOSED') : 'SL HIT — SIGNAL CLOSED';
+
+      output.innerHTML = `
+        <div class="w-full space-y-3">
+          <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
+            <span class="text-xs font-bold text-slate-400">Last Signal Result:</span>
+            <span class="px-4 py-1.5 rounded-full text-xs font-black ${badgeColor} border ${pulseClass}">${icon} ${title}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-center font-mono text-[11px]">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">EXIT PRICE</span><strong class="${isWin ? 'text-emerald-400' : 'text-rose-400'}">$${formatPrice(exitPrice)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">OUTCOME</span><strong class="${isWin ? 'text-emerald-400' : 'text-rose-400'}">${outcome.replace('_', ' ')}</strong></div>
+          </div>
+          <div class="p-2.5 bg-slate-900 rounded-lg border border-indigo-500/30 text-center">
+            <p class="text-[11px] text-indigo-300 italic">🤖 Signal closed. Click <strong>"Scan Market Setup"</strong> for a fresh setup.</p>
+          </div>
+        </div>`;
+    }
+
+    function findSwingHighs(candles, lookback = 5) {
+      const highs = [];
+      for (let i = lookback; i < candles.length - lookback; i++) {
+        let isSwing = true;
+        for (let j = 1; j <= lookback; j++) {
+          if (candles[i].high <= candles[i - j].high || candles[i].high <= candles[i + j].high) { isSwing = false; break; }
+        }
+        if (isSwing) highs.push({ idx: i, price: candles[i].high, time: candles[i].time });
+      }
+      return highs;
+    }
+    function findSwingLows(candles, lookback = 5) {
+      const lows = [];
+      for (let i = lookback; i < candles.length - lookback; i++) {
+        let isSwing = true;
+        for (let j = 1; j <= lookback; j++) {
+          if (candles[i].low >= candles[i - j].low || candles[i].low >= candles[i + j].low) { isSwing = false; break; }
+        }
+        if (isSwing) lows.push({ idx: i, price: candles[i].low, time: candles[i].time });
+      }
+      return lows;
+    }
+
+    function calculateDynamicSR(candles) {
+      const len = candles.length;
+      const recent = candles.slice(-250);
+      const swingHighs = findSwingHighs(recent, 5).map(s => s.price);
+      const swingLows = findSwingLows(recent, 5).map(s => s.price);
+      const currentPrice = candles[len - 2].close;
+
+      function dedupe(arr, tolerance = 0.012) {
+        const sorted = [...arr].sort((a, b) => a - b);
+        const out = [];
+        for (const p of sorted) {
+          if (out.length === 0) { out.push(p); continue; }
+          const last = out[out.length - 1];
+          if (Math.abs(p - last) / last > tolerance) out.push(p);
+        }
+        return out;
+      }
+
+      const uniqueHighs = dedupe(swingHighs);
+      const uniqueLows = dedupe(swingLows);
+
+      let resistances = uniqueHighs.filter(h => h > currentPrice).sort((a, b) => a - b);
+      let supports = uniqueLows.filter(l => l < currentPrice).sort((a, b) => b - a);
+
+      resistances = resistances.slice(0, 4);
+      supports = supports.slice(0, 4);
+
+      if (resistances.length < 2) {
+        const top = Math.max(...recent.map(c => c.high));
+        resistances = [top, top * 1.008];
+        resistances.sort((a, b) => a - b);
+      }
+      if (supports.length < 2) {
+        const bot = Math.min(...recent.map(c => c.low));
+        supports = [bot, bot * 0.992];
+        supports.sort((a, b) => b - a);
+      }
+
+      return { resistances, supports };
     }
 
     function detectEmaStrategy(candles) {
@@ -654,11 +867,11 @@
       if (len < 80) return { valid: false, reason: 'Not enough data' };
       const ema9Vals = computeEMA(candles, 9);
       const ema20Vals = computeEMA(candles, 20);
-      const startIdx = len - 40 - 2;
-      if (startIdx < 2) return { valid: false, reason: 'Not enough data' };
-
+      const lastClosed = len - 2;
+      const scanStart = Math.max(2, lastClosed - 40);
       let crossIdx = -1, crossType = null;
-      for (let i = startIdx; i < len - 2; i++) {
+
+      for (let i = scanStart; i <= lastClosed; i++) {
         const e9p = ema9Vals[i - 1].value, e20p = ema20Vals[i - 1].value;
         const e9c = ema9Vals[i].value, e20c = ema20Vals[i].value;
         if (e9p <= e20p && e9c > e20c) { crossIdx = i; crossType = 'BULLISH_CROSSOVER'; }
@@ -666,16 +879,18 @@
       }
       if (crossIdx === -1) return { valid: false, reason: 'No recent 9/20 EMA crossover' };
 
-      for (let i = crossIdx + 1; i < len - 1; i++) {
+      for (let i = crossIdx + 1; i <= lastClosed; i++) {
         const e9p = ema9Vals[i - 1].value, e20p = ema20Vals[i - 1].value;
         const e9c = ema9Vals[i].value, e20c = ema20Vals[i].value;
         if (crossType === 'BULLISH_CROSSOVER' && e9p >= e20p && e9c < e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
         if (crossType === 'BEARISH_CROSSOVER' && e9p <= e20p && e9c > e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
       }
 
-      for (let i = crossIdx + 3; i < len - 2; i++) {
+      for (let i = crossIdx + 3; i <= lastClosed - 1; i++) {
         const pullback = candles[i - 1];
         const rejection = candles[i];
+        const confirmation = candles[i + 1];
+        if (i + 1 > lastClosed) continue;
         const pullbackEma9 = ema9Vals[i - 1].value;
         const pullbackEma20 = ema20Vals[i - 1].value;
         const rejectEma9 = ema9Vals[i].value;
@@ -688,14 +903,21 @@
           const isGreen = rejection.close > rejection.open;
           const bigger = rejectBody > pullBody;
           const closesAbove = rejection.close > rejectEma9;
-          if (isRed && touchedEMA && isGreen && bigger && closesAbove) {
-            const lastClosed = candles[len - 2];
-            const breaks = lastClosed.close > rejection.high;
-            const aligned = ema9Vals[len - 2].value > ema20Vals[len - 2].value;
-            if (breaks && aligned) {
-              const swingLow = Math.min(pullback.low, rejection.low);
-              return { valid: true, type: 'BULLISH_EMA_SETUP', entry: rejection.high, sl: swingLow * 0.998, note: '9/20 EMA Bullish Crossover → Red Pullback → Bigger Green Rejection → Confirmation High Break' };
-            }
+          const breaks = confirmation.close > rejection.high;
+          const aligned = ema9Vals[i + 1].value > ema20Vals[i + 1].value;
+          if (isRed && touchedEMA && isGreen && bigger && closesAbove && breaks && aligned) {
+            const swingLow = Math.min(pullback.low, rejection.low);
+            return {
+              valid: true,
+              type: 'BULLISH_EMA_SETUP',
+              entry: rejection.high,
+              sl: swingLow * 0.998,
+              confirmCandleTime: confirmation.time,
+              confirmCandleClose: confirmation.close,
+              confirmCandleLow: confirmation.low,
+              confirmCandleHigh: confirmation.high,
+              note: 'Bullish 9/20 EMA crossover → Red pullback → Bigger Green rejection → Confirmation high break'
+            };
           }
         }
         if (crossType === 'BEARISH_CROSSOVER') {
@@ -704,14 +926,21 @@
           const isRed = rejection.close < rejection.open;
           const bigger = rejectBody > pullBody;
           const closesBelow = rejection.close < rejectEma9;
-          if (isGreen && touchedEMA && isRed && bigger && closesBelow) {
-            const lastClosed = candles[len - 2];
-            const breaks = lastClosed.close < rejection.low;
-            const aligned = ema9Vals[len - 2].value < ema20Vals[len - 2].value;
-            if (breaks && aligned) {
-              const swingHigh = Math.max(pullback.high, rejection.high);
-              return { valid: true, type: 'BEARISH_EMA_SETUP', entry: rejection.low, sl: swingHigh * 1.002, note: '9/20 EMA Bearish Crossover → Green Pullback → Bigger Red Rejection → Confirmation Low Break' };
-            }
+          const breaks = confirmation.close < rejection.low;
+          const aligned = ema9Vals[i + 1].value < ema20Vals[i + 1].value;
+          if (isGreen && touchedEMA && isRed && bigger && closesBelow && breaks && aligned) {
+            const swingHigh = Math.max(pullback.high, rejection.high);
+            return {
+              valid: true,
+              type: 'BEARISH_EMA_SETUP',
+              entry: rejection.low,
+              sl: swingHigh * 1.002,
+              confirmCandleTime: confirmation.time,
+              confirmCandleClose: confirmation.close,
+              confirmCandleLow: confirmation.low,
+              confirmCandleHigh: confirmation.high,
+              note: 'Bearish 9/20 EMA crossover → Green pullback → Bigger Red rejection → Confirmation low break'
+            };
           }
         }
       }
@@ -761,25 +990,77 @@
       return { label: 'Normal' };
     }
 
+    async function fetchKlinesPaged(symbol, interval, totalCandles = 6000) {
+      const maxPerReq = 1000;
+      let all = [];
+      let endTime = Date.now();
+      let remaining = totalCandles;
+
+      while (remaining > 0) {
+        const limit = Math.min(maxPerReq, remaining);
+        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}&endTime=${endTime}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Binance API error');
+        const batch = await res.json();
+        if (!batch.length) break;
+        all = batch.concat(all);
+        endTime = batch[0][0] - 1;
+        remaining -= batch.length;
+        if (batch.length < limit) break;
+      }
+
+      const seen = new Set();
+      const deduped = [];
+      for (const d of all) {
+        const t = d[0];
+        if (!seen.has(t)) { seen.add(t); deduped.push(d); }
+      }
+      deduped.sort((a, b) => a[0] - b[0]);
+      return deduped;
+    }
+
     async function loadAssetData() {
       resetAnalysisUI();
       const loadingEl = document.getElementById('chart-loading');
       if (loadingEl) loadingEl.classList.remove('hidden');
       try {
-        const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&limit=1500`;
-        const res = await fetch(url);
-        const raw = await res.json();
+        let total = 2000;
+        if (currentTimeframe === '5m') total = 20000;
+        else if (currentTimeframe === '15m') total = 9000;
+        else if (currentTimeframe === '1h') total = 3000;
+        else if (currentTimeframe === '4h') total = 1000;
+        else if (currentTimeframe === '1d') total = 500;
+
+        const raw = await fetchKlinesPaged(currentSymbol, currentTimeframe, total);
         currentCandles = raw.map(d => ({
           time: Math.floor(d[0] / 1000),
           open: parseFloat(d[1]), high: parseFloat(d[2]),
           low: parseFloat(d[3]), close: parseFloat(d[4])
         }));
         currentVolumes = raw.map(d => parseFloat(d[5]));
+
         if (candleSeries) {
+          candleSeries.applyOptions({
+            priceFormat: {
+              type: 'price',
+              precision: twoDecimalSymbols.includes(currentSymbol) ? 2 : 3,
+              minMove: twoDecimalSymbols.includes(currentSymbol) ? 0.01 : 0.001
+            }
+          });
           candleSeries.setData(currentCandles);
           ema9Series.setData(computeEMA(currentCandles, 9));
           ema20Series.setData(computeEMA(currentCandles, 20));
-          darkChart.timeScale().fitContent();
+          candleSeries.setMarkers([]);
+
+          const visibleBars = Math.min(120, currentCandles.length);
+          const from = Math.max(0, currentCandles.length - visibleBars);
+          darkChart.timeScale().setVisibleLogicalRange({
+            from: from,
+            to: currentCandles.length + 5
+          });
+          darkChart.timeScale().scrollToRealTime();
+
+          userScrolledTimeScale = false;
           connectLiveWebSocket();
         }
       } catch (err) {
@@ -791,6 +1072,8 @@
 
     function resetAnalysisUI() {
       clearCanvasLines();
+      if (candleSeries) candleSeries.setMarkers([]);
+      entryMarkerData = null;
       const out = document.getElementById('ai-analysis-output');
       if (out) out.innerHTML = `
         <div class="text-center">
@@ -807,20 +1090,50 @@
       if (!candleSeries) return;
       chartLines.forEach(l => { try { candleSeries.removePriceLine(l); } catch(e){} });
       chartLines = [];
+      sweepLines.forEach(l => { try { candleSeries.removePriceLine(l); } catch(e){} });
+      sweepLines = [];
     }
 
     async function fetchGeminiAiAnalysis(promptText) {
-      const apiKey = "AQ.Ab8RN6JlscpiNZxFYALMW4sZrMkvr7i5wmUoQ5X8KRkByWb-2A";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
       try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
         });
+        if (!response.ok) return null;
         const data = await response.json();
-        return data.candidates[0].content.parts[0].text;
+        if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+          return data.candidates[0].content.parts[0].text.trim();
+        }
+        return null;
       } catch (e) { return null; }
+    }
+
+    function renderLockedSignal(output, sig, volInfo, sweep, aiText) {
+      const isBullish = sig.type.includes('BULLISH');
+      output.innerHTML = `
+        <div class="w-full space-y-3">
+          <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
+            <span class="text-xs font-bold text-slate-400">${sig.symbol} (${sig.timeframe}):</span>
+            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullish ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">
+              ${isBullish ? '🚀 BUY ENTRY' : '📉 SELL ENTRY'}
+            </span>
+          </div>
+          <div class="text-[11px] text-slate-400 font-bold">📍 ${sig.note}</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400 price-value">$${formatPrice(sig.entry, sig.symbol)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400 price-value">$${formatPrice(sig.tp1, sig.symbol)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3)</span><strong class="text-emerald-300 price-value">$${formatPrice(sig.tp2, sig.symbol)}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400 price-value">$${formatPrice(sig.sl, sig.symbol)}</strong></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-center font-mono text-[11px]">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong></div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
+          </div>
+          ${aiText ? `<div class="p-2.5 bg-slate-900 rounded-lg border border-indigo-500/30"><p class="text-[11px] text-indigo-300 italic leading-relaxed">🤖 <strong class="text-indigo-400">AI Insight:</strong> ${aiText}</p></div>` : ''}
+        </div>`;
     }
 
     window.runAnalysisEngine = async function () {
@@ -829,6 +1142,7 @@
       const output = document.getElementById('ai-analysis-output');
       const spinner = document.getElementById('btn-spinner');
       const btnText = document.getElementById('btn-text');
+
       spinner.classList.remove('hidden');
       btnText.innerText = "Scanning (3s)...";
       output.innerHTML = `
@@ -837,7 +1151,7 @@
             <div class="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-full animate-radar"></div>
           </div>
           <div class="flex items-center gap-2 text-amber-400 font-bold text-xs animate-pulse">
-            <span>⚡ AI checking crossover → pullback → bigger rejection → confirmation...</span>
+            <span>⚡ Analysing Chart...</span>
           </div>
         </div>`;
       await new Promise(r => setTimeout(r, 3000));
@@ -846,58 +1160,56 @@
       const ema9Vals = computeEMA(currentCandles, 9);
       const ema20Vals = computeEMA(currentCandles, 20);
       const isBullishTrend = ema9Vals[len - 2].value > ema20Vals[len - 2].value;
-      const sr = calculate2Support2Resistance(currentCandles);
+      const sr = calculateDynamicSR(currentCandles);
       const sweep = detectLiquiditySweep(currentCandles);
-      const strategy = detectEmaStrategy(currentCandles);
       const volInfo = calculateVolumeMeter(currentVolumes);
       const isChoppy = detectChoppyMarket(currentCandles);
 
-      const emaEl = document.getElementById('metric-ema');
-      emaEl.innerText = isBullishTrend ? "Bullish (9 > 20 EMA)" : "Bearish (9 < 20 EMA)";
-      emaEl.className = isBullishTrend ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+      if (lockedSignal && lockedSignal.symbol === currentSymbol && lockedSignal.timeframe === currentTimeframe) {
+        checkLockedSignalLive();
+        if (lockedSignal && lockedSignal.symbol === currentSymbol && lockedSignal.timeframe === currentTimeframe) {
+          spinner.classList.add('hidden');
+          btnText.innerText = "Scan Market Setup";
+          isAnalyzing = false;
+          updateMetrics(isBullishTrend, sweep, volInfo, true, lockedSignal.type);
+          clearCanvasLines();
+          drawSRLines(sr);
+          drawSignalLines(lockedSignal);
+          drawSweepLine(sweep);
+          drawEntryMarker(lockedSignal);
+          renderLockedSignal(output, lockedSignal, volInfo, sweep, null);
+          return;
+        }
+      }
 
-      const swEl = document.getElementById('metric-sweep');
-      if (sweep.swept) {
-        swEl.innerText = sweep.type === 'BULLISH_SWEEP' ? "Bullish Sweep" : "Bearish Sweep";
-        swEl.className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-      } else { swEl.innerText = "No Sweep"; swEl.className = "text-slate-300"; }
-
-      const biasText = strategy.valid
-        ? (strategy.type.includes('BULLISH') ? 'BULLISH SETUP' : 'BEARISH SETUP')
-        : (isBullishTrend ? 'BULLISH BIAS' : 'BEARISH BIAS');
-      const volEl = document.getElementById('metric-volatility');
-      volEl.innerText = biasText;
-      volEl.className = biasText.includes('BULLISH') ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-
-      const vmEl = document.getElementById('metric-volume');
-      vmEl.innerText = volInfo.label;
-      vmEl.className = volInfo.label === 'High' ? 'text-emerald-400 font-bold' : (volInfo.label === 'Low' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
+      const strategy = detectEmaStrategy(currentCandles);
+      updateMetrics(isBullishTrend, sweep, volInfo, strategy.valid, strategy.type);
 
       clearCanvasLines();
-      chartLines.push(candleSeries.createPriceLine({ price: sr.R1, color: '#f97316', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title: 'R1' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sr.R2, color: '#fb923c', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'R2' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sr.S1, color: '#ec4899', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title: 'S1' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sr.S2, color: '#f472b6', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'S2' }));
-
-      const prompt = `Crypto Analysis (9/20 EMA Pullback Strategy):
-Asset: ${currentSymbol}
-Timeframe: ${currentTimeframe}
-EMA Trend: ${isBullishTrend ? 'Bullish 9>20' : 'Bearish 9<20'}
-Liquidity Sweep: ${sweep.swept ? sweep.type : 'NO SWEEP'}
-EMA Setup: ${strategy.valid ? strategy.note : 'No valid setup'}
-Market Condition: ${isChoppy ? 'Choppy / No-Trade zone' : 'Trending'}
-Volume: ${volInfo.label}
-Explain in 2 short lines in English. If no valid entry: say only "No valid entry right now. Wait for a clear setup." If entry exists: briefly describe the pullback + bigger rejection candle + confirmation logic and volume context.`;
-
-      const aiResponse = await fetchGeminiAiAnalysis(prompt);
-      spinner.classList.add('hidden');
-      btnText.innerText = "Scan Market Setup";
-      isAnalyzing = false;
+      drawSRLines(sr);
+      drawSweepLine(sweep);
 
       if (!strategy.valid || isChoppy) {
         let waitReason = 'No valid entry right now. Wait for a clear setup.';
         if (isChoppy) waitReason = 'Choppy market — no-trade zone. Wait for a clean 9/20 EMA trend, then a pullback.';
         else if (strategy.reason) waitReason = strategy.reason + '. Wait for a clear setup.';
+
+        const prompt = `You are a crypto trading assistant. Respond in 1 short English line only.
+
+Asset: ${currentSymbol} | Timeframe: ${currentTimeframe}
+EMA Trend: ${isBullishTrend ? 'Bullish (9>20)' : 'Bearish (9<20)'}
+Liquidity Sweep: ${sweep.swept ? sweep.type : 'None'}
+Volume: ${volInfo.label}
+Status: NO VALID 9/20 EMA SETUP right now. Reason: ${waitReason}
+
+Give a short, helpful wait message (max 15 words).`;
+
+        let aiWait = null;
+        try { aiWait = await fetchGeminiAiAnalysis(prompt); } catch(e){}
+
+        spinner.classList.add('hidden');
+        btnText.innerText = "Scan Market Setup";
+        isAnalyzing = false;
 
         output.innerHTML = `
           <div class="w-full space-y-3">
@@ -910,7 +1222,9 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
               <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
               <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong></div>
             </div>
-            <div class="p-2.5 bg-slate-900 rounded-lg border border-white/20 text-center"><p class="text-[11px] text-white italic">🤖 AI: ${aiResponse || waitReason}</p></div>
+            <div class="p-2.5 bg-slate-900 rounded-lg border border-white/20 text-center">
+              <p class="text-[11px] text-white italic">🤖 <strong class="text-indigo-400">AI:</strong> ${aiWait || waitReason}</p>
+            </div>
           </div>`;
         return;
       }
@@ -920,46 +1234,165 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
       const risk = Math.abs(entry - sl);
       const tp1 = strategy.type.includes('BULLISH') ? entry + (risk * 2) : entry - (risk * 2);
       const tp2 = strategy.type.includes('BULLISH') ? entry + (risk * 3) : entry - (risk * 3);
-      const isBullish = strategy.type.includes('BULLISH');
 
-      output.innerHTML = `
-        <div class="w-full space-y-3">
-          <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
-            <span class="text-xs font-bold text-slate-400">${currentSymbol} (${currentTimeframe}):</span>
-            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullish ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">${isBullish ? '🚀 LIVE BUY ENTRY' : '📉 LIVE SELL ENTRY'}</span>
-          </div>
-          <div class="text-[11px] text-slate-400 font-bold">📍 ${strategy.note}</div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400 price-value">$${formatPrice(entry)}</strong></div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400 price-value">$${formatPrice(tp1)}</strong></div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3)</span><strong class="text-emerald-300 price-value">$${formatPrice(tp2)}</strong></div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400 price-value">$${formatPrice(sl)}</strong></div>
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-center font-mono text-[11px]">
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong></div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
-          </div>
-          ${aiResponse ? `<div class="p-2.5 bg-slate-900 rounded-lg border border-indigo-500/30 text-center"><p class="text-[11px] text-indigo-300 italic">🤖 AI: ${aiResponse}</p></div>` : ''}
-        </div>`;
+      lockedSignal = {
+        type: strategy.type, entry, sl, tp1, tp2,
+        note: strategy.note,
+        symbol: currentSymbol, timeframe: currentTimeframe,
+        confirmCandleTime: strategy.confirmCandleTime,
+        confirmCandleClose: strategy.confirmCandleClose,
+        confirmCandleLow: strategy.confirmCandleLow,
+        confirmCandleHigh: strategy.confirmCandleHigh,
+        timestamp: Date.now()
+      };
 
-      chartLines.push(candleSeries.createPriceLine({ price: entry, color: '#2563eb', lineWidth: 2, title: 'ENTRY' }));
-      chartLines.push(candleSeries.createPriceLine({ price: tp1, color: '#22c55e', lineWidth: 2, title: 'TP1' }));
-      chartLines.push(candleSeries.createPriceLine({ price: tp2, color: '#16a34a', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'TP2' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 2, title: 'SL' }));
-      if (sweep.swept) chartLines.push(candleSeries.createPriceLine({ price: sweep.sweepLevel, color: '#ffffff', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, title: 'SWEEP' }));
+      const prompt = `You are a professional crypto trading assistant. Reply in 2 short English lines only.
+
+Asset: ${currentSymbol} | Timeframe: ${currentTimeframe}
+Setup Type: ${strategy.type}
+EMA Trend: ${isBullishTrend ? 'Bullish (9>20)' : 'Bearish (9<20)'}
+Entry: ${entry} | SL: ${sl} | TP1: ${tp1} | TP2: ${tp2}
+Risk-Reward: 1:2 (TP1) and 1:3 (TP2)
+Liquidity Sweep: ${sweep.swept ? sweep.type : 'None'}
+Volume: ${volInfo.label}
+Logic: 9/20 EMA crossover → pullback → bigger rejection candle → confirmation break.
+
+Explain the setup logic briefly and give volume context. Max 30 words total.`;
+
+      let aiText = null;
+      try { aiText = await fetchGeminiAiAnalysis(prompt); } catch(e){}
+
+      spinner.classList.add('hidden');
+      btnText.innerText = "Scan Market Setup";
+      isAnalyzing = false;
+      renderLockedSignal(output, lockedSignal, volInfo, sweep, aiText);
+      drawSignalLines(lockedSignal);
+      drawSweepLine(sweep);
+      drawEntryMarker(lockedSignal);
     };
+
+    function drawSignalLines(sig) {
+      chartLines.push(candleSeries.createPriceLine({ price: sig.entry, color: '#3b82f6', lineWidth: 2, title: 'ENTRY' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.tp1, color: '#22c55e', lineWidth: 2, title: 'TP1' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.tp2, color: '#16a34a', lineWidth: 2, title: 'TP2' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.sl, color: '#ef4444', lineWidth: 2, title: 'SL' }));
+    }
+
+    function drawEntryMarker(sig) {
+      if (!candleSeries || !sig.confirmCandleTime) return;
+
+      const isBull = sig.type.includes('BULLISH');
+      const markerPrice = isBull ? sig.confirmCandleLow : sig.confirmCandleHigh;
+
+      entryMarkerData = {
+        time: sig.confirmCandleTime,
+        price: markerPrice,
+        isBull: isBull
+      };
+
+      const marker = {
+        time: sig.confirmCandleTime,
+        position: isBull ? 'belowBar' : 'aboveBar',
+        color: '#ffffff',
+        shape: 'circle',
+        size: 0.15,
+        text: ''
+      };
+
+      candleSeries.setMarkers([marker]);
+    }
+
+    function rerenderEntryMarker() {
+      if (!entryMarkerData || !candleSeries) return;
+      const marker = {
+        time: entryMarkerData.time,
+        position: entryMarkerData.isBull ? 'belowBar' : 'aboveBar',
+        color: '#ffffff',
+        shape: 'circle',
+        size: 0.15,
+        text: ''
+      };
+      candleSeries.setMarkers([marker]);
+    }
+
+    function drawSweepLine(sweep) {
+      if (!sweep.swept) return;
+      const color = sweep.type === 'BULLISH_SWEEP' ? '#06b6d4' : '#a855f7';
+      const title = sweep.type === 'BULLISH_SWEEP' ? 'SWEEP↓' : 'SWEEP↑';
+      const line = candleSeries.createPriceLine({
+        price: sweep.sweepLevel, color, lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        title
+      });
+      sweepLines.push(line);
+    }
+
+    function updateMetrics(isBullishTrend, sweep, volInfo, hasSetup, setupType) {
+      const emaEl = document.getElementById('metric-ema');
+      emaEl.innerText = isBullishTrend ? "Bullish (9 > 20 EMA)" : "Bearish (9 < 20 EMA)";
+      emaEl.className = isBullishTrend ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+
+      const swEl = document.getElementById('metric-sweep');
+      if (sweep.swept) {
+        swEl.innerText = sweep.type === 'BULLISH_SWEEP' ? "Bullish Sweep" : "Bearish Sweep";
+        swEl.className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+      } else { swEl.innerText = "No Sweep"; swEl.className = "text-slate-300"; }
+
+      const volEl = document.getElementById('metric-volatility');
+      let biasText;
+      if (hasSetup && setupType) biasText = setupType.includes('BULLISH') ? 'BULLISH SETUP' : 'BEARISH SETUP';
+      else biasText = isBullishTrend ? 'BULLISH BIAS' : 'BEARISH BIAS';
+      volEl.innerText = biasText;
+      volEl.className = biasText.includes('BULLISH') ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+
+      const vmEl = document.getElementById('metric-volume');
+      vmEl.innerText = volInfo.label;
+      vmEl.className = volInfo.label === 'High' ? 'text-emerald-400 font-bold' : (volInfo.label === 'Low' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
+    }
+
+    function drawSRLines(sr) {
+      const { resistances, supports } = sr;
+      const rColors = ['#f97316', '#fb923c', '#fbbf24', '#facc15'];
+      const sColors = ['#ec4899', '#f472b6', '#f9a8d4', '#fb7185'];
+
+      resistances.forEach((price, i) => {
+        const color = rColors[Math.min(i, rColors.length - 1)];
+        const line = candleSeries.createPriceLine({
+          price: price, color, lineWidth: 2,
+          lineStyle: LightweightCharts.LineStyle.Solid,
+          title: 'R'
+        });
+        chartLines.push(line);
+      });
+
+      supports.forEach((price, i) => {
+        const color = sColors[Math.min(i, sColors.length - 1)];
+        const line = candleSeries.createPriceLine({
+          price: price, color, lineWidth: 2,
+          lineStyle: LightweightCharts.LineStyle.Solid,
+          title: 'S'
+        });
+        chartLines.push(line);
+      });
+    }
 
     window.changeTimeframe = function (tf) {
       currentTimeframe = tf;
-      ['5m','15m','1h','4h'].forEach(t => {
+      resetLockedSignal();
+      userScrolledTimeScale = false;
+      entryMarkerData = null;
+      ['5m','15m','1h','4h','1d'].forEach(t => {
         const btn = document.getElementById(`tf-${t}`);
-        if (btn) btn.className = t === tf ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition" : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition";
+        if (btn) btn.className = t === tf ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition whitespace-nowrap" : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap";
       });
       loadAssetData();
     };
 
     window.changeAsset = function (symbol, name) {
       currentSymbol = symbol; currentAssetName = name;
+      resetLockedSignal();
+      userScrolledTimeScale = false;
+      entryMarkerData = null;
       allSymbols.forEach(s => {
         const btn = document.getElementById(`btn-${s}`);
         if (btn) btn.className = s === symbol
@@ -970,7 +1403,6 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
       loadAssetData();
     };
 
-    // ===== WIRE UP BUTTONS =====
     window.addEventListener('DOMContentLoaded', () => {
       const authForm = document.getElementById('auth-form');
       if (authForm) authForm.addEventListener('submit', window.handleAuth);
@@ -994,23 +1426,38 @@ Explain in 2 short lines in English. If no valid entry: say only "No valid entry
           try {
             const snap = await db.ref('users/' + user.uid).once('value');
             const data = snap.val();
-            console.log('🔄 Manual recheck:', data);
             if (isUserApproved(data)) {
+              saveUserToLocal(user, data);
               showScreen('app');
             } else {
               pendingRecheck.innerText = '⏳ Still Pending — Try Again';
               setTimeout(() => { pendingRecheck.innerText = orig; }, 2000);
             }
           } catch (e) {
-            console.error(e);
             pendingRecheck.innerText = '❌ Error — Try Again';
             setTimeout(() => { pendingRecheck.innerText = orig; }, 2000);
           }
         });
       }
 
-      // ⚠️ Yahan pehle ek 3-second fallback tha jo galat screen dikhata tha.
-      // Ab yeh hata diya — sirf onAuthStateChanged screen decide karega.
+      bootstrapFromLocal();
+
+      setTimeout(() => {
+        const authEl = document.getElementById('auth-container');
+        const pendingEl = document.getElementById('pending-container');
+        const appEl = document.getElementById('app-container');
+        const splash = document.getElementById('splash-screen');
+        if (splash && !splash.classList.contains('fade-out')) {
+          const cached = loadUserFromLocal();
+          if (cached && cached.approved === true) {
+            hideSplashScreen();
+            showScreen('app');
+          } else if (authEl.classList.contains('hidden') && pendingEl.classList.contains('hidden') && appEl.classList.contains('hidden')) {
+            hideSplashScreen();
+            showScreen('auth');
+          }
+        }
+      }, 4000);
     });
   </script>
 </body>
