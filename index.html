@@ -34,16 +34,6 @@
     }
     .animate-radar { animation: radar-scan 1.5s infinite ease-in-out; }
     .price-value { word-break: break-all; white-space: normal; }
-    @keyframes win-pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
-      50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-    }
-    @keyframes loss-pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-      50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-    }
-    .win-badge { animation: win-pulse 2s infinite; }
-    .loss-badge { animation: loss-pulse 2s infinite; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
@@ -261,6 +251,8 @@
     let entryMarkerData = null;
 
     let lockedSignal = null;
+    // ✅ Track last closed signal to prevent re-detection
+    let lastClosedSignalKey = null;
 
     const LS_KEYS = {
       lastEmail: 'pulsealpha_last_email',
@@ -664,7 +656,6 @@
       return arr;
     }
 
-    // ✅ REAL-TIME WebSocket — properly updates last candle & price
     function connectLiveWebSocket() {
       if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
       if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
@@ -704,26 +695,21 @@
           const lastCandle = currentCandles[lastIdx];
 
           if (lastCandle.time === candleTime) {
-            // Same candle — update in place (real-time tick)
             currentCandles[lastIdx] = candle;
             currentVolumes[lastIdx] = vol;
             candleSeries.update(candle);
           } else if (candleTime > lastCandle.time) {
-            // New candle opened — push & update
             currentCandles.push(candle);
             currentVolumes.push(vol);
             candleSeries.update(candle);
           } else {
-            // Stale data, ignore
             return;
           }
 
-          // Efficient EMA update — only last 200 candles
           const recent = currentCandles.slice(-200);
           ema9Series.setData(computeEMA(recent, 9));
           ema20Series.setData(computeEMA(recent, 20));
 
-          // Auto-scroll to real time if user hasn't scrolled
           if (!userScrolledTimeScale) {
             try { darkChart.timeScale().scrollToRealTime(); } catch(e){}
           }
@@ -764,39 +750,27 @@
       }
 
       if (result) {
+        // ✅ Save the closed signal key so it won't be re-detected
+        lastClosedSignalKey = `${lockedSignal.symbol}_${lockedSignal.timeframe}_${lockedSignal.confirmCandleTime}`;
+        
         resetLockedSignal();
         entryMarkerData = null;
         if (candleSeries) candleSeries.setMarkers([]);
-        showSignalClosedBanner(result.outcome, result.exitPrice);
         clearCanvasLines();
+        
+        // ✅ Purana banner hatao aur "Ready to Scan" dikhao
+        const output = document.getElementById('ai-analysis-output');
+        if (output) {
+          output.innerHTML = `
+            <div class="text-center">
+              <h4 class="font-bold text-slate-300 text-xs">Ready to Scan</h4>
+              <p class="text-[10px] text-slate-500 mt-0.5">Last signal closed. Click <strong>"Scan Market Setup"</strong> for a fresh setup.</p>
+            </div>`;
+        }
       }
     }
 
-    function showSignalClosedBanner(outcome, exitPrice) {
-      const output = document.getElementById('ai-analysis-output');
-      if (!output) return;
-      const isWin = outcome.includes('TP');
-      const isTP2 = outcome === 'TP2_HIT';
-      const badgeColor = isWin ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border-rose-500/40';
-      const pulseClass = isWin ? 'win-badge' : 'loss-badge';
-      const icon = isWin ? (isTP2 ? '🎯' : '✅') : '🛑';
-      const title = isWin ? (isTP2 ? 'TP2 HIT — SIGNAL CLOSED' : 'TP1 HIT — SIGNAL CLOSED') : 'SL HIT — SIGNAL CLOSED';
-
-      output.innerHTML = `
-        <div class="w-full space-y-3">
-          <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
-            <span class="text-xs font-bold text-slate-400">Last Signal Result:</span>
-            <span class="px-4 py-1.5 rounded-full text-xs font-black ${badgeColor} border ${pulseClass}">${icon} ${title}</span>
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-center font-mono text-[11px]">
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">EXIT PRICE</span><strong class="${isWin ? 'text-emerald-400' : 'text-rose-400'}">$${formatPrice(exitPrice)}</strong></div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">OUTCOME</span><strong class="${isWin ? 'text-emerald-400' : 'text-rose-400'}">${outcome.replace('_', ' ')}</strong></div>
-          </div>
-          <div class="p-2.5 bg-slate-900 rounded-lg border border-indigo-500/30 text-center">
-            <p class="text-[11px] text-indigo-300 italic">🤖 Signal closed. Click <strong>"Scan Market Setup"</strong> for a fresh setup.</p>
-          </div>
-        </div>`;
-    }
+    // ✅ showSignalClosedBanner ko completely hata diya gaya hai
 
     function findSwingHighs(candles, lookback = 5) {
       const highs = [];
@@ -891,6 +865,11 @@
         const rejection = candles[i];
         const confirmation = candles[i + 1];
         if (i + 1 > lastClosed) continue;
+        
+        // ✅ Skip if this confirmation candle was already closed as a signal
+        const confirmKey = `${currentSymbol}_${currentTimeframe}_${confirmation.time}`;
+        if (lastClosedSignalKey === confirmKey) continue;
+
         const pullbackEma9 = ema9Vals[i - 1].value;
         const pullbackEma20 = ema20Vals[i - 1].value;
         const rejectEma9 = ema9Vals[i].value;
@@ -1140,6 +1119,9 @@
       if (isAnalyzing || currentCandles.length < 80) return;
       isAnalyzing = true;
       const output = document.getElementById('ai-analysis-output');
+      
+      output.innerHTML = '';
+
       const spinner = document.getElementById('btn-spinner');
       const btnText = document.getElementById('btn-text');
 
@@ -1379,6 +1361,7 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
     window.changeTimeframe = function (tf) {
       currentTimeframe = tf;
       resetLockedSignal();
+      lastClosedSignalKey = null;
       userScrolledTimeScale = false;
       entryMarkerData = null;
       ['5m','15m','1h','4h','1d'].forEach(t => {
@@ -1391,6 +1374,7 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
     window.changeAsset = function (symbol, name) {
       currentSymbol = symbol; currentAssetName = name;
       resetLockedSignal();
+      lastClosedSignalKey = null;
       userScrolledTimeScale = false;
       entryMarkerData = null;
       allSymbols.forEach(s => {
