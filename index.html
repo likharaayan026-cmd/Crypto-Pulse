@@ -2,220 +2,476 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Pulse Alpha</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
-
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <style>
+    * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     html, body {
       touch-action: pan-y;
       user-select: none;
       overflow-x: hidden;
-      background-color: #030712;
+      background-color: #f8fafc;
       height: 100%;
+      -webkit-tap-highlight-color: transparent;
     }
     .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
-    .glass-card {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    .glass {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 20px 60px -20px rgba(15, 23, 42, 0.18);
     }
     .tv-lightweight-charts-legend { display: none !important; }
     #chart-wrapper { touch-action: none; }
     @keyframes radar-scan {
       0% { transform: translateY(-100%); opacity: 0.3; }
-      50% { opacity: 0.8; }
+      50% { opacity: 0.9; }
       100% { transform: translateY(100%); opacity: 0.3; }
     }
     .animate-radar { animation: radar-scan 1.5s infinite ease-in-out; }
     .price-value { word-break: break-all; white-space: normal; }
+
+    .screen-enter { animation: screenEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes screenEnter {
+      from { opacity: 0; transform: translateY(14px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes pulseRing {
+      0% { transform: scale(0.85); opacity: 0.7; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(2deg); }
+    }
+    @keyframes barShimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes floatBlob {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(30px,-20px) scale(1.08); }
+      66% { transform: translate(-20px,20px) scale(0.95); }
+    }
+    .splash-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 32px;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      animation: pulseRing 2s ease-out infinite;
+    }
+    .splash-ring.delay { animation-delay: 0.6s; }
+    .splash-logo-inner { animation: logoFloat 3s ease-in-out infinite; }
+    .shimmer-bar {
+      background: linear-gradient(90deg, #6366f1 0%, #3b82f6 25%, #a855f7 50%, #3b82f6 75%, #6366f1 100%);
+      background-size: 200% 100%;
+      animation: barShimmer 1.6s linear infinite;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(70px);
+      opacity: 0.5;
+      animation: floatBlob 12s ease-in-out infinite;
+    }
+
+    .btn-press { transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease; }
+    .btn-press:active { transform: scale(0.97); }
+
+    .input-modern {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .input-modern:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+      background: #ffffff;
+    }
+
+    .mobile-wrap {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .mobile-wrap:focus-within {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+      background: #ffffff;
+    }
+    .mobile-prefix {
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .mobile-wrap input {
+      background: transparent;
+      border: none;
+      outline: none;
+    }
+    .mobile-wrap input:focus { outline: none; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    input[type=tel]::-webkit-outer-spin-button,
+    input[type=tel]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Live pulse dot (used in header LIVE badge) */
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16,185,129,0.7);
+      animation: livePulse 1.6s infinite;
+    }
+    @keyframes livePulse {
+      0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+      100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    }
+
+    /* Google button */
+    .google-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 12px 16px;
+      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+      font-weight: 700; font-size: 13px; color: #334155;
+      box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+      transition: all 0.2s ease;
+    }
+    .google-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .google-btn:active { transform: scale(0.98); }
+    .google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      color: #94a3b8; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: #e2e8f0;
+    }
+
+    /* Kill browser autofill yellow/blue background */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+      -webkit-text-fill-color: #1e293b !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-  <!-- Splash Screen -->
-  <div id="splash-screen" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
-    <div class="relative flex items-center justify-center">
-      <div class="w-20 h-20 bg-indigo-600 rounded-3xl animate-ping opacity-25 absolute"></div>
-      <div class="w-20 h-20 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-3xl flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-indigo-500/50 animate-bounce">
-        C
+  <!-- ================= SPLASH SCREEN ================= -->
+  <div id="splash-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 via-white to-indigo-50 flex flex-col items-center justify-center transition-opacity duration-500 overflow-hidden">
+    <div class="blob" style="width:260px;height:260px;background:#818cf8;top:8%;left:-60px;"></div>
+    <div class="blob" style="width:300px;height:300px;background:#60a5fa;bottom:6%;right:-80px;animation-delay:-4s;"></div>
+    <div class="blob" style="width:220px;height:220px;background:#c084fc;top:40%;left:50%;animation-delay:-8s;"></div>
+
+    <div class="relative flex flex-col items-center z-10">
+      <div class="relative w-24 h-24 flex items-center justify-center">
+        <div class="splash-ring"></div>
+        <div class="splash-ring delay"></div>
+        <div class="splash-logo-inner w-20 h-20 rounded-[28px] bg-gradient-to-tr from-indigo-600 via-violet-500 to-blue-500 flex items-center justify-center shadow-2xl shadow-indigo-500/40 relative z-10">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12h3l2.5-7 4 14 2.5-7H22"/>
+          </svg>
+        </div>
       </div>
+
+      <h1 class="mt-8 text-3xl font-black tracking-tight text-slate-900">
+        Pulse<span class="gradient-text"> Alpha</span>
+      </h1>
+      <p class="text-[11px] text-slate-400 mt-1.5 font-semibold tracking-[0.2em] uppercase">Smart Market Intelligence</p>
+
+      <div class="mt-8 w-56">
+        <div class="h-1 bg-slate-200 rounded-full overflow-hidden">
+          <div id="splash-progress" class="h-full w-0 shimmer-bar rounded-full transition-all duration-500 ease-out"></div>
+        </div>
+      </div>
+
+      <p id="splash-status" class="text-[11px] text-slate-500 mt-4 font-bold tracking-wider uppercase">Initializing...</p>
     </div>
-    <h1 class="mt-6 text-2xl font-black tracking-wider text-white">Pulse<span class="text-indigo-500"> Alpha</span></h1>
-    <p id="splash-status" class="text-xs text-slate-500 mt-2 font-medium tracking-widest uppercase animate-pulse">Authenticating Session...</p>
+
+    <div class="absolute bottom-8 text-center z-10">
+      <p class="text-[10px] text-slate-400 font-medium">Developer <span class="text-slate-600 font-bold">Aayan Likhar</span></p>
+    </div>
   </div>
 
-  <!-- 1. AUTH CONTAINER -->
-  <div id="auth-container" class="hidden fixed inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="glass-card w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6">
-      <div class="text-center space-y-1">
-        <h2 id="auth-title" class="text-2xl font-black text-white tracking-tight">Welcome Back</h2>
-        <p id="auth-subtitle" class="text-xs text-slate-400">Log in to access live market analytics</p>
+  <!-- ================= AUTH SCREEN ================= -->
+  <div id="auth-container" class="hidden fixed inset-0 z-40 bg-gradient-to-br from-slate-50 via-white to-indigo-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="blob" style="width:220px;height:220px;background:#a5b4fc;top:-40px;right:-40px;"></div>
+    <div class="blob" style="width:240px;height:240px;background:#93c5fd;bottom:-60px;left:-60px;animation-delay:-6s;"></div>
+
+    <div class="glass w-full max-w-md p-7 sm:p-8 rounded-[28px] space-y-6 my-auto relative z-10 screen-enter">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-violet-500 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-3 mx-auto">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12h3l2.5-7 4 14 2.5-7H22"/>
+          </svg>
+        </div>
+        <h2 id="auth-title" class="text-2xl font-black text-slate-900 tracking-tight">Welcome Back</h2>
+        <p id="auth-subtitle" class="text-xs text-slate-500 font-medium">Log in to access live market analytics</p>
       </div>
 
-      <form id="auth-form" class="space-y-4">
-        <div id="field-name" class="hidden space-y-1">
-          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
-          <input type="text" id="input-name" placeholder="John Doe" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+      <button type="button" id="google-signin-btn" class="google-btn">
+        <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+
+      <div class="divider">or</div>
+
+      <form id="auth-form" class="space-y-4" novalidate autocomplete="off">
+        <div id="field-name" class="hidden space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Full Name</label>
+          <input type="text" id="input-name" placeholder="John Doe" autocomplete="off" name="pulse_name_field" class="input-modern w-full bg-white/70 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400">
         </div>
 
-        <div id="field-mobile" class="hidden space-y-1">
-          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mobile Number</label>
-          <input type="tel" id="input-mobile" placeholder="10-digit mobile number" maxlength="10" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+        <div id="field-mobile" class="hidden space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mobile Number</label>
+          <div class="mobile-wrap flex items-center bg-white/70 border border-slate-200 rounded-xl overflow-hidden">
+            <span class="mobile-prefix px-3.5 py-3 text-sm font-bold text-slate-700 bg-slate-100 border-r border-slate-200 select-none">+91</span>
+            <input type="tel" id="input-mobile" placeholder="10-digit number" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="off" name="pulse_mobile_field" class="flex-1 min-w-0 px-3 py-3 text-sm text-slate-800 placeholder-slate-400">
+          </div>
         </div>
 
-        <div class="space-y-1">
-          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
-          <input type="email" id="input-email" required placeholder="trader@cryptopulse.com" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
+          <input type="email" id="input-email" required placeholder="yourname@gmail.com" autocomplete="off" name="pulse_email_field" autocapitalize="off" spellcheck="false" class="input-modern w-full bg-white/70 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400">
         </div>
 
-        <div class="space-y-1">
-          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
-          <input type="password" id="input-password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+        <div id="field-password" class="space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Password</label>
+          <div class="relative">
+            <input type="password" id="input-password" required placeholder="••••••••" autocomplete="new-password" name="pulse_pass_field" class="input-modern w-full bg-white/70 border border-slate-200 rounded-xl px-4 py-3 pr-12 text-sm text-slate-800 placeholder-slate-400">
+            <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+              <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
         </div>
 
-        <p id="auth-error" class="text-[11px] text-rose-400 text-center font-bold hidden"></p>
+        <div id="forgot-row" class="text-right -mt-1">
+          <button type="button" id="forgot-link" class="text-[11px] text-indigo-600 font-bold hover:underline">Forgot Password?</button>
+        </div>
 
-        <button type="submit" id="auth-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition">
+        <p id="auth-error" class="text-[11px] text-rose-500 text-center font-bold hidden"></p>
+
+        <button type="submit" id="auth-btn" class="btn-press w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-3.5 rounded-xl text-sm shadow-lg shadow-indigo-600/25">
           Log In
         </button>
       </form>
 
-      <div class="text-center pt-2 border-t border-slate-800/80">
-        <p class="text-xs text-slate-400">
+      <div id="auth-toggle-row" class="text-center pt-3 border-t border-slate-200/80">
+        <p class="text-xs text-slate-500">
           <span id="auth-toggle-text">Don't have an account?</span>
-          <button type="button" id="auth-toggle-btn" class="text-indigo-400 font-bold ml-1 hover:underline">Sign Up</button>
+          <button type="button" id="auth-toggle-btn" class="text-indigo-600 font-bold ml-1 hover:underline">Sign Up</button>
         </p>
       </div>
     </div>
   </div>
 
-  <!-- 2. PENDING APPROVAL -->
-  <div id="pending-container" class="hidden fixed inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl text-center space-y-5 border border-amber-500/20">
-      <div class="w-20 h-20 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full flex items-center justify-center mx-auto text-3xl font-bold animate-pulse">⏳</div>
-      <div class="space-y-2">
-        <h2 class="text-2xl font-black text-white tracking-tight">Approval Pending</h2>
-        <p class="text-xs text-slate-400 leading-relaxed">
-          Your account request has been submitted to the administrator. Once approved, access will be granted automatically.
-        </p>
-      </div>
+  <!-- ================= VERIFY SCREEN ================= -->
+  <div id="verify-container" class="hidden fixed inset-0 z-40 bg-gradient-to-br from-slate-50 via-white to-amber-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="blob" style="width:220px;height:220px;background:#fcd34d;top:-60px;left:-60px;"></div>
+    <div class="blob" style="width:240px;height:240px;background:#a5b4fc;bottom:-60px;right:-60px;animation-delay:-5s;"></div>
 
-      <button type="button" id="pending-recheck-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition active:scale-95">
-        🔄 Check Approval Status
-      </button>
-
-      <button type="button" id="pending-logout-btn" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-4 py-2 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
-        Logout
-      </button>
-    </div>
-  </div>
-
-  <!-- 3. MAIN DASHBOARD -->
-  <div id="app-container" class="hidden flex-col min-h-screen">
-    <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
-      <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-500/20">C</div>
-          <span class="text-xl font-black text-white tracking-tight">Pulse<span class="text-indigo-500"> Alpha</span></span>
+    <div class="glass w-full max-w-md p-8 rounded-[28px] text-center space-y-6 my-auto relative z-10 screen-enter">
+      <div class="relative w-24 h-24 mx-auto">
+        <div class="absolute inset-0 rounded-full bg-amber-100 animate-ping opacity-40"></div>
+        <div class="relative w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-xl shadow-amber-500/30">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <path d="m3 7 9 6 9-6"/>
+          </svg>
         </div>
-        <button type="button" id="header-logout-btn" class="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-3.5 py-1.5 rounded-xl border border-rose-500/20 font-bold text-xs transition active:scale-95">
-          <span>Logout</span>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-slate-900 tracking-tight">Verify Your Email</h2>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          We've sent a verification link to<br>
+          <strong id="verify-email" class="text-slate-800 break-all font-bold text-[13px]"></strong>
+        </p>
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+        <p class="text-[11px] text-amber-700 leading-relaxed font-medium">
+          <strong>Important:</strong> Click the link in your email to activate your account. Check your <strong>Spam</strong> or <strong>Promotions</strong> folder if you don't see it.
+        </p>
+      </div>
+
+      <p id="verify-msg" class="text-[11px] font-bold text-center hidden"></p>
+
+      <div class="space-y-2.5">
+        <button type="button" id="verify-check-btn" class="btn-press w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-3.5 rounded-xl text-sm shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2">
+          <span id="verify-check-icon">✅</span>
+          <span id="verify-check-text">I've Verified — Continue</span>
         </button>
+
+        <button type="button" id="verify-resend-btn" class="btn-press w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold py-3 rounded-xl text-xs">
+          🔄 Resend Verification Email
+        </button>
+      </div>
+
+      <div class="flex items-center justify-center gap-3 text-[11px]">
+        <span class="flex items-center gap-1.5 text-slate-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Auto-checking status
+        </span>
+      </div>
+
+      <button type="button" id="verify-logout-btn" class="text-rose-500 hover:text-rose-600 font-bold text-xs py-1 transition">
+        Use a different account
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= APP / DASHBOARD ================= -->
+  <div id="app-container" class="hidden flex-col min-h-screen">
+    <header class="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-500 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12h3l2.5-7 4 14 2.5-7H22"/>
+            </svg>
+          </div>
+          <div class="leading-none">
+            <span class="text-lg font-black text-slate-900 tracking-tight block">Pulse<span class="gradient-text"> Alpha</span></span>
+            <span class="text-[9px] text-slate-400 font-semibold tracking-widest uppercase">Live Analytics</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="hidden sm:flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+            <span class="live-dot"></span>
+            <span class="text-[10px] font-bold text-emerald-700">LIVE</span>
+          </div>
+          <button type="button" id="header-logout-btn" class="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl border border-rose-200 font-bold text-xs transition active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            <span id="header-logout-text" class="hidden sm:inline">Logout</span>
+          </button>
+        </div>
       </div>
     </header>
 
     <main class="flex-grow max-w-7xl mx-auto w-full p-3 sm:p-4 space-y-3">
-      <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex flex-wrap justify-between items-center gap-2">
-        <div class="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
-          <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap">ETH/USDT</button>
-          <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">BTC/USDT</button>
-          <button onclick="changeAsset('SOLUSDT', 'Solana')" id="btn-SOLUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">SOL/USDT</button>
-          <button onclick="changeAsset('XRPUSDT', 'XRP')" id="btn-XRPUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">XRP/USDT</button>
-          <button onclick="changeAsset('TAOUSDT', 'Bittensor')" id="btn-TAOUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">TAO/USDT</button>
-          <button onclick="changeAsset('AAVEUSDT', 'Aave')" id="btn-AAVEUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">AAVE/USDT</button>
-          <button onclick="changeAsset('AVAXUSDT', 'Avalanche')" id="btn-AVAXUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">AVAX/USDT</button>
-          <button onclick="changeAsset('ZECUSDT', 'Zcash')" id="btn-ZECUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">ZEC/USDT</button>
-          <button onclick="changeAsset('PAXGUSDT', 'PAX Gold')" id="btn-PAXGUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">PAXG/USDT</button>
+      <!-- CONTROLS -->
+      <div class="bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-2">
+        <div class="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 scrollbar-thin">
+          <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm transition whitespace-nowrap">ETH/USDT</button>
+          <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">BTC/USDT</button>
+          <button onclick="changeAsset('SOLUSDT', 'Solana')" id="btn-SOLUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">SOL/USDT</button>
+          <button onclick="changeAsset('XRPUSDT', 'XRP')" id="btn-XRPUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">XRP/USDT</button>
+          <button onclick="changeAsset('TAOUSDT', 'Bittensor')" id="btn-TAOUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">TAO/USDT</button>
+          <button onclick="changeAsset('AAVEUSDT', 'Aave')" id="btn-AAVEUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">AAVE/USDT</button>
+          <button onclick="changeAsset('AVAXUSDT', 'Avalanche')" id="btn-AVAXUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">AVAX/USDT</button>
+          <button onclick="changeAsset('ZECUSDT', 'Zcash')" id="btn-ZECUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">ZEC/USDT</button>
+          <button onclick="changeAsset('PAXGUSDT', 'PAX Gold')" id="btn-PAXGUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">PAXG/USDT</button>
         </div>
 
-        <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 overflow-x-auto">
-          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap">5m</button>
-          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition whitespace-nowrap">15m</button>
-          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap">1h</button>
-          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap">4h</button>
-          <button onclick="changeTimeframe('1d')" id="tf-1d" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap">1D</button>
+        <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 overflow-x-auto">
+          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap">5m</button>
+          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-white text-indigo-600 rounded shadow-sm transition whitespace-nowrap">15m</button>
+          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap">1h</button>
+          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap">4h</button>
+          <button onclick="changeTimeframe('1d')" id="tf-1d" class="px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap">1D</button>
         </div>
 
-        <button id="run-ai-btn" onclick="runAnalysisEngine()" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-md transition flex items-center gap-2">
+        <button id="run-ai-btn" onclick="runAnalysisEngine()" class="btn-press bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md shadow-indigo-500/25 transition flex items-center gap-2">
           <span id="btn-spinner" class="hidden animate-spin">⚡</span>
           <span id="btn-text">Scan Setup</span>
         </button>
       </div>
 
-      <div id="chart-wrapper" class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-[420px] relative overflow-hidden">
-        <div class="absolute top-3 left-3 z-20 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-md border border-slate-800 text-[11px] font-bold flex items-center gap-3 pointer-events-none">
-          <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-1 bg-blue-500 rounded"></span> 9 EMA</span>
-          <span class="flex items-center gap-1 text-red-500"><span class="w-2.5 h-1 bg-red-600 rounded"></span> 20 EMA</span>
-          <span id="live-indicator" class="text-[10px] text-emerald-400 font-extrabold ml-2">● LIVE FEED</span>
+      <!-- CHART -->
+      <div id="chart-wrapper" class="bg-white rounded-2xl border border-slate-200 p-2 h-[420px] relative overflow-hidden shadow-sm">
+        <div class="absolute top-3 left-3 z-20 bg-white/95 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold flex items-center gap-3 pointer-events-none shadow-sm">
+          <span class="flex items-center gap-1 text-blue-600"><span class="w-2.5 h-1 bg-blue-600 rounded"></span> 9 EMA</span>
+          <span class="flex items-center gap-1 text-red-600"><span class="w-2.5 h-1 bg-red-600 rounded"></span> 20 EMA</span>
+          <span id="live-indicator" class="text-[10px] text-emerald-600 font-extrabold ml-2">● LIVE FEED</span>
         </div>
-        <div id="chart-loading" class="hidden absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center">
-          <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-xs font-bold text-slate-300 mt-2">Loading Chart...</span>
+        <div id="chart-loading" class="hidden absolute inset-0 z-30 bg-white/85 backdrop-blur-sm flex flex-col items-center justify-center">
+          <div class="w-9 h-9 border-[3px] border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-xs font-bold text-slate-600 mt-3">Loading Chart...</span>
         </div>
-        <div id="tv-dark-chart" class="w-full h-full"></div>
+        <div id="tv-chart" class="w-full h-full"></div>
       </div>
 
-      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
+      <!-- METRICS -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-            <span class="text-[10px] text-slate-500 block font-bold">9/20 EMA TREND</span>
-            <strong id="metric-ema" class="text-slate-300">--</strong>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">9/20 EMA Trend</span>
+            <strong id="metric-ema" class="text-slate-600 text-[12px]">--</strong>
           </div>
-          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-            <span class="text-[10px] text-slate-500 block font-bold">LIQUIDITY SWEEP</span>
-            <strong id="metric-sweep" class="text-slate-300">--</strong>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Liquidity Sweep</span>
+            <strong id="metric-sweep" class="text-slate-600 text-[12px]">--</strong>
           </div>
-          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-            <span class="text-[10px] text-slate-500 block font-bold">MARKET BIAS</span>
-            <strong id="metric-volatility" class="text-slate-300">--</strong>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Market Bias</span>
+            <strong id="metric-volatility" class="text-slate-600 text-[12px]">--</strong>
           </div>
-          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-            <span class="text-[10px] text-slate-500 block font-bold">VOLUME</span>
-            <strong id="metric-volume" class="text-slate-300">--</strong>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Volume</span>
+            <strong id="metric-volume" class="text-slate-600 text-[12px]">--</strong>
           </div>
         </div>
 
-        <div id="ai-analysis-output" class="bg-slate-950 p-4 rounded-xl border border-slate-800 min-h-[110px] flex items-center justify-center relative overflow-hidden">
+        <div id="ai-analysis-output" class="bg-slate-50 p-4 rounded-2xl border border-slate-100 min-h-[110px] flex items-center justify-center relative overflow-hidden">
           <div class="text-center">
-            <h4 class="font-bold text-slate-300 text-xs">Engine Ready</h4>
-            <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> for 9/20 EMA pullback + rejection + confirmation entries.</p>
+            <h4 class="font-bold text-slate-600 text-xs">Engine Ready</h4>
+            <p class="text-[10px] text-slate-400 mt-1">Click <strong>"Scan Market Setup"</strong> for real-time AI analysis with 9/20 EMA pullback + rejection + confirmation entries.</p>
           </div>
         </div>
       </div>
     </main>
 
-    <footer class="bg-slate-900 border-t border-slate-800/80 py-3 mt-auto">
-      <div class="max-w-7xl mx-auto px-4 text-center space-y-1">
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+      <div class="max-w-7xl mx-auto px-4 text-center space-y-1.5">
         <p class="text-[11px] text-slate-500 font-medium">
-          <a href="https://pulse-alpha-privacy-policy.vercel.app" target="_blank" rel="noopener noreferrer" class="text-indigo-400 font-bold hover:underline select-none">
+          <a href="https://pulse-alpha-privacy-policy.vercel.app" target="_blank" rel="noopener noreferrer" class="text-indigo-600 font-bold hover:underline select-none">
             Terms and Conditions & Disclaimer
           </a>
         </p>
-        <p class="text-[10px] text-slate-600 font-medium">Developer <span class="text-slate-400 font-bold">Aayan Likhar</span></p>
+        <p class="text-[10px] text-slate-400 font-medium">Developer <span class="text-slate-600 font-bold">Aayan Likhar</span></p>
       </div>
     </footer>
   </div>
 
-  <!-- ✅ Audio element for notification sound -->
   <audio id="notification-sound" src="nothing.mp3" preload="auto"></audio>
 
   <script>
+    // ================== FIREBASE CONFIG ==================
     const firebaseConfig = {
       apiKey: "AIzaSyBt3iYcR4SijEJqtrBlH8mNr292vakgJFQ",
       authDomain: "figo-movies.firebaseapp.com",
@@ -235,15 +491,17 @@
 
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => console.warn('persistence', e));
 
-    // ===== STATE =====
-    let isSignupMode = false;
-    let userStatusListener = null;
-    let preApprovalListener = null;
+    // ================== STATE ==================
+    let authMode = 'login';
+    let currentScreen = 'splash';
+    let bootstrapped = false;
+    let isTransitioning = false;
+
     let currentSymbol = 'ETHUSDT';
     let currentAssetName = 'Ethereum';
     let currentTimeframe = '15m';
     let isAnalyzing = false;
-    let darkChart = null, candleSeries = null, ema9Series = null, ema20Series = null;
+    let chart = null, candleSeries = null, ema9Series = null, ema20Series = null;
     let chartLines = [];
     let sweepLines = [];
     let ws = null;
@@ -253,14 +511,11 @@
     let isLoggingOut = false;
     let userScrolledTimeScale = false;
     let entryMarkerData = null;
+    let verifyPollTimer = null;
+    let resendCooldown = 0;
 
     let lockedSignal = null;
     let lastClosedSignalKey = null;
-
-    const LS_KEYS = {
-      lastEmail: 'pulsealpha_last_email',
-      cachedUser: 'pulsealpha_cached_user'
-    };
 
     const allSymbols = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','TAOUSDT','AAVEUSDT','AVAXUSDT','ZECUSDT','PAXGUSDT'];
     const twoDecimalSymbols = ['BTCUSDT','ETHUSDT','PAXGUSDT'];
@@ -268,375 +523,619 @@
 
     function resetLockedSignal() { lockedSignal = null; }
 
+    // ================== AUDIO ==================
+    let audioCtx = null;
+    let audioUnlocked = false;
+
+    function unlockAudioOnFirstInteraction() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+      } catch (e) {}
+      try {
+        const a = document.getElementById('notification-sound');
+        if (a) {
+          a.volume = 0;
+          const p = a.play();
+          if (p && p.then) p.then(() => { a.pause(); a.currentTime = 0; a.volume = 1; }).catch(() => {});
+        }
+      } catch (e) {}
+    }
+    document.addEventListener('touchstart', unlockAudioOnFirstInteraction, { once: true, passive: true });
+    document.addEventListener('click', unlockAudioOnFirstInteraction, { once: true });
+
+    function playBeepFallback() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        const notes = [880, 1320];
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.13);
+          gain.gain.setValueAtTime(0.0001, now + i * 0.13);
+          gain.gain.exponentialRampToValueAtTime(0.18, now + i * 0.13 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.13 + 0.22);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.13);
+          osc.stop(now + i * 0.13 + 0.25);
+        });
+      } catch (e) {}
+    }
+
     function playNotificationSound() {
       try {
         const audio = document.getElementById('notification-sound');
         if (audio) {
           audio.currentTime = 0;
-          audio.play().catch(e => console.warn('Audio play failed:', e));
+          const p = audio.play();
+          if (p && p.catch) p.catch(() => playBeepFallback());
+          return;
         }
-      } catch (e) {
-        console.warn('Audio error:', e);
-      }
+      } catch (e) {}
+      playBeepFallback();
     }
 
-    function saveUserToLocal(user, userData) {
+    // ================== LOCAL STORAGE (only for session cache, no email prefill) ==================
+    function saveCachedUser(user, verified) {
       try {
-        localStorage.setItem(LS_KEYS.cachedUser, JSON.stringify({
-          uid: user.uid, email: user.email,
-          name: userData ? userData.name : '',
-          status: userData ? userData.status : 'pending',
-          approved: userData ? userData.approved : false,
+        localStorage.setItem('pulsealpha_cached_user', JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName || '',
+          verified: !!verified,
           savedAt: Date.now()
         }));
-        localStorage.setItem(LS_KEYS.lastEmail, user.email || '');
-      } catch (e) {}
+      } catch(e){}
     }
-
-    function loadUserFromLocal() {
+    function clearCachedUser() {
       try {
-        const raw = localStorage.getItem(LS_KEYS.cachedUser);
-        if (!raw) return null;
-        const obj = JSON.parse(raw);
-        if (Date.now() - (obj.savedAt || 0) > 30 * 24 * 60 * 60 * 1000) {
-          localStorage.removeItem(LS_KEYS.cachedUser);
-          return null;
-        }
-        return obj;
-      } catch (e) { return null; }
+        localStorage.removeItem('pulsealpha_cached_user');
+        localStorage.removeItem('pulsealpha_last_email');
+      } catch(e){}
     }
 
-    function clearUserLocal() { try { localStorage.removeItem(LS_KEYS.cachedUser); } catch (e) {} }
-    function loadLastEmail() { try { return localStorage.getItem(LS_KEYS.lastEmail) || ''; } catch (e) { return ''; } }
-
+    // ================== SPLASH ==================
+    function setSplashProgress(pct) {
+      const el = document.getElementById('splash-progress');
+      if (el) el.style.width = pct + '%';
+    }
     function setSplashStatus(text) {
       const el = document.getElementById('splash-status');
       if (el) el.innerText = text;
     }
-
     function hideSplashScreen() {
       const splash = document.getElementById('splash-screen');
       if (splash && !splash.classList.contains('fade-out')) {
         splash.classList.add('fade-out');
-        setTimeout(() => splash.remove(), 500);
+        setTimeout(() => { try { splash.remove(); } catch(e){} }, 500);
       }
     }
 
-    function showAuthError(msg) {
+    // ================== MESSAGES ==================
+    function showAuthMsg(msg, type) {
       const el = document.getElementById('auth-error');
       if (!el) return;
-      if (msg) { el.innerText = msg; el.classList.remove('hidden'); }
-      else { el.innerText = ''; el.classList.add('hidden'); }
+      if (msg) {
+        el.innerText = msg;
+        el.className = 'text-[11px] text-center font-bold ' + (type === 'success' ? 'text-emerald-600' : 'text-rose-500');
+        el.classList.remove('hidden');
+      } else {
+        el.innerText = '';
+        el.classList.add('hidden');
+      }
+    }
+    function showVerifyMsg(msg, type) {
+      const el = document.getElementById('verify-msg');
+      if (!el) return;
+      if (msg) {
+        el.innerText = msg;
+        el.className = 'text-[11px] font-bold text-center ' + (type === 'success' ? 'text-emerald-600' : 'text-rose-500');
+        el.classList.remove('hidden');
+      } else {
+        el.innerText = '';
+        el.classList.add('hidden');
+      }
     }
 
-    window.toggleAuthMode = function () {
-      isSignupMode = !isSignupMode;
-      showAuthError('');
+    // ================== VALIDATION ==================
+    function isGmailAddress(email) {
+      return /^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]{4,28}[a-zA-Z0-9])?@gmail\.com$/i.test(email);
+    }
+    function normalizeEmail(email) {
+      return (email || '').toLowerCase().trim();
+    }
+    function isValidMobile10(mobile) {
+      return /^[6-9][0-9]{9}$/.test(mobile);
+    }
+
+    // ================== CLEAR AUTH INPUTS ==================
+    function clearAuthInputs(keepEmail) {
+      const email = document.getElementById('input-email');
+      const pwd = document.getElementById('input-password');
+      const nm = document.getElementById('input-name');
+      const mb = document.getElementById('input-mobile');
+      if (pwd) pwd.value = '';
+      if (nm) nm.value = '';
+      if (mb) mb.value = '';
+      if (!keepEmail && email) email.value = '';
+    }
+
+    // ================== AUTH MODE ==================
+    function setAuthMode(mode) {
+      authMode = mode;
+      showAuthMsg('');
       const title = document.getElementById('auth-title');
       const subtitle = document.getElementById('auth-subtitle');
       const nameField = document.getElementById('field-name');
       const mobileField = document.getElementById('field-mobile');
+      const passField = document.getElementById('field-password');
       const btn = document.getElementById('auth-btn');
+      const toggleRow = document.getElementById('auth-toggle-row');
       const toggleText = document.getElementById('auth-toggle-text');
       const toggleBtn = document.getElementById('auth-toggle-btn');
+      const forgotRow = document.getElementById('forgot-row');
 
-      if (isSignupMode) {
+      nameField.classList.add('hidden');
+      mobileField.classList.add('hidden');
+      passField.classList.add('hidden');
+      forgotRow.classList.add('hidden');
+      toggleRow.classList.remove('hidden');
+
+      // Always start with a clean form. No prefilled email at all.
+      clearAuthInputs(false);
+
+      if (mode === 'signup') {
         title.innerText = 'Create Account';
-        subtitle.innerText = 'Request access to live market analytics';
+        subtitle.innerText = 'Sign up and verify your email to begin';
         nameField.classList.remove('hidden');
         mobileField.classList.remove('hidden');
-        btn.innerText = 'Request Access';
+        passField.classList.remove('hidden');
+        btn.innerText = 'Sign Up';
         toggleText.innerText = 'Already have an account?';
+        toggleBtn.innerText = 'Log In';
+      } else if (mode === 'forgot') {
+        title.innerText = 'Reset Password';
+        subtitle.innerText = 'Enter your email to receive a reset link';
+        btn.innerText = 'Send Reset Link';
+        toggleText.innerText = 'Remember your password?';
         toggleBtn.innerText = 'Log In';
       } else {
         title.innerText = 'Welcome Back';
         subtitle.innerText = 'Log in to access live market analytics';
-        nameField.classList.add('hidden');
-        mobileField.classList.add('hidden');
+        passField.classList.remove('hidden');
+        forgotRow.classList.remove('hidden');
         btn.innerText = 'Log In';
         toggleText.innerText = "Don't have an account?";
         toggleBtn.innerText = 'Sign Up';
       }
+      btn.disabled = false;
+    }
+
+    window.toggleAuthMode = function () {
+      const next = authMode === 'signup' ? 'login' : 'signup';
+      setAuthMode(next);
     };
 
-    function emailToKey(email) {
-      return email.toLowerCase().trim().replace(/\./g, '_dot_').replace(/@/g, '_at_');
-    }
-
-    function isUserApproved(data) {
-      if (!data) return false;
-      const st = data.status ? data.status.toString().toLowerCase().trim() : '';
-      if (st === 'approved') return true;
-      const ap = data.approved;
-      if (ap === true) return true;
-      if (typeof ap === 'string' && ap.toLowerCase().trim() === 'true') return true;
-      return false;
-    }
-
-    // ✅ NEW: Check pre_approved_emails and auto-approve user if found
-    async function checkAndAutoApproveByEmail(user, userData) {
-      if (!user || !user.email) return userData;
-      if (isUserApproved(userData)) return userData;
+    // ================== HISTORY / BACK ==================
+    function pushScreenState(screen, replace) {
       try {
-        const emailKey = emailToKey(user.email);
-        const preSnap = await db.ref('pre_approved_emails/' + emailKey).once('value');
-        if (preSnap.exists()) {
-          await db.ref('users/' + user.uid).update({
-            approved: true,
-            status: 'approved'
-          });
-          return { ...(userData || {}), approved: true, status: 'approved' };
-        }
-      } catch (e) {
-        console.warn('Pre-approval check failed:', e);
-      }
-      return userData;
+        const state = { pulseScreen: screen, ts: Date.now() };
+        if (replace) history.replaceState(state, '', location.href);
+        else history.pushState(state, '', location.href);
+      } catch(e){}
     }
 
+    window.addEventListener('popstate', () => {
+      if (isTransitioning) return;
+
+      if (currentScreen === 'verify') {
+        isTransitioning = true;
+        doLogout().finally(() => { isTransitioning = false; });
+        return;
+      }
+
+      if (currentScreen === 'app') {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+          || window.navigator.standalone === true;
+        if (isStandalone) {
+          try { window.close(); } catch(err){}
+        }
+        try { history.pushState({ pulseScreen: 'app', ts: Date.now() }, '', location.href); } catch(e){}
+        return;
+      }
+    });
+
+    // ================== SCREEN ROUTER ==================
+    function showScreen(screen) {
+      const authEl = document.getElementById('auth-container');
+      const verifyEl = document.getElementById('verify-container');
+      const appEl = document.getElementById('app-container');
+
+      [authEl, verifyEl, appEl].forEach(el => el && el.classList.add('hidden'));
+      appEl && appEl.classList.remove('flex');
+
+      const prevScreen = currentScreen;
+      currentScreen = screen;
+
+      if (screen === 'auth') {
+        stopVerifyPolling();
+        setAuthMode('login');
+        // Clear any residual values explicitly
+        clearAuthInputs(false);
+        authEl.classList.remove('hidden');
+        authEl.classList.remove('screen-enter'); void authEl.offsetWidth; authEl.classList.add('screen-enter');
+        pushScreenState('auth', true);
+      } else if (screen === 'verify') {
+        const u = auth.currentUser;
+        const emailEl = document.getElementById('verify-email');
+        if (emailEl) emailEl.innerText = u ? (u.email || '') : '';
+        showVerifyMsg('');
+        verifyEl.classList.remove('hidden');
+        verifyEl.classList.remove('screen-enter'); void verifyEl.offsetWidth; verifyEl.classList.add('screen-enter');
+        startVerifyPolling();
+        if (prevScreen === 'auth') pushScreenState('verify', false);
+        else pushScreenState('verify', true);
+      } else if (screen === 'app') {
+        stopVerifyPolling();
+        appEl.classList.remove('hidden');
+        appEl.classList.add('flex');
+        appEl.classList.remove('screen-enter'); void appEl.offsetWidth; appEl.classList.add('screen-enter');
+
+        currentSymbol = 'ETHUSDT';
+        currentAssetName = 'Ethereum';
+        currentTimeframe = '15m';
+        applySymbolButtons();
+        applyTimeframeButtons();
+
+        if (!chartBootstrapped || !chart) {
+          chartBootstrapped = true;
+          setTimeout(() => {
+            buildChart();
+            loadAssetData();
+          }, 60);
+        }
+        pushScreenState('app', true);
+      }
+    }
+
+    function applySymbolButtons() {
+      allSymbols.forEach(s => {
+        const btn = document.getElementById(`btn-${s}`);
+        if (!btn) return;
+        btn.className = s === currentSymbol
+          ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm transition whitespace-nowrap'
+          : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap';
+      });
+    }
+    function applyTimeframeButtons() {
+      ['5m','15m','1h','4h','1d'].forEach(t => {
+        const btn = document.getElementById(`tf-${t}`);
+        if (!btn) return;
+        btn.className = t === currentTimeframe
+          ? 'px-2.5 py-1 text-[11px] font-bold bg-white text-indigo-600 rounded shadow-sm transition whitespace-nowrap'
+          : 'px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap';
+      });
+    }
+
+    // ================== GOOGLE SIGN-IN ==================
+    async function handleGoogleSignIn() {
+      const btn = document.getElementById('google-signin-btn');
+      if (!btn) return;
+      const origHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="text-xs font-bold text-slate-500">Signing in…</span>';
+
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        let result;
+        try {
+          result = await auth.signInWithPopup(provider);
+        } catch (popupErr) {
+          if (popupErr && (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/operation-not-supported-in-this-environment')) {
+            await auth.signInWithRedirect(provider);
+            return;
+          }
+          throw popupErr;
+        }
+
+        const user = result.user;
+
+        try {
+          const userRef = db.ref('users/' + user.uid);
+          const snap = await userRef.once('value');
+          if (!snap.exists()) {
+            await userRef.set({
+              name: user.displayName || '',
+              mobile: '',
+              email: user.email,
+              provider: 'google',
+              createdAt: firebase.database.ServerValue.TIMESTAMP
+            });
+          }
+        } catch (e) { console.warn('DB write failed', e); }
+
+        saveCachedUser(user, true);
+      } catch (err) {
+        console.warn('Google sign-in failed', err);
+        let msg = 'Google sign-in failed. Try again.';
+        if (err.code === 'auth/popup-closed-by-user') msg = 'Google sign-in cancelled.';
+        else if (err.code === 'auth/account-exists-with-different-credential') msg = 'This email is linked to another sign-in method.';
+        else if (err.code === 'auth/network-request-failed') msg = 'Network error. Check your connection.';
+        else if (err.code === 'auth/unauthorized-domain') msg = 'This domain is not authorized for Google sign-in.';
+        showAuthMsg(msg);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+      }
+    }
+
+    // ================== EMAIL AUTH ==================
     window.handleAuth = async function (event) {
       event.preventDefault();
-      showAuthError('');
-      const email = document.getElementById('input-email').value.trim();
+      showAuthMsg('');
+      const emailRaw = document.getElementById('input-email').value.trim();
+      const email = normalizeEmail(emailRaw);
       const password = document.getElementById('input-password').value;
       const btn = document.getElementById('auth-btn');
       const originalText = btn.innerText;
 
-      if (isSignupMode) {
+      if (authMode === 'forgot') {
+        if (!email) return showAuthMsg('Please enter your email address.');
+        if (!isGmailAddress(email)) return showAuthMsg('Please enter a valid Gmail address.');
+        btn.innerText = 'Sending...'; btn.disabled = true;
+        try {
+          await auth.sendPasswordResetEmail(email);
+          showAuthMsg('Reset link sent! Check your inbox (and spam folder).', 'success');
+        } catch (err) {
+          let msg = 'Could not send reset email. Try again.';
+          if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+          else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+          else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+          showAuthMsg(msg);
+        }
+        btn.innerText = originalText; btn.disabled = false;
+        return;
+      }
+
+      if (authMode === 'signup') {
         const name = document.getElementById('input-name').value.trim();
         const mobile = document.getElementById('input-mobile').value.trim();
-        if (!name || name.length < 2) return showAuthError('Please enter your full name.');
-        if (!/^[0-9]{10}$/.test(mobile)) return showAuthError('Please enter a valid 10-digit mobile number.');
-        if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
+
+        if (!name || name.length < 2) return showAuthMsg('Please enter your full name.');
+        if (!isValidMobile10(mobile)) return showAuthMsg('Please enter a valid 10-digit mobile number.');
+        if (!email) return showAuthMsg('Please enter your email address.');
+        if (!isGmailAddress(email)) return showAuthMsg('Please enter a valid Gmail address.');
+        if (password.length < 6) return showAuthMsg('Password must be at least 6 characters.');
 
         btn.innerText = 'Creating...'; btn.disabled = true;
         try {
           const cred = await auth.createUserWithEmailAndPassword(email, password);
-          const uid = cred.user.uid;
-          let isPreApproved = false;
+          const user = cred.user;
+          try { await user.updateProfile({ displayName: name }); } catch(e){}
           try {
-            const preSnap = await db.ref('pre_approved_emails/' + emailToKey(email)).once('value');
-            isPreApproved = preSnap.exists();
-          } catch (e) {}
-          const userData = {
-            name, mobile, email,
-            status: isPreApproved ? 'approved' : 'pending',
-            approved: isPreApproved,
-            createdAt: firebase.database.ServerValue.TIMESTAMP
-          };
-          await db.ref('users/' + uid).set(userData);
-          saveUserToLocal(cred.user, userData);
+            await db.ref('users/' + user.uid).set({
+              name, mobile: '+91' + mobile, email,
+              createdAt: firebase.database.ServerValue.TIMESTAMP
+            });
+          } catch(e){ console.warn('DB write failed', e); }
+          try { await user.sendEmailVerification(); } catch(e){ console.warn('verification send failed', e); }
+          saveCachedUser(user, false);
+          btn.innerText = originalText; btn.disabled = false;
         } catch (err) {
           let msg = 'Signup failed. Please try again.';
           if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please log in.';
           else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
           else if (err.code === 'auth/weak-password') msg = 'Password is too weak.';
-          showAuthError(msg);
+          showAuthMsg(msg);
           btn.innerText = originalText; btn.disabled = false;
         }
-      } else {
-        btn.innerText = 'Logging in...'; btn.disabled = true;
-        try {
-          await auth.signInWithEmailAndPassword(email, password);
-        } catch (err) {
-          let msg = 'Login failed. Check your email and password.';
-          if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
-          else if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';
-          else if (err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
-          else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
-          else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
-          showAuthError(msg);
-          btn.innerText = originalText; btn.disabled = false;
-        }
-      }
-    };
-
-    window.handleLogout = async function () {
-      if (isLoggingOut) return;
-      isLoggingOut = true;
-      try {
-        if (userStatusListener) { try { userStatusListener.off(); } catch(e){} userStatusListener = null; }
-        if (preApprovalListener) { try { preApprovalListener.off(); } catch(e){} preApprovalListener = null; }
-        if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
-        if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
-        if (darkChart) { try { darkChart.remove(); } catch(e){} }
-        darkChart = null; candleSeries = null; ema9Series = null; ema20Series = null;
-        chartLines = []; sweepLines = []; currentCandles = []; currentVolumes = [];
-        entryMarkerData = null;
-        chartBootstrapped = false; resetLockedSignal(); clearUserLocal();
-        userScrolledTimeScale = false;
-        await auth.signOut();
-        showScreen('auth');
-      } catch (err) {
-        showScreen('auth');
-      } finally {
-        setTimeout(() => { isLoggingOut = false; }, 800);
-      }
-    };
-
-    function showScreen(screen) {
-      const authEl = document.getElementById('auth-container');
-      const pendingEl = document.getElementById('pending-container');
-      const appEl = document.getElementById('app-container');
-
-      authEl.classList.add('hidden');
-      pendingEl.classList.add('hidden');
-      appEl.classList.add('hidden');
-      appEl.classList.remove('flex');
-
-      if (screen === 'auth') {
-        isSignupMode = false;
-        document.getElementById('auth-title').innerText = 'Welcome Back';
-        document.getElementById('auth-subtitle').innerText = 'Log in to access live market analytics';
-        document.getElementById('field-name').classList.add('hidden');
-        document.getElementById('field-mobile').classList.add('hidden');
-        const btn = document.getElementById('auth-btn');
-        btn.innerText = 'Log In'; btn.disabled = false;
-        document.getElementById('auth-toggle-text').innerText = "Don't have an account?";
-        document.getElementById('auth-toggle-btn').innerText = 'Sign Up';
-        document.getElementById('input-email').value = loadLastEmail();
-        document.getElementById('input-password').value = '';
-        document.getElementById('input-name').value = '';
-        document.getElementById('input-mobile').value = '';
-        showAuthError('');
-        authEl.classList.remove('hidden');
-      } else if (screen === 'pending') {
-        pendingEl.classList.remove('hidden');
-      } else if (screen === 'app') {
-        appEl.classList.remove('hidden');
-        appEl.classList.add('flex');
-
-        currentSymbol = 'ETHUSDT';
-        currentTimeframe = '15m';
-
-        allSymbols.forEach(s => {
-          const btn = document.getElementById(`btn-${s}`);
-          if (btn) btn.className = s === currentSymbol
-            ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap'
-            : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
-        });
-        ['5m','15m','1h','4h','1d'].forEach(t => {
-          const btn = document.getElementById(`tf-${t}`);
-          if (btn) btn.className = t === currentTimeframe ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition whitespace-nowrap" : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap";
-        });
-
-        if (!chartBootstrapped || !darkChart) {
-          chartBootstrapped = true;
-          setTimeout(() => {
-            buildDarkCanvasChart();
-            loadAssetData();
-          }, 50);
-        }
-      }
-    }
-
-    async function bootstrapFromLocal() {
-      setSplashStatus('Loading session...');
-      const cached = loadUserFromLocal();
-      if (!cached) {
-        setSplashStatus('Please log in...');
-        setTimeout(() => { hideSplashScreen(); showScreen('auth'); }, 800);
-        return false;
-      }
-      setSplashStatus('Welcome back, ' + (cached.name || 'Trader'));
-      return true;
-    }
-
-    auth.onAuthStateChanged(async (user) => {
-      if (userStatusListener) { try { userStatusListener.off(); } catch(e){} userStatusListener = null; }
-      if (preApprovalListener) { try { preApprovalListener.off(); } catch(e){} preApprovalListener = null; }
-
-      if (!user) {
-        const cached = loadUserFromLocal();
-        if (cached && cached.approved === true) {
-          setSplashStatus('Welcome back');
-          hideSplashScreen();
-          setTimeout(() => {
-            if (!isLoggingOut) showScreen('app');
-          }, 600);
-          return;
-        }
-        hideSplashScreen();
-        if (!isLoggingOut) showScreen('auth');
         return;
       }
 
-      setSplashStatus('Verifying access...');
-      const userRef = db.ref('users/' + user.uid);
+      if (!email) return showAuthMsg('Please enter your email address.');
+      if (!isGmailAddress(email)) return showAuthMsg('Please enter a valid Gmail address.');
+      btn.innerText = 'Logging in...'; btn.disabled = true;
       try {
-        const cached = loadUserFromLocal();
-        if (cached && cached.uid === user.uid && (cached.approved === true || cached.status === 'approved')) {
-          hideSplashScreen();
-          showScreen('app');
-        }
-
-        const snap = await userRef.once('value');
-        let data = snap.val();
-        if (!data) {
-          await userRef.set({
-            name: user.displayName || 'User',
-            mobile: '', email: user.email,
-            status: 'pending', approved: false,
-            createdAt: firebase.database.ServerValue.TIMESTAMP
-          });
-          data = { status: 'pending', approved: false };
-        }
-
-        // ✅ NEW: Check pre-approval and auto-approve if email is in pre_approved_emails
-        data = await checkAndAutoApproveByEmail(user, data);
-
-        saveUserToLocal(user, data);
-        const ok = isUserApproved(data);
-        hideSplashScreen();
-        if (ok) showScreen('app');
-        else showScreen('pending');
-
-        // Live listener on user record
-        userStatusListener = userRef.on('value', async (s) => {
-          let val = s.val();
-          let okLive = isUserApproved(val);
-
-          // ✅ NEW: Live listener also checks pre-approval
-          if (!okLive && user.email) {
-            try {
-              const emailKey = emailToKey(user.email);
-              const preSnap = await db.ref('pre_approved_emails/' + emailKey).once('value');
-              if (preSnap.exists()) {
-                await userRef.update({ approved: true, status: 'approved' });
-                okLive = true;
-                val = { ...(val || {}), approved: true, status: 'approved' };
-              }
-            } catch (e) {}
-          }
-
-          if (val) saveUserToLocal(user, val);
-          if (okLive) showScreen('app');
-          else showScreen('pending');
-        });
-
-        // ✅ NEW: Live listener on pre_approved_emails/{emailKey}
-        // If admin pre-approves this email while user is waiting, auto-approve instantly
-        if (user.email) {
-          const emailKey = emailToKey(user.email);
-          preApprovalListener = db.ref('pre_approved_emails/' + emailKey).on('value', async (s) => {
-            if (s.exists()) {
-              const currentSnap = await userRef.once('value');
-              const currentData = currentSnap.val();
-              if (currentData && !isUserApproved(currentData)) {
-                await userRef.update({ approved: true, status: 'approved' });
-              }
-            }
-          });
-        }
+        await auth.signInWithEmailAndPassword(email, password);
       } catch (err) {
-        hideSplashScreen();
-        showScreen('pending');
+        let msg = 'Login failed. Check your email and password.';
+        if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+        else if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';
+        else if (err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+        else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+        else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+        showAuthMsg(msg);
+        btn.innerText = originalText; btn.disabled = false;
+      }
+    };
+
+    // ================== LOGOUT (robust) ==================
+    async function doLogout() {
+      if (isLoggingOut) return;
+      isLoggingOut = true;
+
+      // Visual feedback
+      const btnText = document.getElementById('header-logout-text');
+      if (btnText) btnText.innerText = 'Logging out…';
+
+      stopVerifyPolling();
+
+      // Tear down UI state immediately so nothing stale remains
+      try {
+        if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+        if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
+        if (chart) { try { chart.remove(); } catch(e){} }
+      } catch (e) { console.warn('teardown err', e); }
+
+      chart = null; candleSeries = null; ema9Series = null; ema20Series = null;
+      chartLines = []; sweepLines = []; currentCandles = []; currentVolumes = [];
+      entryMarkerData = null;
+      chartBootstrapped = false; resetLockedSignal();
+      userScrolledTimeScale = false;
+
+      // Clear local caches BEFORE signing out
+      clearCachedUser();
+
+      // Clear form inputs
+      clearAuthInputs(false);
+
+      // Sign out
+      let signedOut = false;
+      try {
+        await auth.signOut();
+        signedOut = true;
+      } catch (e) {
+        console.warn('signOut error', e);
+      }
+
+      // Force show auth screen regardless
+      showScreen('auth');
+
+      // Reset button
+      if (btnText) btnText.innerText = 'Logout';
+
+      // Ensure next render doesn't re-route to app
+      setTimeout(() => { isLoggingOut = false; }, 800);
+
+      // Safety: if still showing app after 1.2s, force auth
+      setTimeout(() => {
+        if (currentScreen === 'app') {
+          console.warn('Forcing auth screen after logout');
+          showScreen('auth');
+        }
+      }, 1200);
+    }
+    window.handleLogout = doLogout;
+
+    // ================== VERIFY POLLING ==================
+    function startVerifyPolling() {
+      stopVerifyPolling();
+      verifyPollTimer = setInterval(async () => {
+        const u = auth.currentUser;
+        if (!u) { stopVerifyPolling(); return; }
+        try {
+          await u.reload();
+          const fresh = auth.currentUser;
+          if (fresh && fresh.emailVerified) {
+            stopVerifyPolling();
+            saveCachedUser(fresh, true);
+            showVerifyMsg('Email verified! Opening dashboard...', 'success');
+            setTimeout(() => showScreen('app'), 400);
+          }
+        } catch(e){}
+      }, 4000);
+    }
+    function stopVerifyPolling() {
+      if (verifyPollTimer) { clearInterval(verifyPollTimer); verifyPollTimer = null; }
+    }
+
+    // ================== AUTH STATE ==================
+    auth.getRedirectResult().catch((err) => {
+      console.warn('Redirect result error', err);
+      if (err && err.code) {
+        let msg = 'Google sign-in failed. Try again.';
+        if (err.code === 'auth/account-exists-with-different-credential') msg = 'This email is linked to another sign-in method.';
+        showAuthMsg(msg);
       }
     });
 
+    auth.onAuthStateChanged(async (user) => {
+      if (!bootstrapped) return;
+
+      if (!user) {
+        clearCachedUser();
+        showScreen('auth');
+        return;
+      }
+
+      try { await user.reload(); } catch(e){}
+      const fresh = auth.currentUser;
+      if (!fresh) { showScreen('auth'); return; }
+
+      if (fresh.emailVerified) {
+        saveCachedUser(fresh, true);
+        if (currentScreen !== 'app') showScreen('app');
+      } else {
+        saveCachedUser(fresh, false);
+        if (currentScreen !== 'verify') showScreen('verify');
+      }
+    });
+
+    // ================== BOOTSTRAP ==================
+    async function bootstrap() {
+      setSplashProgress(15);
+      setSplashStatus('Connecting...');
+      await new Promise(r => setTimeout(r, 900));
+
+      setSplashProgress(40);
+      setSplashStatus('Loading session...');
+
+      const restoredUser = await new Promise((resolve) => {
+        const unsub = auth.onAuthStateChanged((u) => {
+          unsub();
+          resolve(u);
+        });
+        setTimeout(() => { try { unsub(); } catch(e){} resolve(auth.currentUser); }, 3500);
+      });
+
+      setSplashProgress(65);
+      setSplashStatus('Verifying access...');
+
+      fetch('https://api.binance.com/api/v3/ping').catch(() => {});
+      await new Promise(r => setTimeout(r, 350));
+
+      bootstrapped = true;
+
+      if (!restoredUser) {
+        setSplashProgress(100);
+        setSplashStatus('Welcome');
+        await new Promise(r => setTimeout(r, 400));
+        hideSplashScreen();
+        setTimeout(() => showScreen('auth'), 150);
+        return;
+      }
+
+      let fresh = restoredUser;
+      try {
+        await restoredUser.reload();
+        fresh = auth.currentUser || restoredUser;
+      } catch(e){}
+
+      setSplashProgress(85);
+
+      if (fresh && fresh.emailVerified) {
+        saveCachedUser(fresh, true);
+        setSplashProgress(100);
+        setSplashStatus('Welcome back!');
+        await new Promise(r => setTimeout(r, 450));
+        hideSplashScreen();
+        setTimeout(() => showScreen('app'), 150);
+      } else {
+        saveCachedUser(fresh, false);
+        setSplashProgress(100);
+        setSplashStatus('Verify your email');
+        await new Promise(r => setTimeout(r, 450));
+        hideSplashScreen();
+        setTimeout(() => showScreen('verify'), 150);
+      }
+    }
+
+    // ================== FORMAT ==================
     function formatPrice(price, symbol = currentSymbol) {
       if (price === undefined || price === null || isNaN(price)) return twoDecimalSymbols.includes(symbol) ? "0.00" : "0.000";
       const num = Number(price);
-      return twoDecimalSymbols.includes(symbol) ? num.toFixed(2) : num.toFixed(3);
+      if (num >= 1000) return num.toFixed(2);
+      if (twoDecimalSymbols.includes(symbol)) return num.toFixed(2);
+      if (num >= 1) return num.toFixed(3);
+      return num.toFixed(4);
     }
     function formatTimeFull(time) {
       const date = new Date(time * 1000);
@@ -649,24 +1148,36 @@
       return `${day} ${month}, ${hours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
     }
 
-    function buildDarkCanvasChart() {
-      const container = document.getElementById('tv-dark-chart');
+    // ================== CHART ==================
+    function buildChart() {
+      const container = document.getElementById('tv-chart');
       if (!container) return;
       container.innerHTML = '';
-      if (darkChart) { try { darkChart.remove(); } catch(e){} darkChart = null; }
+      if (chart) { try { chart.remove(); } catch(e){} chart = null; }
 
-      darkChart = LightweightCharts.createChart(container, {
+      chart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
         height: container.clientHeight,
-        layout: { background: { type: 'solid', color: '#090d16' }, textColor: '#94a3b8' },
-        grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
-        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        layout: {
+          background: { type: 'solid', color: '#ffffff' },
+          textColor: '#64748b',
+          fontFamily: 'Inter, system-ui, sans-serif'
+        },
+        grid: {
+          vertLines: { color: '#f1f5f9' },
+          horzLines: { color: '#f1f5f9' }
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: '#94a3b8', width: 1, style: 2, labelBackgroundColor: '#475569' },
+          horzLine: { color: '#94a3b8', width: 1, style: 2, labelBackgroundColor: '#475569' }
+        },
         priceScale: {
-          borderColor: '#334155',
+          borderColor: '#e2e8f0',
           scaleMargins: { top: 0.1, bottom: 0.1 }
         },
         timeScale: {
-          borderColor: '#334155',
+          borderColor: '#e2e8f0',
           timeVisible: true,
           secondsVisible: false,
           rightOffset: 8,
@@ -685,20 +1196,20 @@
         kineticScroll: { touch: true, mouse: false }
       });
 
-      candleSeries = darkChart.addCandlestickSeries({
-        upColor: '#22c55e', downColor: '#ef4444',
-        borderDownColor: '#ef4444', borderUpColor: '#22c55e',
-        wickDownColor: '#ef4444', wickUpColor: '#22c55e',
+      candleSeries = chart.addCandlestickSeries({
+        upColor: '#16a34a', downColor: '#dc2626',
+        borderDownColor: '#dc2626', borderUpColor: '#16a34a',
+        wickDownColor: '#dc2626', wickUpColor: '#16a34a',
         priceFormat: {
           type: 'price',
           precision: twoDecimalSymbols.includes(currentSymbol) ? 2 : 3,
           minMove: twoDecimalSymbols.includes(currentSymbol) ? 0.01 : 0.001
         }
       });
-      ema9Series = darkChart.addLineSeries({ color: '#3b82f6', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
-      ema20Series = darkChart.addLineSeries({ color: '#ef4444', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      ema9Series = chart.addLineSeries({ color: '#2563eb', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      ema20Series = chart.addLineSeries({ color: '#dc2626', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
 
-      darkChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
         if (!range) return;
         const totalBars = currentCandles.length;
         if (totalBars > 0 && range.to < totalBars - 3) {
@@ -707,8 +1218,8 @@
       });
 
       window.addEventListener('resize', () => {
-        if (darkChart && container) {
-          darkChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+        if (chart && container) {
+          chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
           rerenderEntryMarker();
         }
       });
@@ -727,6 +1238,7 @@
       return arr;
     }
 
+    // ================== WEBSOCKET ==================
     function connectLiveWebSocket() {
       if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
       if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
@@ -734,14 +1246,12 @@
       const wsSymbol = currentSymbol.toLowerCase();
       const wsInterval = currentTimeframe;
       const url = `wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${wsInterval}`;
-      console.log('🔌 WS connecting:', url);
 
       ws = new WebSocket(url);
 
       ws.onopen = () => {
-        console.log('✅ WS OPEN');
         const ind = document.getElementById('live-indicator');
-        if (ind) { ind.className = 'text-[10px] text-emerald-400 font-extrabold ml-2'; ind.innerText = '● LIVE FEED'; }
+        if (ind) { ind.className = 'text-[10px] text-emerald-600 font-extrabold ml-2'; ind.innerText = '● LIVE FEED'; }
       };
 
       ws.onmessage = (event) => {
@@ -782,7 +1292,7 @@
           ema20Series.setData(computeEMA(recent, 20));
 
           if (!userScrolledTimeScale) {
-            try { darkChart.timeScale().scrollToRealTime(); } catch(e){}
+            try { chart.timeScale().scrollToRealTime(); } catch(e){}
           }
 
           checkLockedSignalLive();
@@ -791,13 +1301,12 @@
 
       ws.onerror = () => {
         const ind = document.getElementById('live-indicator');
-        if (ind) { ind.className = 'text-[10px] text-rose-400 font-extrabold ml-2'; ind.innerText = '● ERROR'; }
+        if (ind) { ind.className = 'text-[10px] text-rose-500 font-extrabold ml-2'; ind.innerText = '● ERROR'; }
       };
 
       ws.onclose = () => {
-        console.warn('🔌 WS closed — reconnect in 2s');
         const ind = document.getElementById('live-indicator');
-        if (ind) { ind.className = 'text-[10px] text-amber-400 font-extrabold ml-2'; ind.innerText = '● RECONNECTING'; }
+        if (ind) { ind.className = 'text-[10px] text-amber-600 font-extrabold ml-2'; ind.innerText = '● RECONNECTING'; }
         wsReconnectTimer = setTimeout(() => connectLiveWebSocket(), 2000);
       };
     }
@@ -822,7 +1331,6 @@
 
       if (result) {
         lastClosedSignalKey = `${lockedSignal.symbol}_${lockedSignal.timeframe}_${lockedSignal.confirmCandleTime}`;
-
         resetLockedSignal();
         entryMarkerData = null;
         if (candleSeries) candleSeries.setMarkers([]);
@@ -832,13 +1340,14 @@
         if (output) {
           output.innerHTML = `
             <div class="text-center">
-              <h4 class="font-bold text-slate-300 text-xs">Ready to Scan</h4>
-              <p class="text-[10px] text-slate-500 mt-0.5">Last signal closed. Click <strong>"Scan Market Setup"</strong> for a fresh setup.</p>
+              <h4 class="font-bold text-slate-600 text-xs">Ready to Scan</h4>
+              <p class="text-[10px] text-slate-400 mt-0.5">Last signal closed. Click <strong>"Scan Market Setup"</strong> for a fresh setup.</p>
             </div>`;
         }
       }
     }
 
+    // ================== STRATEGY ==================
     function findSwingHighs(candles, lookback = 5) {
       const highs = [];
       for (let i = lookback; i < candles.length - lookback; i++) {
@@ -1030,11 +1539,12 @@
       const current = volumes[volumes.length - 2];
       const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
       const ratio = current / avg;
-      if (ratio >= 1.8) return { label: 'High' };
-      if (ratio <= 0.6) return { label: 'Low' };
-      return { label: 'Normal' };
+      if (ratio >= 1.8) return { label: 'High', ratio };
+      if (ratio <= 0.6) return { label: 'Low', ratio };
+      return { label: 'Normal', ratio };
     }
 
+    // ================== DATA FETCH ==================
     async function fetchKlinesPaged(symbol, interval, totalCandles = 6000) {
       const maxPerReq = 1000;
       let all = [];
@@ -1099,11 +1609,11 @@
 
           const visibleBars = Math.min(120, currentCandles.length);
           const from = Math.max(0, currentCandles.length - visibleBars);
-          darkChart.timeScale().setVisibleLogicalRange({
+          chart.timeScale().setVisibleLogicalRange({
             from: from,
             to: currentCandles.length + 5
           });
-          darkChart.timeScale().scrollToRealTime();
+          chart.timeScale().scrollToRealTime();
 
           userScrolledTimeScale = false;
           connectLiveWebSocket();
@@ -1122,12 +1632,12 @@
       const out = document.getElementById('ai-analysis-output');
       if (out) out.innerHTML = `
         <div class="text-center">
-          <h4 class="font-bold text-slate-300 text-xs">New Market Loaded</h4>
-          <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to analyze ${currentSymbol} on ${currentTimeframe}.</p>
+          <h4 class="font-bold text-slate-600 text-xs">New Market Loaded</h4>
+          <p class="text-[10px] text-slate-400 mt-0.5">Click <strong>"Scan Market Setup"</strong> to analyze ${currentSymbol} on ${currentTimeframe}.</p>
         </div>`;
       ['metric-ema','metric-sweep','metric-volatility','metric-volume'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) { el.innerText = '--'; el.className = 'text-slate-300'; }
+        if (el) { el.innerText = '--'; el.className = 'text-slate-600'; }
       });
     }
 
@@ -1139,53 +1649,68 @@
       sweepLines = [];
     }
 
+    // ================== GEMINI ==================
     async function fetchGeminiAiAnalysis(promptText) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
-        });
-        if (!response.ok) return null;
-        const data = await response.json();
-        if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-          return data.candidates[0].content.parts[0].text.trim();
+      const endpoints = [
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
+      ];
+      for (const url of endpoints) {
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }],
+              generationConfig: { temperature: 0.7, maxOutputTokens: 256, topP: 0.95 }
+            })
+          });
+          if (!response.ok) {
+            console.warn('Gemini endpoint failed:', url, response.status);
+            continue;
+          }
+          const data = await response.json();
+          if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+            return data.candidates[0].content.parts[0].text.trim();
+          }
+        } catch (e) {
+          console.warn('Gemini fetch error', e);
         }
-        return null;
-      } catch (e) { return null; }
+      }
+      return null;
     }
 
+    // ================== RENDER ==================
     function renderLockedSignal(output, sig, volInfo, sweep, aiText) {
       const isBullish = sig.type.includes('BULLISH');
       output.innerHTML = `
         <div class="w-full space-y-3">
-          <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
-            <span class="text-xs font-bold text-slate-400">${sig.symbol} (${sig.timeframe}):</span>
-            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullish ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">
+          <div class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-2 gap-2">
+            <span class="text-xs font-bold text-slate-500">${sig.symbol} (${sig.timeframe}):</span>
+            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullish ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'}">
               ${isBullish ? '🚀 BUY ENTRY' : '📉 SELL ENTRY'}
             </span>
           </div>
-          <div class="text-[11px] text-slate-400 font-bold">📍 ${sig.note}</div>
+          <div class="text-[11px] text-slate-500 font-bold">📍 ${sig.note}</div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400 price-value">$${formatPrice(sig.entry, sig.symbol)}</strong></div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400 price-value">$${formatPrice(sig.tp1, sig.symbol)}</strong></div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TP2 (1:3)</span><strong class="text-emerald-300 price-value">$${formatPrice(sig.tp2, sig.symbol)}</strong></div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400 price-value">$${formatPrice(sig.sl, sig.symbol)}</strong></div>
+            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">ENTRY</span><strong class="text-blue-600 price-value">$${formatPrice(sig.entry, sig.symbol)}</strong></div>
+            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-600 price-value">$${formatPrice(sig.tp1, sig.symbol)}</strong></div>
+            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">TP2 (1:3)</span><strong class="text-emerald-700 price-value">$${formatPrice(sig.tp2, sig.symbol)}</strong></div>
+            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">STOP LOSS</span><strong class="text-rose-600 price-value">$${formatPrice(sig.sl, sig.symbol)}</strong></div>
           </div>
           <div class="grid grid-cols-2 gap-2 text-center font-mono text-[11px]">
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong></div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
+            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-600' : (volInfo.label === 'Low' ? 'text-rose-600' : 'text-amber-600')}">${volInfo.label}</strong></div>
+            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-500'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
           </div>
-          ${aiText ? `<div class="p-2.5 bg-slate-900 rounded-lg border border-indigo-500/30"><p class="text-[11px] text-indigo-300 italic leading-relaxed">🤖 <strong class="text-indigo-400">AI Insight:</strong> ${aiText}</p></div>` : ''}
+          ${aiText ? `<div class="p-3 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-100"><div class="flex items-start gap-2"><span class="text-lg">🤖</span><div><p class="text-[10px] font-black text-indigo-600 uppercase tracking-wider mb-1">Gemini AI Analysis</p><p class="text-[11px] text-slate-700 leading-relaxed whitespace-pre-line">${aiText}</p></div></div></div>` : ''}
         </div>`;
     }
 
+    // ================== ANALYSIS ENGINE ==================
     window.runAnalysisEngine = async function () {
       if (isAnalyzing || currentCandles.length < 80) return;
       isAnalyzing = true;
       const output = document.getElementById('ai-analysis-output');
-
       output.innerHTML = '';
 
       const spinner = document.getElementById('btn-spinner');
@@ -1195,11 +1720,11 @@
       btnText.innerText = "Scanning (3s)...";
       output.innerHTML = `
         <div class="flex flex-col items-center justify-center p-4 space-y-3 w-full">
-          <div class="relative w-full max-w-xs h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div class="relative w-full max-w-xs h-1.5 bg-slate-200 rounded-full overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-full animate-radar"></div>
           </div>
-          <div class="flex items-center gap-2 text-amber-400 font-bold text-xs animate-pulse">
-            <span>⚡ Analysing Chart...</span>
+          <div class="flex items-center gap-2 text-amber-600 font-bold text-xs animate-pulse">
+            <span>⚡ Analysing Chart with Gemini AI...</span>
           </div>
         </div>`;
       await new Promise(r => setTimeout(r, 3000));
@@ -1238,20 +1763,33 @@
       drawSRLines(sr);
       drawSweepLine(sweep);
 
+      const latestClose = currentCandles[len - 1].close;
+      const high30 = Math.max(...currentCandles.slice(-30).map(c => c.high));
+      const low30 = Math.min(...currentCandles.slice(-30).map(c => c.low));
+      const nearestR = sr.resistances[0] || high30;
+      const nearestS = sr.supports[0] || low30;
+
       if (!strategy.valid || isChoppy) {
         let waitReason = 'No valid entry right now. Wait for a clear setup.';
         if (isChoppy) waitReason = 'Choppy market — no-trade zone. Wait for a clean 9/20 EMA trend, then a pullback.';
         else if (strategy.reason) waitReason = strategy.reason + '. Wait for a clear setup.';
 
-        const prompt = `You are a crypto trading assistant. Respond in 1 short English line only.
+        const prompt = `You are a professional crypto market analyst. Analyze this market snapshot and provide a SHORT, specific analysis (3-4 lines maximum) in English.
 
-Asset: ${currentSymbol} | Timeframe: ${currentTimeframe}
-EMA Trend: ${isBullishTrend ? 'Bullish (9>20)' : 'Bearish (9<20)'}
-Liquidity Sweep: ${sweep.swept ? sweep.type : 'None'}
-Volume: ${volInfo.label}
-Status: NO VALID 9/20 EMA SETUP right now. Reason: ${waitReason}
+ASSET: ${currentSymbol} | TIMEFRAME: ${currentTimeframe}
+CURRENT PRICE: $${formatPrice(latestClose, currentSymbol)}
+9 EMA: ${formatPrice(ema9Vals[len-2].value, currentSymbol)} | 20 EMA: ${formatPrice(ema20Vals[len-2].value, currentSymbol)}
+TREND: ${isBullishTrend ? 'BULLISH (9 EMA above 20 EMA)' : 'BEARISH (9 EMA below 20 EMA)'}
+NEAREST RESISTANCE: $${formatPrice(nearestR, currentSymbol)}
+NEAREST SUPPORT: $${formatPrice(nearestS, currentSymbol)}
+30-CANDLE HIGH: $${formatPrice(high30, currentSymbol)} | 30-CANDLE LOW: $${formatPrice(low30, currentSymbol)}
+LIQUIDITY SWEEP: ${sweep.swept ? sweep.type : 'None detected'}
+VOLUME: ${volInfo.label}
+EMA CROSSOVER: ${strategy.reason}
 
-Give a short, helpful wait message (max 15 words).`;
+STATUS: NO VALID 9/20 EMA PULLBACK SETUP right now.
+
+Give a real, actionable analysis covering: (1) current market structure, (2) what price action you're waiting for, (3) a specific key level to watch. Keep it under 45 words. Do NOT use markdown or bullet points.`;
 
         let aiWait = null;
         try { aiWait = await fetchGeminiAiAnalysis(prompt); } catch(e){}
@@ -1262,17 +1800,23 @@ Give a short, helpful wait message (max 15 words).`;
 
         output.innerHTML = `
           <div class="w-full space-y-3">
-            <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
-              <span class="text-xs font-bold text-slate-400">${currentSymbol} (${currentTimeframe}):</span>
-              <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">⏳ NO VALID ENTRY — WAIT</span>
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-2 gap-2">
+              <span class="text-xs font-bold text-slate-500">${currentSymbol} (${currentTimeframe}):</span>
+              <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-50 text-amber-600 border border-amber-200">⏳ NO VALID ENTRY — WAIT</span>
             </div>
             <div class="grid grid-cols-3 gap-2 text-center font-mono text-[11px]">
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">TREND</span><strong class="${isBullishTrend ? 'text-emerald-400' : 'text-rose-400'}">${isBullishTrend ? 'Bullish' : 'Bearish'}</strong></div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
-              <div class="bg-slate-900 p-2 rounded border border-slate-800"><span class="block text-slate-500 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong></div>
+              <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">TREND</span><strong class="${isBullishTrend ? 'text-emerald-600' : 'text-rose-600'}">${isBullishTrend ? 'Bullish' : 'Bearish'}</strong></div>
+              <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-500'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
+              <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-600' : (volInfo.label === 'Low' ? 'text-rose-600' : 'text-amber-600')}">${volInfo.label}</strong></div>
             </div>
-            <div class="p-2.5 bg-slate-900 rounded-lg border border-white/20 text-center">
-              <p class="text-[11px] text-white italic">🤖 <strong class="text-indigo-400">AI:</strong> ${aiWait || waitReason}</p>
+            <div class="p-3 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-100">
+              <div class="flex items-start gap-2">
+                <span class="text-lg">🤖</span>
+                <div>
+                  <p class="text-[10px] font-black text-indigo-600 uppercase tracking-wider mb-1">Gemini AI Analysis</p>
+                  <p class="text-[11px] text-slate-700 leading-relaxed whitespace-pre-line">${aiWait || waitReason}</p>
+                </div>
+              </div>
             </div>
           </div>`;
         playNotificationSound();
@@ -1296,18 +1840,28 @@ Give a short, helpful wait message (max 15 words).`;
         timestamp: Date.now()
       };
 
-      const prompt = `You are a professional crypto trading assistant. Reply in 2 short English lines only.
+      const isLong = strategy.type.includes('BULLISH');
+      const prompt = `You are a professional crypto trade analyst. Provide a real, actionable trade analysis in 4-5 SHORT lines (English only, no markdown).
 
+TRADE SETUP:
 Asset: ${currentSymbol} | Timeframe: ${currentTimeframe}
-Setup Type: ${strategy.type}
-EMA Trend: ${isBullishTrend ? 'Bullish (9>20)' : 'Bearish (9<20)'}
-Entry: ${entry} | SL: ${sl} | TP1: ${tp1} | TP2: ${tp2}
-Risk-Reward: 1:2 (TP1) and 1:3 (TP2)
-Liquidity Sweep: ${sweep.swept ? sweep.type : 'None'}
-Volume: ${volInfo.label}
-Logic: 9/20 EMA crossover → pullback → bigger rejection candle → confirmation break.
+Direction: ${isLong ? 'LONG / BUY' : 'SHORT / SELL'}
+Current Price: $${formatPrice(latestClose, currentSymbol)}
+Entry: $${formatPrice(entry, currentSymbol)}
+Stop Loss: $${formatPrice(sl, currentSymbol)}
+TP1 (1:2 RR): $${formatPrice(tp1, currentSymbol)}
+TP2 (1:3 RR): $${formatPrice(tp2, currentSymbol)}
+Risk Amount: $${formatPrice(risk, currentSymbol)}
 
-Explain the setup logic briefly and give volume context. Max 30 words total.`;
+CONTEXT:
+Trend: ${isBullishTrend ? 'Bullish (9 EMA > 20 EMA)' : 'Bearish (9 EMA < 20 EMA)'}
+Setup: ${strategy.type} — 9/20 EMA crossover, pullback to EMA zone, bigger rejection candle, confirmation break
+Liquidity Sweep: ${sweep.swept ? sweep.type + ' at $' + formatPrice(sweep.sweepLevel, currentSymbol) : 'None'}
+Volume: ${volInfo.label}
+Nearest Resistance: $${formatPrice(nearestR, currentSymbol)}
+Nearest Support: $${formatPrice(nearestS, currentSymbol)}
+
+Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, (3) key risk to watch, (4) suggested management (e.g. move SL to BE after TP1). Keep each line under 18 words. No bullet points, no markdown.`;
 
       let aiText = null;
       try { aiText = await fetchGeminiAiAnalysis(prompt); } catch(e){}
@@ -1322,34 +1876,27 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
       playNotificationSound();
     };
 
+    // ================== DRAW HELPERS ==================
     function drawSignalLines(sig) {
-      chartLines.push(candleSeries.createPriceLine({ price: sig.entry, color: '#3b82f6', lineWidth: 2, title: 'ENTRY' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sig.tp1, color: '#22c55e', lineWidth: 2, title: 'TP1' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sig.tp2, color: '#16a34a', lineWidth: 2, title: 'TP2' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sig.sl, color: '#ef4444', lineWidth: 2, title: 'SL' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.entry, color: '#2563eb', lineWidth: 2, title: 'ENTRY' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.tp1, color: '#16a34a', lineWidth: 2, title: 'TP1' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.tp2, color: '#15803d', lineWidth: 2, title: 'TP2' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.sl, color: '#dc2626', lineWidth: 2, title: 'SL' }));
     }
 
     function drawEntryMarker(sig) {
       if (!candleSeries || !sig.confirmCandleTime) return;
-
       const isBull = sig.type.includes('BULLISH');
       const markerPrice = isBull ? sig.confirmCandleLow : sig.confirmCandleHigh;
-
-      entryMarkerData = {
-        time: sig.confirmCandleTime,
-        price: markerPrice,
-        isBull: isBull
-      };
-
+      entryMarkerData = { time: sig.confirmCandleTime, price: markerPrice, isBull };
       const marker = {
         time: sig.confirmCandleTime,
         position: isBull ? 'belowBar' : 'aboveBar',
-        color: '#ffffff',
+        color: '#0f172a',
         shape: 'circle',
         size: 0.15,
         text: ''
       };
-
       candleSeries.setMarkers([marker]);
     }
 
@@ -1358,7 +1905,7 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
       const marker = {
         time: entryMarkerData.time,
         position: entryMarkerData.isBull ? 'belowBar' : 'aboveBar',
-        color: '#ffffff',
+        color: '#0f172a',
         shape: 'circle',
         size: 0.15,
         text: ''
@@ -1368,7 +1915,7 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
 
     function drawSweepLine(sweep) {
       if (!sweep.swept) return;
-      const color = sweep.type === 'BULLISH_SWEEP' ? '#06b6d4' : '#a855f7';
+      const color = sweep.type === 'BULLISH_SWEEP' ? '#0891b2' : '#9333ea';
       const title = sweep.type === 'BULLISH_SWEEP' ? 'SWEEP↓' : 'SWEEP↑';
       const line = candleSeries.createPriceLine({
         price: sweep.sweepLevel, color, lineWidth: 2,
@@ -1381,24 +1928,24 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
     function updateMetrics(isBullishTrend, sweep, volInfo, hasSetup, setupType) {
       const emaEl = document.getElementById('metric-ema');
       emaEl.innerText = isBullishTrend ? "Bullish (9 > 20 EMA)" : "Bearish (9 < 20 EMA)";
-      emaEl.className = isBullishTrend ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+      emaEl.className = isBullishTrend ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
 
       const swEl = document.getElementById('metric-sweep');
       if (sweep.swept) {
         swEl.innerText = sweep.type === 'BULLISH_SWEEP' ? "Bullish Sweep" : "Bearish Sweep";
-        swEl.className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-      } else { swEl.innerText = "No Sweep"; swEl.className = "text-slate-300"; }
+        swEl.className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
+      } else { swEl.innerText = "No Sweep"; swEl.className = "text-slate-600"; }
 
       const volEl = document.getElementById('metric-volatility');
       let biasText;
       if (hasSetup && setupType) biasText = setupType.includes('BULLISH') ? 'BULLISH SETUP' : 'BEARISH SETUP';
       else biasText = isBullishTrend ? 'BULLISH BIAS' : 'BEARISH BIAS';
       volEl.innerText = biasText;
-      volEl.className = biasText.includes('BULLISH') ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+      volEl.className = biasText.includes('BULLISH') ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
 
       const vmEl = document.getElementById('metric-volume');
       vmEl.innerText = volInfo.label;
-      vmEl.className = volInfo.label === 'High' ? 'text-emerald-400 font-bold' : (volInfo.label === 'Low' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
+      vmEl.className = volInfo.label === 'High' ? 'text-emerald-600 font-bold' : (volInfo.label === 'Low' ? 'text-rose-600 font-bold' : 'text-amber-600 font-bold');
     }
 
     function drawSRLines(sr) {
@@ -1427,16 +1974,14 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
       });
     }
 
+    // ================== UI ACTIONS ==================
     window.changeTimeframe = function (tf) {
       currentTimeframe = tf;
       resetLockedSignal();
       lastClosedSignalKey = null;
       userScrolledTimeScale = false;
       entryMarkerData = null;
-      ['5m','15m','1h','4h','1d'].forEach(t => {
-        const btn = document.getElementById(`tf-${t}`);
-        if (btn) btn.className = t === tf ? "px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded transition whitespace-nowrap" : "px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-white rounded transition whitespace-nowrap";
-      });
+      applyTimeframeButtons();
       loadAssetData();
     };
 
@@ -1446,16 +1991,120 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
       lastClosedSignalKey = null;
       userScrolledTimeScale = false;
       entryMarkerData = null;
-      allSymbols.forEach(s => {
-        const btn = document.getElementById(`btn-${s}`);
-        if (btn) btn.className = s === symbol
-          ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition whitespace-nowrap'
-          : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
-      });
-      buildDarkCanvasChart();
+      applySymbolButtons();
+      buildChart();
       loadAssetData();
     };
 
+    // ================== PASSWORD TOGGLE ==================
+    function setupPasswordToggle() {
+      const btn = document.getElementById('toggle-password');
+      const inp = document.getElementById('input-password');
+      if (!btn || !inp) return;
+      btn.addEventListener('click', () => {
+        const isPwd = inp.type === 'password';
+        inp.type = isPwd ? 'text' : 'password';
+        const icon = document.getElementById('eye-icon');
+        if (icon) {
+          icon.innerHTML = isPwd
+            ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+            : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+      });
+    }
+
+    // ================== MOBILE INPUT ==================
+    function setupMobileInput() {
+      const mb = document.getElementById('input-mobile');
+      if (!mb) return;
+      mb.addEventListener('input', (e) => {
+        let v = e.target.value.replace(/[^0-9]/g, '');
+        if (v.length > 10) v = v.slice(0, 10);
+        if (v.length >= 1 && !/[6-9]/.test(v[0])) {
+          v = '';
+        }
+        e.target.value = v;
+      });
+      mb.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+        let v = text.replace(/[^0-9]/g, '').slice(0, 10);
+        if (v.length >= 1 && !/[6-9]/.test(v[0])) v = '';
+        mb.value = v;
+      });
+    }
+
+    // ================== VERIFY BUTTONS ==================
+    function setupVerifyButtons() {
+      const checkBtn = document.getElementById('verify-check-btn');
+      const checkIcon = document.getElementById('verify-check-icon');
+      const checkText = document.getElementById('verify-check-text');
+      if (checkBtn) {
+        checkBtn.addEventListener('click', async () => {
+          const u = auth.currentUser;
+          if (!u) { showScreen('auth'); return; }
+          checkBtn.disabled = true;
+          if (checkText) checkText.innerText = 'Checking...';
+          if (checkIcon) checkIcon.innerText = '⏳';
+          try {
+            await u.reload();
+            const fresh = auth.currentUser;
+            if (fresh && fresh.emailVerified) {
+              saveCachedUser(fresh, true);
+              showVerifyMsg('Email verified! Opening dashboard...', 'success');
+              setTimeout(() => showScreen('app'), 500);
+            } else {
+              showVerifyMsg('Not verified yet. Please click the link in your email.', 'error');
+            }
+          } catch(e) {
+            showVerifyMsg('Could not check status. Try again.', 'error');
+          } finally {
+            checkBtn.disabled = false;
+            if (checkText) checkText.innerText = "I've Verified — Continue";
+            if (checkIcon) checkIcon.innerText = '✅';
+          }
+        });
+      }
+
+      const resendBtn = document.getElementById('verify-resend-btn');
+      if (resendBtn) {
+        resendBtn.addEventListener('click', async () => {
+          if (resendCooldown > 0) return;
+          const u = auth.currentUser;
+          if (!u) { showScreen('auth'); return; }
+          const orig = resendBtn.innerText;
+          resendBtn.innerText = 'Sending...';
+          resendBtn.disabled = true;
+          try {
+            await u.sendEmailVerification();
+            showVerifyMsg('Verification email sent! Check your inbox.', 'success');
+          } catch (e) {
+            if (e.code === 'auth/too-many-requests') {
+              showVerifyMsg('Too many requests. Please wait a few minutes.', 'error');
+            } else {
+              showVerifyMsg('Could not send email. Try again shortly.', 'error');
+            }
+          } finally {
+            resendBtn.disabled = false;
+            resendCooldown = 30;
+            const tick = setInterval(() => {
+              resendCooldown--;
+              if (resendCooldown <= 0) {
+                clearInterval(tick);
+                resendBtn.innerText = orig;
+              } else {
+                resendBtn.innerText = `Resend in ${resendCooldown}s`;
+              }
+            }, 1000);
+          }
+        });
+      }
+
+      const logoutBtn = document.getElementById('verify-logout-btn');
+      if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
+    }
+
+    // ================== DOM READY ==================
     window.addEventListener('DOMContentLoaded', () => {
       const authForm = document.getElementById('auth-form');
       if (authForm) authForm.addEventListener('submit', window.handleAuth);
@@ -1463,56 +2112,47 @@ Explain the setup logic briefly and give volume context. Max 30 words total.`;
       const toggleBtn = document.getElementById('auth-toggle-btn');
       if (toggleBtn) toggleBtn.addEventListener('click', window.toggleAuthMode);
 
+      const forgotLink = document.getElementById('forgot-link');
+      if (forgotLink) forgotLink.addEventListener('click', () => setAuthMode('forgot'));
+
+      const googleBtn = document.getElementById('google-signin-btn');
+      if (googleBtn) googleBtn.addEventListener('click', handleGoogleSignIn);
+
       const headerLogout = document.getElementById('header-logout-btn');
-      if (headerLogout) headerLogout.addEventListener('click', window.handleLogout);
+      if (headerLogout) headerLogout.addEventListener('click', doLogout);
 
-      const pendingLogout = document.getElementById('pending-logout-btn');
-      if (pendingLogout) pendingLogout.addEventListener('click', window.handleLogout);
+      setupPasswordToggle();
+      setupVerifyButtons();
+      setupMobileInput();
 
-      const pendingRecheck = document.getElementById('pending-recheck-btn');
-      if (pendingRecheck) {
-        pendingRecheck.addEventListener('click', async () => {
-          const user = auth.currentUser;
-          if (!user) return;
-          const orig = '🔄 Check Approval Status';
-          pendingRecheck.innerText = 'Checking...';
-          try {
-            // ✅ NEW: Also check pre_approved_emails on manual recheck
-            const snap = await db.ref('users/' + user.uid).once('value');
-            let data = snap.val();
-            data = await checkAndAutoApproveByEmail(user, data);
-            if (isUserApproved(data)) {
-              saveUserToLocal(user, data);
-              showScreen('app');
-            } else {
-              pendingRecheck.innerText = '⏳ Still Pending — Try Again';
-              setTimeout(() => { pendingRecheck.innerText = orig; }, 2000);
-            }
-          } catch (e) {
-            pendingRecheck.innerText = '❌ Error — Try Again';
-            setTimeout(() => { pendingRecheck.innerText = orig; }, 2000);
-          }
-        });
-      }
+      try { history.replaceState({ pulseScreen: 'splash', ts: Date.now() }, '', location.href); } catch(e){}
 
-      bootstrapFromLocal();
+      bootstrap();
 
       setTimeout(() => {
-        const authEl = document.getElementById('auth-container');
-        const pendingEl = document.getElementById('pending-container');
-        const appEl = document.getElementById('app-container');
         const splash = document.getElementById('splash-screen');
         if (splash && !splash.classList.contains('fade-out')) {
-          const cached = loadUserFromLocal();
-          if (cached && cached.approved === true) {
-            hideSplashScreen();
-            showScreen('app');
-          } else if (authEl.classList.contains('hidden') && pendingEl.classList.contains('hidden') && appEl.classList.contains('hidden')) {
-            hideSplashScreen();
-            showScreen('auth');
-          }
+          bootstrapped = true;
+          hideSplashScreen();
+          setTimeout(() => showScreen(auth.currentUser ? (auth.currentUser.emailVerified ? 'app' : 'verify') : 'auth'), 200);
         }
-      }, 4000);
+      }, 8000);
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && bootstrapped && auth.currentUser) {
+        (async () => {
+          try {
+            await auth.currentUser.reload();
+            const fresh = auth.currentUser;
+            if (!fresh) return;
+            if (fresh.emailVerified && currentScreen === 'verify') {
+              saveCachedUser(fresh, true);
+              showScreen('app');
+            }
+          } catch(e){}
+        })();
+      }
     });
   </script>
 </body>
