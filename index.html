@@ -16,25 +16,46 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <style>
+    :root { color-scheme: dark; }
+
     * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
     html, body {
-      touch-action: pan-y;
-      user-select: none;
+      width: 100%;
+      max-width: 100%;
       overflow-x: hidden;
-      background-color: #f8fafc;
+      overscroll-behavior: none;
+      background-color: #070b14;
       height: 100%;
       -webkit-tap-highlight-color: transparent;
+      touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
     }
+
+    /* allow text selection only inside fields */
+    input, textarea { user-select: text; -webkit-user-select: text; }
+
+    /* keep every section locked to viewport width */
+    #splash-screen, #auth-container, #verify-container, #app-container {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
     .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
+
     .glass {
-      background: rgba(255, 255, 255, 0.78);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 20px 60px -20px rgba(15, 23, 42, 0.18);
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid rgba(51, 65, 85, 0.65);
+      box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.75);
     }
+
     .tv-lightweight-charts-legend { display: none !important; }
+
     #chart-wrapper { touch-action: none; }
+
     @keyframes radar-scan {
       0% { transform: translateY(-100%); opacity: 0.3; }
       50% { opacity: 0.9; }
@@ -66,6 +87,7 @@
       33% { transform: translate(30px,-20px) scale(1.08); }
       66% { transform: translate(-20px,20px) scale(0.95); }
     }
+
     .splash-ring {
       position: absolute;
       inset: 0;
@@ -75,20 +97,23 @@
     }
     .splash-ring.delay { animation-delay: 0.6s; }
     .splash-logo-inner { animation: logoFloat 3s ease-in-out infinite; }
+
     .shimmer-bar {
       background: linear-gradient(90deg, #6366f1 0%, #3b82f6 25%, #a855f7 50%, #3b82f6 75%, #6366f1 100%);
       background-size: 200% 100%;
       animation: barShimmer 1.6s linear infinite;
     }
+
     .blob {
       position: absolute;
       border-radius: 9999px;
-      filter: blur(70px);
-      opacity: 0.5;
+      filter: blur(80px);
+      opacity: 0.28;
       animation: floatBlob 12s ease-in-out infinite;
+      pointer-events: none;
     }
 
-    .btn-press { transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease; }
+    .btn-press { transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease; touch-action: manipulation; }
     .btn-press:active { transform: scale(0.97); }
 
     .input-modern {
@@ -97,8 +122,8 @@
     .input-modern:focus {
       outline: none;
       border-color: #6366f1;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+      background: #0b1220;
     }
 
     .mobile-wrap {
@@ -106,8 +131,8 @@
     }
     .mobile-wrap:focus-within {
       border-color: #6366f1;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+      background: #0b1220;
     }
     .mobile-prefix {
       pointer-events: none;
@@ -121,12 +146,14 @@
     }
     .mobile-wrap input:focus { outline: none; }
 
+    /* dark scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
     .gradient-text {
-      background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+      background: linear-gradient(135deg, #818cf8 0%, #60a5fa 100%);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
@@ -138,7 +165,7 @@
       margin: 0;
     }
 
-    /* Live pulse dot (used in header LIVE badge) */
+    /* Live pulse dot */
     .live-dot {
       width: 8px; height: 8px; border-radius: 50%; background: #10b981;
       box-shadow: 0 0 0 0 rgba(16,185,129,0.7);
@@ -150,46 +177,61 @@
       100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
     }
 
-    /* Google button */
+    /* Google button (dark) */
     .google-btn {
       display: flex; align-items: center; justify-content: center; gap: 10px;
       width: 100%; padding: 12px 16px;
-      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
-      font-weight: 700; font-size: 13px; color: #334155;
-      box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+      background: #0f172a; border: 1px solid #334155; border-radius: 12px;
+      font-weight: 700; font-size: 13px; color: #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4);
       transition: all 0.2s ease;
+      touch-action: manipulation;
     }
-    .google-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .google-btn:hover { background: #16203a; border-color: #475569; }
     .google-btn:active { transform: scale(0.98); }
     .google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .divider {
       display: flex; align-items: center; gap: 12px;
-      color: #94a3b8; font-size: 11px; font-weight: 700;
+      color: #64748b; font-size: 11px; font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.08em;
     }
     .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: #e2e8f0;
+      content: ''; flex: 1; height: 1px; background: #1e293b;
     }
 
-    /* Kill browser autofill yellow/blue background */
+    /* Kill browser autofill background (dark) */
     input:-webkit-autofill,
     input:-webkit-autofill:hover,
     input:-webkit-autofill:focus,
     input:-webkit-autofill:active {
-      -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
-      -webkit-text-fill-color: #1e293b !important;
+      -webkit-box-shadow: 0 0 0 30px #0f172a inset !important;
+      -webkit-text-fill-color: #e2e8f0 !important;
       transition: background-color 5000s ease-in-out 0s;
     }
+
+    /* horizontal scrollers that never move the page */
+    .scroll-x {
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .scroll-x::-webkit-scrollbar { display: none; }
+
+    /* safe area helpers */
+    .safe-b { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .safe-t { padding-top: env(safe-area-inset-top, 0px); }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+<body class="bg-[#070b14] text-slate-200 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
   <!-- ================= SPLASH SCREEN ================= -->
-  <div id="splash-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 via-white to-indigo-50 flex flex-col items-center justify-center transition-opacity duration-500 overflow-hidden">
-    <div class="blob" style="width:260px;height:260px;background:#818cf8;top:8%;left:-60px;"></div>
-    <div class="blob" style="width:300px;height:300px;background:#60a5fa;bottom:6%;right:-80px;animation-delay:-4s;"></div>
-    <div class="blob" style="width:220px;height:220px;background:#c084fc;top:40%;left:50%;animation-delay:-8s;"></div>
+  <div id="splash-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-[#070b14] via-[#0b1220] to-[#131a3a] flex flex-col items-center justify-center transition-opacity duration-500 overflow-hidden">
+    <div class="blob" style="width:260px;height:260px;background:#4f46e5;top:8%;left:-60px;"></div>
+    <div class="blob" style="width:300px;height:300px;background:#2563eb;bottom:6%;right:-80px;animation-delay:-4s;"></div>
+    <div class="blob" style="width:220px;height:220px;background:#7c3aed;top:40%;left:50%;animation-delay:-8s;"></div>
 
     <div class="relative flex flex-col items-center z-10">
       <div class="relative w-24 h-24 flex items-center justify-center">
@@ -202,29 +244,29 @@
         </div>
       </div>
 
-      <h1 class="mt-8 text-3xl font-black tracking-tight text-slate-900">
+      <h1 class="mt-8 text-3xl font-black tracking-tight text-white">
         Pulse<span class="gradient-text"> Alpha</span>
       </h1>
-      <p class="text-[11px] text-slate-400 mt-1.5 font-semibold tracking-[0.2em] uppercase">Smart Market Intelligence</p>
+      <p class="text-[11px] text-slate-500 mt-1.5 font-semibold tracking-[0.2em] uppercase">Smart Market Intelligence</p>
 
       <div class="mt-8 w-56">
-        <div class="h-1 bg-slate-200 rounded-full overflow-hidden">
+        <div class="h-1 bg-slate-800 rounded-full overflow-hidden">
           <div id="splash-progress" class="h-full w-0 shimmer-bar rounded-full transition-all duration-500 ease-out"></div>
         </div>
       </div>
 
-      <p id="splash-status" class="text-[11px] text-slate-500 mt-4 font-bold tracking-wider uppercase">Initializing...</p>
+      <p id="splash-status" class="text-[11px] text-slate-400 mt-4 font-bold tracking-wider uppercase">Initializing...</p>
     </div>
 
-    <div class="absolute bottom-8 text-center z-10">
-      <p class="text-[10px] text-slate-400 font-medium">Developer <span class="text-slate-600 font-bold">Aayan Likhar</span></p>
+    <div class="absolute bottom-8 text-center z-10 safe-b">
+      <p class="text-[10px] text-slate-500 font-medium">Developer <span class="text-slate-300 font-bold">Aayan Likhar</span></p>
     </div>
   </div>
 
   <!-- ================= AUTH SCREEN ================= -->
-  <div id="auth-container" class="hidden fixed inset-0 z-40 bg-gradient-to-br from-slate-50 via-white to-indigo-50 flex items-center justify-center p-4 overflow-y-auto">
-    <div class="blob" style="width:220px;height:220px;background:#a5b4fc;top:-40px;right:-40px;"></div>
-    <div class="blob" style="width:240px;height:240px;background:#93c5fd;bottom:-60px;left:-60px;animation-delay:-6s;"></div>
+  <div id="auth-container" class="hidden fixed inset-0 z-40 bg-gradient-to-br from-[#070b14] via-[#0b1220] to-[#131a3a] flex items-center justify-center p-4 overflow-y-auto overflow-x-hidden">
+    <div class="blob" style="width:220px;height:220px;background:#4338ca;top:-40px;right:-40px;"></div>
+    <div class="blob" style="width:240px;height:240px;background:#1d4ed8;bottom:-60px;left:-60px;animation-delay:-6s;"></div>
 
     <div class="glass w-full max-w-md p-7 sm:p-8 rounded-[28px] space-y-6 my-auto relative z-10 screen-enter">
       <div class="text-center space-y-2">
@@ -233,8 +275,8 @@
             <path d="M2 12h3l2.5-7 4 14 2.5-7H22"/>
           </svg>
         </div>
-        <h2 id="auth-title" class="text-2xl font-black text-slate-900 tracking-tight">Welcome Back</h2>
-        <p id="auth-subtitle" class="text-xs text-slate-500 font-medium">Log in to access live market analytics</p>
+        <h2 id="auth-title" class="text-2xl font-black text-white tracking-tight">Welcome Back</h2>
+        <p id="auth-subtitle" class="text-xs text-slate-400 font-medium">Log in to access live market analytics</p>
       </div>
 
       <button type="button" id="google-signin-btn" class="google-btn">
@@ -251,61 +293,61 @@
 
       <form id="auth-form" class="space-y-4" novalidate autocomplete="off">
         <div id="field-name" class="hidden space-y-1.5">
-          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Full Name</label>
-          <input type="text" id="input-name" placeholder="John Doe" autocomplete="off" name="pulse_name_field" class="input-modern w-full bg-white/70 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+          <input type="text" id="input-name" placeholder="John Doe" autocomplete="off" name="pulse_name_field" class="input-modern w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500">
         </div>
 
         <div id="field-mobile" class="hidden space-y-1.5">
-          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mobile Number</label>
-          <div class="mobile-wrap flex items-center bg-white/70 border border-slate-200 rounded-xl overflow-hidden">
-            <span class="mobile-prefix px-3.5 py-3 text-sm font-bold text-slate-700 bg-slate-100 border-r border-slate-200 select-none">+91</span>
-            <input type="tel" id="input-mobile" placeholder="10-digit number" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="off" name="pulse_mobile_field" class="flex-1 min-w-0 px-3 py-3 text-sm text-slate-800 placeholder-slate-400">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mobile Number</label>
+          <div class="mobile-wrap flex items-center bg-slate-900/60 border border-slate-700 rounded-xl overflow-hidden">
+            <span class="mobile-prefix px-3.5 py-3 text-sm font-bold text-slate-300 bg-slate-800 border-r border-slate-700 select-none">+91</span>
+            <input type="tel" id="input-mobile" placeholder="10-digit number" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="off" name="pulse_mobile_field" class="flex-1 min-w-0 px-3 py-3 text-sm text-slate-100 placeholder-slate-500">
           </div>
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
-          <input type="email" id="input-email" required placeholder="yourname@gmail.com" autocomplete="off" name="pulse_email_field" autocapitalize="off" spellcheck="false" class="input-modern w-full bg-white/70 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+          <input type="email" id="input-email" required placeholder="yourname@gmail.com" autocomplete="off" name="pulse_email_field" autocapitalize="off" spellcheck="false" class="input-modern w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500">
         </div>
 
         <div id="field-password" class="space-y-1.5">
-          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Password</label>
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
           <div class="relative">
-            <input type="password" id="input-password" required placeholder="••••••••" autocomplete="new-password" name="pulse_pass_field" class="input-modern w-full bg-white/70 border border-slate-200 rounded-xl px-4 py-3 pr-12 text-sm text-slate-800 placeholder-slate-400">
-            <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+            <input type="password" id="input-password" required placeholder="••••••••" autocomplete="new-password" name="pulse_pass_field" class="input-modern w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 pr-12 text-sm text-slate-100 placeholder-slate-500">
+            <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1">
               <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
           </div>
         </div>
 
         <div id="forgot-row" class="text-right -mt-1">
-          <button type="button" id="forgot-link" class="text-[11px] text-indigo-600 font-bold hover:underline">Forgot Password?</button>
+          <button type="button" id="forgot-link" class="text-[11px] text-indigo-400 font-bold hover:underline">Forgot Password?</button>
         </div>
 
-        <p id="auth-error" class="text-[11px] text-rose-500 text-center font-bold hidden"></p>
+        <p id="auth-error" class="text-[11px] text-rose-400 text-center font-bold hidden"></p>
 
         <button type="submit" id="auth-btn" class="btn-press w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-3.5 rounded-xl text-sm shadow-lg shadow-indigo-600/25">
           Log In
         </button>
       </form>
 
-      <div id="auth-toggle-row" class="text-center pt-3 border-t border-slate-200/80">
-        <p class="text-xs text-slate-500">
+      <div id="auth-toggle-row" class="text-center pt-3 border-t border-slate-700/70">
+        <p class="text-xs text-slate-400">
           <span id="auth-toggle-text">Don't have an account?</span>
-          <button type="button" id="auth-toggle-btn" class="text-indigo-600 font-bold ml-1 hover:underline">Sign Up</button>
+          <button type="button" id="auth-toggle-btn" class="text-indigo-400 font-bold ml-1 hover:underline">Sign Up</button>
         </p>
       </div>
     </div>
   </div>
 
   <!-- ================= VERIFY SCREEN ================= -->
-  <div id="verify-container" class="hidden fixed inset-0 z-40 bg-gradient-to-br from-slate-50 via-white to-amber-50 flex items-center justify-center p-4 overflow-y-auto">
-    <div class="blob" style="width:220px;height:220px;background:#fcd34d;top:-60px;left:-60px;"></div>
-    <div class="blob" style="width:240px;height:240px;background:#a5b4fc;bottom:-60px;right:-60px;animation-delay:-5s;"></div>
+  <div id="verify-container" class="hidden fixed inset-0 z-40 bg-gradient-to-br from-[#070b14] via-[#0b1220] to-[#1a1408] flex items-center justify-center p-4 overflow-y-auto overflow-x-hidden">
+    <div class="blob" style="width:220px;height:220px;background:#b45309;top:-60px;left:-60px;"></div>
+    <div class="blob" style="width:240px;height:240px;background:#4338ca;bottom:-60px;right:-60px;animation-delay:-5s;"></div>
 
     <div class="glass w-full max-w-md p-8 rounded-[28px] text-center space-y-6 my-auto relative z-10 screen-enter">
       <div class="relative w-24 h-24 mx-auto">
-        <div class="absolute inset-0 rounded-full bg-amber-100 animate-ping opacity-40"></div>
+        <div class="absolute inset-0 rounded-full bg-amber-500/20 animate-ping opacity-40"></div>
         <div class="relative w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-xl shadow-amber-500/30">
           <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="5" width="18" height="14" rx="2"/>
@@ -315,15 +357,15 @@
       </div>
 
       <div class="space-y-2">
-        <h2 class="text-2xl font-black text-slate-900 tracking-tight">Verify Your Email</h2>
-        <p class="text-xs text-slate-500 leading-relaxed">
+        <h2 class="text-2xl font-black text-white tracking-tight">Verify Your Email</h2>
+        <p class="text-xs text-slate-400 leading-relaxed">
           We've sent a verification link to<br>
-          <strong id="verify-email" class="text-slate-800 break-all font-bold text-[13px]"></strong>
+          <strong id="verify-email" class="text-slate-100 break-all font-bold text-[13px]"></strong>
         </p>
       </div>
 
-      <div class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-        <p class="text-[11px] text-amber-700 leading-relaxed font-medium">
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl px-4 py-3">
+        <p class="text-[11px] text-amber-300 leading-relaxed font-medium">
           <strong>Important:</strong> Click the link in your email to activate your account. Check your <strong>Spam</strong> or <strong>Promotions</strong> folder if you don't see it.
         </p>
       </div>
@@ -336,19 +378,19 @@
           <span id="verify-check-text">I've Verified — Continue</span>
         </button>
 
-        <button type="button" id="verify-resend-btn" class="btn-press w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold py-3 rounded-xl text-xs">
+        <button type="button" id="verify-resend-btn" class="btn-press w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold py-3 rounded-xl text-xs">
           🔄 Resend Verification Email
         </button>
       </div>
 
       <div class="flex items-center justify-center gap-3 text-[11px]">
-        <span class="flex items-center gap-1.5 text-slate-400">
+        <span class="flex items-center gap-1.5 text-slate-500">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
           Auto-checking status
         </span>
       </div>
 
-      <button type="button" id="verify-logout-btn" class="text-rose-500 hover:text-rose-600 font-bold text-xs py-1 transition">
+      <button type="button" id="verify-logout-btn" class="text-rose-400 hover:text-rose-300 font-bold text-xs py-1 transition">
         Use a different account
       </button>
     </div>
@@ -356,26 +398,26 @@
 
   <!-- ================= APP / DASHBOARD ================= -->
   <div id="app-container" class="hidden flex-col min-h-screen">
-    <header class="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-500 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+    <header class="bg-[#0b1220]/90 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-30 shadow-lg shadow-black/30">
+      <div class="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex justify-between items-center gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-500 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 12h3l2.5-7 4 14 2.5-7H22"/>
             </svg>
           </div>
-          <div class="leading-none">
-            <span class="text-lg font-black text-slate-900 tracking-tight block">Pulse<span class="gradient-text"> Alpha</span></span>
-            <span class="text-[9px] text-slate-400 font-semibold tracking-widest uppercase">Live Analytics</span>
+          <div class="leading-none min-w-0">
+            <span class="text-base sm:text-lg font-black text-white tracking-tight block truncate">Pulse<span class="gradient-text"> Alpha</span></span>
+            <span class="text-[9px] text-slate-500 font-semibold tracking-widest uppercase">Live Analytics</span>
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <div class="hidden sm:flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+        <div class="flex items-center gap-2 shrink-0">
+          <div class="hidden sm:flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">
             <span class="live-dot"></span>
-            <span class="text-[10px] font-bold text-emerald-700">LIVE</span>
+            <span class="text-[10px] font-bold text-emerald-400">LIVE</span>
           </div>
-          <button type="button" id="header-logout-btn" class="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl border border-rose-200 font-bold text-xs transition active:scale-95">
+          <button type="button" id="header-logout-btn" class="btn-press flex items-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-3 py-1.5 rounded-xl border border-rose-500/30 font-bold text-xs transition">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             <span id="header-logout-text" class="hidden sm:inline">Logout</span>
           </button>
@@ -383,87 +425,87 @@
       </div>
     </header>
 
-    <main class="flex-grow max-w-7xl mx-auto w-full p-3 sm:p-4 space-y-3">
+    <main class="flex-grow w-full max-w-7xl mx-auto p-3 sm:p-4 space-y-3 min-w-0">
       <!-- CONTROLS -->
-      <div class="bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-2">
-        <div class="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 scrollbar-thin">
+      <div class="bg-[#0f172a] p-2.5 rounded-2xl border border-slate-800 shadow-sm flex flex-wrap justify-between items-center gap-2 min-w-0">
+        <div class="scroll-x flex items-center gap-1.5 max-w-full min-w-0 flex-1 sm:flex-none">
           <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm transition whitespace-nowrap">ETH/USDT</button>
-          <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">BTC/USDT</button>
-          <button onclick="changeAsset('SOLUSDT', 'Solana')" id="btn-SOLUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">SOL/USDT</button>
-          <button onclick="changeAsset('XRPUSDT', 'XRP')" id="btn-XRPUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">XRP/USDT</button>
-          <button onclick="changeAsset('TAOUSDT', 'Bittensor')" id="btn-TAOUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">TAO/USDT</button>
-          <button onclick="changeAsset('AAVEUSDT', 'Aave')" id="btn-AAVEUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">AAVE/USDT</button>
-          <button onclick="changeAsset('AVAXUSDT', 'Avalanche')" id="btn-AVAXUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">AVAX/USDT</button>
-          <button onclick="changeAsset('ZECUSDT', 'Zcash')" id="btn-ZECUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">ZEC/USDT</button>
-          <button onclick="changeAsset('PAXGUSDT', 'PAX Gold')" id="btn-PAXGUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">PAXG/USDT</button>
+          <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">BTC/USDT</button>
+          <button onclick="changeAsset('SOLUSDT', 'Solana')" id="btn-SOLUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">SOL/USDT</button>
+          <button onclick="changeAsset('XRPUSDT', 'XRP')" id="btn-XRPUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">XRP/USDT</button>
+          <button onclick="changeAsset('TAOUSDT', 'Bittensor')" id="btn-TAOUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">TAO/USDT</button>
+          <button onclick="changeAsset('AAVEUSDT', 'Aave')" id="btn-AAVEUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">AAVE/USDT</button>
+          <button onclick="changeAsset('AVAXUSDT', 'Avalanche')" id="btn-AVAXUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">AVAX/USDT</button>
+          <button onclick="changeAsset('ZECUSDT', 'Zcash')" id="btn-ZECUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">ZEC/USDT</button>
+          <button onclick="changeAsset('PAXGUSDT', 'PAX Gold')" id="btn-PAXGUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">PAXG/USDT</button>
         </div>
 
-        <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 overflow-x-auto">
-          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap">5m</button>
-          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-white text-indigo-600 rounded shadow-sm transition whitespace-nowrap">15m</button>
-          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap">1h</button>
-          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap">4h</button>
-          <button onclick="changeTimeframe('1d')" id="tf-1d" class="px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap">1D</button>
+        <div class="scroll-x flex items-center bg-slate-800/70 p-1 rounded-lg border border-slate-700 max-w-full">
+          <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap">5m</button>
+          <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-slate-700 text-indigo-300 rounded shadow-sm transition whitespace-nowrap">15m</button>
+          <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap">1h</button>
+          <button onclick="changeTimeframe('4h')" id="tf-4h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap">4h</button>
+          <button onclick="changeTimeframe('1d')" id="tf-1d" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap">1D</button>
         </div>
 
-        <button id="run-ai-btn" onclick="runAnalysisEngine()" class="btn-press bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md shadow-indigo-500/25 transition flex items-center gap-2">
+        <button id="run-ai-btn" onclick="runAnalysisEngine()" class="btn-press bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md shadow-indigo-500/25 transition flex items-center gap-2 whitespace-nowrap">
           <span id="btn-spinner" class="hidden animate-spin">⚡</span>
           <span id="btn-text">Scan Setup</span>
         </button>
       </div>
 
       <!-- CHART -->
-      <div id="chart-wrapper" class="bg-white rounded-2xl border border-slate-200 p-2 h-[420px] relative overflow-hidden shadow-sm">
-        <div class="absolute top-3 left-3 z-20 bg-white/95 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold flex items-center gap-3 pointer-events-none shadow-sm">
-          <span class="flex items-center gap-1 text-blue-600"><span class="w-2.5 h-1 bg-blue-600 rounded"></span> 9 EMA</span>
-          <span class="flex items-center gap-1 text-red-600"><span class="w-2.5 h-1 bg-red-600 rounded"></span> 20 EMA</span>
-          <span id="live-indicator" class="text-[10px] text-emerald-600 font-extrabold ml-2">● LIVE FEED</span>
+      <div id="chart-wrapper" class="bg-[#0b1220] rounded-2xl border border-slate-800 p-2 h-[360px] sm:h-[420px] relative overflow-hidden shadow-sm">
+        <div class="absolute top-3 left-3 z-20 bg-[#0b1220]/95 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-700 text-[11px] font-bold flex items-center gap-3 pointer-events-none shadow-sm">
+          <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-1 bg-blue-400 rounded"></span> 9 EMA</span>
+          <span class="flex items-center gap-1 text-red-400"><span class="w-2.5 h-1 bg-red-400 rounded"></span> 20 EMA</span>
+          <span id="live-indicator" class="text-[10px] text-emerald-400 font-extrabold ml-2">● LIVE FEED</span>
         </div>
-        <div id="chart-loading" class="hidden absolute inset-0 z-30 bg-white/85 backdrop-blur-sm flex flex-col items-center justify-center">
+        <div id="chart-loading" class="hidden absolute inset-0 z-30 bg-[#0b1220]/85 backdrop-blur-sm flex flex-col items-center justify-center">
           <div class="w-9 h-9 border-[3px] border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-xs font-bold text-slate-600 mt-3">Loading Chart...</span>
+          <span class="text-xs font-bold text-slate-400 mt-3">Loading Chart...</span>
         </div>
         <div id="tv-chart" class="w-full h-full"></div>
       </div>
 
       <!-- METRICS -->
-      <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
+      <div class="bg-[#0f172a] p-4 rounded-2xl border border-slate-800 space-y-4 shadow-sm min-w-0">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">9/20 EMA Trend</span>
-            <strong id="metric-ema" class="text-slate-600 text-[12px]">--</strong>
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/60 min-w-0">
+            <span class="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">9/20 EMA Trend</span>
+            <strong id="metric-ema" class="text-slate-300 text-[12px]">--</strong>
           </div>
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Liquidity Sweep</span>
-            <strong id="metric-sweep" class="text-slate-600 text-[12px]">--</strong>
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/60 min-w-0">
+            <span class="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">Liquidity Sweep</span>
+            <strong id="metric-sweep" class="text-slate-300 text-[12px]">--</strong>
           </div>
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Market Bias</span>
-            <strong id="metric-volatility" class="text-slate-600 text-[12px]">--</strong>
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/60 min-w-0">
+            <span class="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">Market Bias</span>
+            <strong id="metric-volatility" class="text-slate-300 text-[12px]">--</strong>
           </div>
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Volume</span>
-            <strong id="metric-volume" class="text-slate-600 text-[12px]">--</strong>
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/60 min-w-0">
+            <span class="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">Volume</span>
+            <strong id="metric-volume" class="text-slate-300 text-[12px]">--</strong>
           </div>
         </div>
 
-        <div id="ai-analysis-output" class="bg-slate-50 p-4 rounded-2xl border border-slate-100 min-h-[110px] flex items-center justify-center relative overflow-hidden">
+        <div id="ai-analysis-output" class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/60 min-h-[110px] flex items-center justify-center relative overflow-hidden">
           <div class="text-center">
-            <h4 class="font-bold text-slate-600 text-xs">Engine Ready</h4>
-            <p class="text-[10px] text-slate-400 mt-1">Click <strong>"Scan Market Setup"</strong> for real-time AI analysis with 9/20 EMA pullback + rejection + confirmation entries.</p>
+            <h4 class="font-bold text-slate-300 text-xs">Engine Ready</h4>
+            <p class="text-[10px] text-slate-500 mt-1">Click <strong>"Scan Market Setup"</strong> for real-time AI analysis with 9/20 EMA pullback + rejection + confirmation entries.</p>
           </div>
         </div>
       </div>
     </main>
 
-    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+    <footer class="bg-[#0b1220] border-t border-slate-800 py-4 mt-auto safe-b">
       <div class="max-w-7xl mx-auto px-4 text-center space-y-1.5">
-        <p class="text-[11px] text-slate-500 font-medium">
-          <a href="https://pulse-alpha-privacy-policy.vercel.app" target="_blank" rel="noopener noreferrer" class="text-indigo-600 font-bold hover:underline select-none">
+        <p class="text-[11px] text-slate-400 font-medium">
+          <a href="https://pulse-alpha-privacy-policy.vercel.app" target="_blank" rel="noopener noreferrer" class="text-indigo-400 font-bold hover:underline select-none">
             Terms and Conditions & Disclaimer
           </a>
         </p>
-        <p class="text-[10px] text-slate-400 font-medium">Developer <span class="text-slate-600 font-bold">Aayan Likhar</span></p>
+        <p class="text-[10px] text-slate-500 font-medium">Developer <span class="text-slate-300 font-bold">Aayan Likhar</span></p>
       </div>
     </footer>
   </div>
@@ -490,6 +532,29 @@
     const db = firebase.database();
 
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => console.warn('persistence', e));
+
+    // ================== DARK CHART PALETTE ==================
+    const THEME = {
+      chartBg:    '#0b1220',
+      grid:       '#1e293b',
+      text:       '#94a3b8',
+      border:     '#1e293b',
+      crosshair:  '#475569',
+      crossLabel: '#334155',
+      up:         '#22c55e',
+      down:       '#ef4444',
+      ema9:       '#60a5fa',
+      ema20:      '#f87171',
+      entry:      '#60a5fa',
+      tp1:        '#22c55e',
+      tp2:        '#16a34a',
+      sl:         '#ef4444',
+      marker:     '#e2e8f0',
+      sweepBull:  '#22d3ee',
+      sweepBear:  '#c084fc',
+      rColors:    ['#fb923c', '#f59e0b', '#fbbf24', '#facc15'],
+      sColors:    ['#f472b6', '#ec4899', '#f9a8d4', '#fb7185']
+    };
 
     // ================== STATE ==================
     let authMode = 'login';
@@ -581,7 +646,7 @@
       playBeepFallback();
     }
 
-    // ================== LOCAL STORAGE (only for session cache, no email prefill) ==================
+    // ================== LOCAL STORAGE ==================
     function saveCachedUser(user, verified) {
       try {
         localStorage.setItem('pulsealpha_cached_user', JSON.stringify({
@@ -623,7 +688,7 @@
       if (!el) return;
       if (msg) {
         el.innerText = msg;
-        el.className = 'text-[11px] text-center font-bold ' + (type === 'success' ? 'text-emerald-600' : 'text-rose-500');
+        el.className = 'text-[11px] text-center font-bold ' + (type === 'success' ? 'text-emerald-400' : 'text-rose-400');
         el.classList.remove('hidden');
       } else {
         el.innerText = '';
@@ -635,7 +700,7 @@
       if (!el) return;
       if (msg) {
         el.innerText = msg;
-        el.className = 'text-[11px] font-bold text-center ' + (type === 'success' ? 'text-emerald-600' : 'text-rose-500');
+        el.className = 'text-[11px] font-bold text-center ' + (type === 'success' ? 'text-emerald-400' : 'text-rose-400');
         el.classList.remove('hidden');
       } else {
         el.innerText = '';
@@ -654,7 +719,6 @@
       return /^[6-9][0-9]{9}$/.test(mobile);
     }
 
-    // ================== CLEAR AUTH INPUTS ==================
     function clearAuthInputs(keepEmail) {
       const email = document.getElementById('input-email');
       const pwd = document.getElementById('input-password');
@@ -687,7 +751,6 @@
       forgotRow.classList.add('hidden');
       toggleRow.classList.remove('hidden');
 
-      // Always start with a clean form. No prefilled email at all.
       clearAuthInputs(false);
 
       if (mode === 'signup') {
@@ -766,7 +829,6 @@
       if (screen === 'auth') {
         stopVerifyPolling();
         setAuthMode('login');
-        // Clear any residual values explicitly
         clearAuthInputs(false);
         authEl.classList.remove('hidden');
         authEl.classList.remove('screen-enter'); void authEl.offsetWidth; authEl.classList.add('screen-enter');
@@ -810,7 +872,7 @@
         if (!btn) return;
         btn.className = s === currentSymbol
           ? 'px-3 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm transition whitespace-nowrap'
-          : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap';
+          : 'px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap';
       });
     }
     function applyTimeframeButtons() {
@@ -818,8 +880,8 @@
         const btn = document.getElementById(`tf-${t}`);
         if (!btn) return;
         btn.className = t === currentTimeframe
-          ? 'px-2.5 py-1 text-[11px] font-bold bg-white text-indigo-600 rounded shadow-sm transition whitespace-nowrap'
-          : 'px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 rounded transition whitespace-nowrap';
+          ? 'px-2.5 py-1 text-[11px] font-bold bg-slate-700 text-indigo-300 rounded shadow-sm transition whitespace-nowrap'
+          : 'px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap';
       });
     }
 
@@ -829,7 +891,7 @@
       if (!btn) return;
       const origHTML = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<span class="text-xs font-bold text-slate-500">Signing in…</span>';
+      btn.innerHTML = '<span class="text-xs font-bold text-slate-400">Signing in…</span>';
 
       try {
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -957,18 +1019,16 @@
       }
     };
 
-    // ================== LOGOUT (robust) ==================
+    // ================== LOGOUT ==================
     async function doLogout() {
       if (isLoggingOut) return;
       isLoggingOut = true;
 
-      // Visual feedback
       const btnText = document.getElementById('header-logout-text');
       if (btnText) btnText.innerText = 'Logging out…';
 
       stopVerifyPolling();
 
-      // Tear down UI state immediately so nothing stale remains
       try {
         if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
         if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
@@ -981,31 +1041,21 @@
       chartBootstrapped = false; resetLockedSignal();
       userScrolledTimeScale = false;
 
-      // Clear local caches BEFORE signing out
       clearCachedUser();
-
-      // Clear form inputs
       clearAuthInputs(false);
 
-      // Sign out
-      let signedOut = false;
       try {
         await auth.signOut();
-        signedOut = true;
       } catch (e) {
         console.warn('signOut error', e);
       }
 
-      // Force show auth screen regardless
       showScreen('auth');
 
-      // Reset button
       if (btnText) btnText.innerText = 'Logout';
 
-      // Ensure next render doesn't re-route to app
       setTimeout(() => { isLoggingOut = false; }, 800);
 
-      // Safety: if still showing app after 1.2s, force auth
       setTimeout(() => {
         if (currentScreen === 'app') {
           console.warn('Forcing auth screen after logout');
@@ -1159,25 +1209,25 @@
         width: container.clientWidth,
         height: container.clientHeight,
         layout: {
-          background: { type: 'solid', color: '#ffffff' },
-          textColor: '#64748b',
+          background: { type: 'solid', color: THEME.chartBg },
+          textColor: THEME.text,
           fontFamily: 'Inter, system-ui, sans-serif'
         },
         grid: {
-          vertLines: { color: '#f1f5f9' },
-          horzLines: { color: '#f1f5f9' }
+          vertLines: { color: THEME.grid },
+          horzLines: { color: THEME.grid }
         },
         crosshair: {
           mode: LightweightCharts.CrosshairMode.Normal,
-          vertLine: { color: '#94a3b8', width: 1, style: 2, labelBackgroundColor: '#475569' },
-          horzLine: { color: '#94a3b8', width: 1, style: 2, labelBackgroundColor: '#475569' }
+          vertLine: { color: THEME.crosshair, width: 1, style: 2, labelBackgroundColor: THEME.crossLabel },
+          horzLine: { color: THEME.crosshair, width: 1, style: 2, labelBackgroundColor: THEME.crossLabel }
         },
         priceScale: {
-          borderColor: '#e2e8f0',
+          borderColor: THEME.border,
           scaleMargins: { top: 0.1, bottom: 0.1 }
         },
         timeScale: {
-          borderColor: '#e2e8f0',
+          borderColor: THEME.border,
           timeVisible: true,
           secondsVisible: false,
           rightOffset: 8,
@@ -1197,17 +1247,17 @@
       });
 
       candleSeries = chart.addCandlestickSeries({
-        upColor: '#16a34a', downColor: '#dc2626',
-        borderDownColor: '#dc2626', borderUpColor: '#16a34a',
-        wickDownColor: '#dc2626', wickUpColor: '#16a34a',
+        upColor: THEME.up, downColor: THEME.down,
+        borderDownColor: THEME.down, borderUpColor: THEME.up,
+        wickDownColor: THEME.down, wickUpColor: THEME.up,
         priceFormat: {
           type: 'price',
           precision: twoDecimalSymbols.includes(currentSymbol) ? 2 : 3,
           minMove: twoDecimalSymbols.includes(currentSymbol) ? 0.01 : 0.001
         }
       });
-      ema9Series = chart.addLineSeries({ color: '#2563eb', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
-      ema20Series = chart.addLineSeries({ color: '#dc2626', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      ema9Series = chart.addLineSeries({ color: THEME.ema9, lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      ema20Series = chart.addLineSeries({ color: THEME.ema20, lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
 
       chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
         if (!range) return;
@@ -1251,7 +1301,7 @@
 
       ws.onopen = () => {
         const ind = document.getElementById('live-indicator');
-        if (ind) { ind.className = 'text-[10px] text-emerald-600 font-extrabold ml-2'; ind.innerText = '● LIVE FEED'; }
+        if (ind) { ind.className = 'text-[10px] text-emerald-400 font-extrabold ml-2'; ind.innerText = '● LIVE FEED'; }
       };
 
       ws.onmessage = (event) => {
@@ -1301,12 +1351,12 @@
 
       ws.onerror = () => {
         const ind = document.getElementById('live-indicator');
-        if (ind) { ind.className = 'text-[10px] text-rose-500 font-extrabold ml-2'; ind.innerText = '● ERROR'; }
+        if (ind) { ind.className = 'text-[10px] text-rose-400 font-extrabold ml-2'; ind.innerText = '● ERROR'; }
       };
 
       ws.onclose = () => {
         const ind = document.getElementById('live-indicator');
-        if (ind) { ind.className = 'text-[10px] text-amber-600 font-extrabold ml-2'; ind.innerText = '● RECONNECTING'; }
+        if (ind) { ind.className = 'text-[10px] text-amber-400 font-extrabold ml-2'; ind.innerText = '● RECONNECTING'; }
         wsReconnectTimer = setTimeout(() => connectLiveWebSocket(), 2000);
       };
     }
@@ -1340,8 +1390,8 @@
         if (output) {
           output.innerHTML = `
             <div class="text-center">
-              <h4 class="font-bold text-slate-600 text-xs">Ready to Scan</h4>
-              <p class="text-[10px] text-slate-400 mt-0.5">Last signal closed. Click <strong>"Scan Market Setup"</strong> for a fresh setup.</p>
+              <h4 class="font-bold text-slate-300 text-xs">Ready to Scan</h4>
+              <p class="text-[10px] text-slate-500 mt-0.5">Last signal closed. Click <strong>"Scan Market Setup"</strong> for a fresh setup.</p>
             </div>`;
         }
       }
@@ -1632,12 +1682,12 @@
       const out = document.getElementById('ai-analysis-output');
       if (out) out.innerHTML = `
         <div class="text-center">
-          <h4 class="font-bold text-slate-600 text-xs">New Market Loaded</h4>
-          <p class="text-[10px] text-slate-400 mt-0.5">Click <strong>"Scan Market Setup"</strong> to analyze ${currentSymbol} on ${currentTimeframe}.</p>
+          <h4 class="font-bold text-slate-300 text-xs">New Market Loaded</h4>
+          <p class="text-[10px] text-slate-500 mt-0.5">Click <strong>"Scan Market Setup"</strong> to analyze ${currentSymbol} on ${currentTimeframe}.</p>
         </div>`;
       ['metric-ema','metric-sweep','metric-volatility','metric-volume'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) { el.innerText = '--'; el.className = 'text-slate-600'; }
+        if (el) { el.innerText = '--'; el.className = 'text-slate-300'; }
       });
     }
 
@@ -1685,24 +1735,24 @@
       const isBullish = sig.type.includes('BULLISH');
       output.innerHTML = `
         <div class="w-full space-y-3">
-          <div class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-2 gap-2">
-            <span class="text-xs font-bold text-slate-500">${sig.symbol} (${sig.timeframe}):</span>
-            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullish ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'}">
+          <div class="flex flex-wrap items-center justify-between border-b border-slate-700 pb-2 gap-2">
+            <span class="text-xs font-bold text-slate-400">${sig.symbol} (${sig.timeframe}):</span>
+            <span class="px-4 py-1.5 rounded-full text-xs font-black ${isBullish ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'}">
               ${isBullish ? '🚀 BUY ENTRY' : '📉 SELL ENTRY'}
             </span>
           </div>
-          <div class="text-[11px] text-slate-500 font-bold">📍 ${sig.note}</div>
+          <div class="text-[11px] text-slate-400 font-bold">📍 ${sig.note}</div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
-            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">ENTRY</span><strong class="text-blue-600 price-value">$${formatPrice(sig.entry, sig.symbol)}</strong></div>
-            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-600 price-value">$${formatPrice(sig.tp1, sig.symbol)}</strong></div>
-            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">TP2 (1:3)</span><strong class="text-emerald-700 price-value">$${formatPrice(sig.tp2, sig.symbol)}</strong></div>
-            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">STOP LOSS</span><strong class="text-rose-600 price-value">$${formatPrice(sig.sl, sig.symbol)}</strong></div>
+            <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-700 min-w-0"><span class="block text-slate-500 text-[10px]">ENTRY</span><strong class="text-blue-400 price-value">$${formatPrice(sig.entry, sig.symbol)}</strong></div>
+            <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-700 min-w-0"><span class="block text-slate-500 text-[10px]">TP1 (1:2)</span><strong class="text-emerald-400 price-value">$${formatPrice(sig.tp1, sig.symbol)}</strong></div>
+            <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-700 min-w-0"><span class="block text-slate-500 text-[10px]">TP2 (1:3)</span><strong class="text-emerald-300 price-value">$${formatPrice(sig.tp2, sig.symbol)}</strong></div>
+            <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-700 min-w-0"><span class="block text-slate-500 text-[10px]">STOP LOSS</span><strong class="text-rose-400 price-value">$${formatPrice(sig.sl, sig.symbol)}</strong></div>
           </div>
           <div class="grid grid-cols-2 gap-2 text-center font-mono text-[11px]">
-            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-600' : (volInfo.label === 'Low' ? 'text-rose-600' : 'text-amber-600')}">${volInfo.label}</strong></div>
-            <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-500'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
+            <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-700 min-w-0"><span class="block text-slate-500 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong></div>
+            <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-700 min-w-0"><span class="block text-slate-500 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
           </div>
-          ${aiText ? `<div class="p-3 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-100"><div class="flex items-start gap-2"><span class="text-lg">🤖</span><div><p class="text-[10px] font-black text-indigo-600 uppercase tracking-wider mb-1">Gemini AI Analysis</p><p class="text-[11px] text-slate-700 leading-relaxed whitespace-pre-line">${aiText}</p></div></div></div>` : ''}
+          ${aiText ? `<div class="p-3 bg-gradient-to-r from-indigo-950/70 to-blue-950/60 rounded-xl border border-indigo-800/50"><div class="flex items-start gap-2"><span class="text-lg">🤖</span><div><p class="text-[10px] font-black text-indigo-400 uppercase tracking-wider mb-1">Gemini AI Analysis</p><p class="text-[11px] text-slate-300 leading-relaxed whitespace-pre-line">${aiText}</p></div></div></div>` : ''}
         </div>`;
     }
 
@@ -1720,10 +1770,10 @@
       btnText.innerText = "Scanning (3s)...";
       output.innerHTML = `
         <div class="flex flex-col items-center justify-center p-4 space-y-3 w-full">
-          <div class="relative w-full max-w-xs h-1.5 bg-slate-200 rounded-full overflow-hidden">
+          <div class="relative w-full max-w-xs h-1.5 bg-slate-700 rounded-full overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-full animate-radar"></div>
           </div>
-          <div class="flex items-center gap-2 text-amber-600 font-bold text-xs animate-pulse">
+          <div class="flex items-center gap-2 text-amber-400 font-bold text-xs animate-pulse">
             <span>⚡ Analysing Chart...</span>
           </div>
         </div>`;
@@ -1800,21 +1850,21 @@ Give a real, actionable analysis covering: (1) current market structure, (2) wha
 
         output.innerHTML = `
           <div class="w-full space-y-3">
-            <div class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-2 gap-2">
-              <span class="text-xs font-bold text-slate-500">${currentSymbol} (${currentTimeframe}):</span>
-              <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-50 text-amber-600 border border-amber-200">⏳ NO VALID ENTRY — WAIT</span>
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-700 pb-2 gap-2">
+              <span class="text-xs font-bold text-slate-400">${currentSymbol} (${currentTimeframe}):</span>
+              <span class="px-4 py-1.5 rounded-full text-xs font-black bg-amber-500/10 text-amber-400 border border-amber-500/30">⏳ NO VALID ENTRY — WAIT</span>
             </div>
             <div class="grid grid-cols-3 gap-2 text-center font-mono text-[11px]">
-              <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">TREND</span><strong class="${isBullishTrend ? 'text-emerald-600' : 'text-rose-600'}">${isBullishTrend ? 'Bullish' : 'Bearish'}</strong></div>
-              <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-500'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
-              <div class="bg-white p-2 rounded-lg border border-slate-200"><span class="block text-slate-400 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-600' : (volInfo.label === 'Low' ? 'text-rose-600' : 'text-amber-600')}">${volInfo.label}</strong></div>
+              <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-700 min-w-0"><span class="block text-slate-500 text-[10px]">TREND</span><strong class="${isBullishTrend ? 'text-emerald-400' : 'text-rose-400'}">${isBullishTrend ? 'Bullish' : 'Bearish'}</strong></div>
+              <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-700 min-w-0"><span class="block text-slate-500 text-[10px]">SWEEP</span><strong class="${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}">${sweep.swept ? (sweep.type === 'BULLISH_SWEEP' ? 'Bullish' : 'Bearish') : 'None'}</strong></div>
+              <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-700 min-w-0"><span class="block text-slate-500 text-[10px]">VOLUME</span><strong class="${volInfo.label === 'High' ? 'text-emerald-400' : (volInfo.label === 'Low' ? 'text-rose-400' : 'text-amber-400')}">${volInfo.label}</strong></div>
             </div>
-            <div class="p-3 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-100">
+            <div class="p-3 bg-gradient-to-r from-indigo-950/70 to-blue-950/60 rounded-xl border border-indigo-800/50">
               <div class="flex items-start gap-2">
                 <span class="text-lg">🤖</span>
                 <div>
-                  <p class="text-[10px] font-black text-indigo-600 uppercase tracking-wider mb-1">Pulse Alpha AI Analysis</p>
-                  <p class="text-[11px] text-slate-700 leading-relaxed whitespace-pre-line">${aiWait || waitReason}</p>
+                  <p class="text-[10px] font-black text-indigo-400 uppercase tracking-wider mb-1">Pulse Alpha AI Analysis</p>
+                  <p class="text-[11px] text-slate-300 leading-relaxed whitespace-pre-line">${aiWait || waitReason}</p>
                 </div>
               </div>
             </div>
@@ -1878,10 +1928,10 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
 
     // ================== DRAW HELPERS ==================
     function drawSignalLines(sig) {
-      chartLines.push(candleSeries.createPriceLine({ price: sig.entry, color: '#2563eb', lineWidth: 2, title: 'ENTRY' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sig.tp1, color: '#16a34a', lineWidth: 2, title: 'TP1' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sig.tp2, color: '#15803d', lineWidth: 2, title: 'TP2' }));
-      chartLines.push(candleSeries.createPriceLine({ price: sig.sl, color: '#dc2626', lineWidth: 2, title: 'SL' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.entry, color: THEME.entry, lineWidth: 2, title: 'ENTRY' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.tp1, color: THEME.tp1, lineWidth: 2, title: 'TP1' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.tp2, color: THEME.tp2, lineWidth: 2, title: 'TP2' }));
+      chartLines.push(candleSeries.createPriceLine({ price: sig.sl, color: THEME.sl, lineWidth: 2, title: 'SL' }));
     }
 
     function drawEntryMarker(sig) {
@@ -1892,7 +1942,7 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       const marker = {
         time: sig.confirmCandleTime,
         position: isBull ? 'belowBar' : 'aboveBar',
-        color: '#0f172a',
+        color: THEME.marker,
         shape: 'circle',
         size: 0.15,
         text: ''
@@ -1905,7 +1955,7 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       const marker = {
         time: entryMarkerData.time,
         position: entryMarkerData.isBull ? 'belowBar' : 'aboveBar',
-        color: '#0f172a',
+        color: THEME.marker,
         shape: 'circle',
         size: 0.15,
         text: ''
@@ -1915,7 +1965,7 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
 
     function drawSweepLine(sweep) {
       if (!sweep.swept) return;
-      const color = sweep.type === 'BULLISH_SWEEP' ? '#0891b2' : '#9333ea';
+      const color = sweep.type === 'BULLISH_SWEEP' ? THEME.sweepBull : THEME.sweepBear;
       const title = sweep.type === 'BULLISH_SWEEP' ? 'SWEEP↓' : 'SWEEP↑';
       const line = candleSeries.createPriceLine({
         price: sweep.sweepLevel, color, lineWidth: 2,
@@ -1928,33 +1978,31 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
     function updateMetrics(isBullishTrend, sweep, volInfo, hasSetup, setupType) {
       const emaEl = document.getElementById('metric-ema');
       emaEl.innerText = isBullishTrend ? "Bullish (9 > 20 EMA)" : "Bearish (9 < 20 EMA)";
-      emaEl.className = isBullishTrend ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
+      emaEl.className = isBullishTrend ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
 
       const swEl = document.getElementById('metric-sweep');
       if (sweep.swept) {
         swEl.innerText = sweep.type === 'BULLISH_SWEEP' ? "Bullish Sweep" : "Bearish Sweep";
-        swEl.className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
-      } else { swEl.innerText = "No Sweep"; swEl.className = "text-slate-600"; }
+        swEl.className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+      } else { swEl.innerText = "No Sweep"; swEl.className = "text-slate-400"; }
 
       const volEl = document.getElementById('metric-volatility');
       let biasText;
       if (hasSetup && setupType) biasText = setupType.includes('BULLISH') ? 'BULLISH SETUP' : 'BEARISH SETUP';
       else biasText = isBullishTrend ? 'BULLISH BIAS' : 'BEARISH BIAS';
       volEl.innerText = biasText;
-      volEl.className = biasText.includes('BULLISH') ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
+      volEl.className = biasText.includes('BULLISH') ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
 
       const vmEl = document.getElementById('metric-volume');
       vmEl.innerText = volInfo.label;
-      vmEl.className = volInfo.label === 'High' ? 'text-emerald-600 font-bold' : (volInfo.label === 'Low' ? 'text-rose-600 font-bold' : 'text-amber-600 font-bold');
+      vmEl.className = volInfo.label === 'High' ? 'text-emerald-400 font-bold' : (volInfo.label === 'Low' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
     }
 
     function drawSRLines(sr) {
       const { resistances, supports } = sr;
-      const rColors = ['#f97316', '#fb923c', '#fbbf24', '#facc15'];
-      const sColors = ['#ec4899', '#f472b6', '#f9a8d4', '#fb7185'];
 
       resistances.forEach((price, i) => {
-        const color = rColors[Math.min(i, rColors.length - 1)];
+        const color = THEME.rColors[Math.min(i, THEME.rColors.length - 1)];
         const line = candleSeries.createPriceLine({
           price: price, color, lineWidth: 2,
           lineStyle: LightweightCharts.LineStyle.Solid,
@@ -1964,7 +2012,7 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       });
 
       supports.forEach((price, i) => {
-        const color = sColors[Math.min(i, sColors.length - 1)];
+        const color = THEME.sColors[Math.min(i, THEME.sColors.length - 1)];
         const line = candleSeries.createPriceLine({
           price: price, color, lineWidth: 2,
           lineStyle: LightweightCharts.LineStyle.Solid,
@@ -2153,6 +2201,17 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
           } catch(e){}
         })();
       }
+    });
+
+    // ================== CHART RESIZE ON ORIENTATION CHANGE ==================
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        const container = document.getElementById('tv-chart');
+        if (chart && container) {
+          chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+          rerenderEntryMarker();
+        }
+      }, 350);
     });
   </script>
 </body>
