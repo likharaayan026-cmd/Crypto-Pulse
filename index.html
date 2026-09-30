@@ -427,8 +427,10 @@
 
     <main class="flex-grow w-full max-w-7xl mx-auto p-3 sm:p-4 space-y-3 min-w-0">
       <!-- CONTROLS -->
-      <div class="bg-[#0f172a] p-2.5 rounded-2xl border border-slate-800 shadow-sm flex flex-wrap justify-between items-center gap-2 min-w-0">
-        <div class="scroll-x flex items-center gap-1.5 max-w-full min-w-0 flex-1 sm:flex-none">
+      <div class="bg-[#0f172a] p-2.5 rounded-2xl border border-slate-800 shadow-sm flex flex-wrap items-center gap-2 min-w-0">
+
+        <!-- COINS: mobile par full width (neeche wrap), tablet+ par normal -->
+        <div class="scroll-x flex items-center gap-1.5 w-full min-w-0 sm:w-auto sm:flex-1">
           <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm transition whitespace-nowrap">ETH/USDT</button>
           <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">BTC/USDT</button>
           <button onclick="changeAsset('SOLUSDT', 'Solana')" id="btn-SOLUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">SOL/USDT</button>
@@ -440,7 +442,8 @@
           <button onclick="changeAsset('PAXGUSDT', 'PAX Gold')" id="btn-PAXGUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">PAXG/USDT</button>
         </div>
 
-        <div class="scroll-x flex items-center bg-slate-800/70 p-1 rounded-lg border border-slate-700 max-w-full">
+        <!-- TIMEFRAME: mobile par apni row, tablet+ par same line -->
+        <div class="scroll-x flex items-center bg-slate-800/70 p-1 rounded-lg border border-slate-700 min-w-0 flex-1 sm:flex-none">
           <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap">5m</button>
           <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-slate-700 text-indigo-300 rounded shadow-sm transition whitespace-nowrap">15m</button>
           <button onclick="changeTimeframe('1h')" id="tf-1h" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap">1h</button>
@@ -448,7 +451,7 @@
           <button onclick="changeTimeframe('1d')" id="tf-1d" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap">1D</button>
         </div>
 
-        <button id="run-ai-btn" onclick="runAnalysisEngine()" class="btn-press bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md shadow-indigo-500/25 transition flex items-center gap-2 whitespace-nowrap">
+        <button id="run-ai-btn" onclick="runAnalysisEngine()" class="btn-press shrink-0 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md shadow-indigo-500/25 transition flex items-center gap-2 whitespace-nowrap">
           <span id="btn-spinner" class="hidden animate-spin">⚡</span>
           <span id="btn-text">Scan Setup</span>
         </button>
