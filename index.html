@@ -14,36 +14,22 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-  <!-- RAZORPAY CHECKOUT -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <style>
     :root { color-scheme: dark; }
-
     * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-
     html, body {
-      width: 100%;
-      max-width: 100%;
-      overflow-x: hidden;
-      overscroll-behavior: none;
-      background-color: #070b14;
-      height: 100%;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: pan-y;
-      user-select: none;
-      -webkit-user-select: none;
+      width: 100%; max-width: 100%; overflow-x: hidden;
+      overscroll-behavior: none; background-color: #070b14; height: 100%;
+      -webkit-tap-highlight-color: transparent; touch-action: pan-y;
+      user-select: none; -webkit-user-select: none;
     }
-
     input, textarea { user-select: text; -webkit-user-select: text; }
-
     #splash-screen, #auth-container, #verify-container, #app-container {
-      max-width: 100vw;
-      overflow-x: hidden;
+      max-width: 100vw; overflow-x: hidden;
     }
-
     .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
-
     .glass {
       background: rgba(15, 23, 42, 0.82);
       backdrop-filter: blur(24px) saturate(160%);
@@ -51,11 +37,8 @@
       border: 1px solid rgba(51, 65, 85, 0.65);
       box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.75);
     }
-
     .tv-lightweight-charts-legend { display: none !important; }
-
     #chart-wrapper { touch-action: none; }
-
     @keyframes radar-scan {
       0% { transform: translateY(-100%); opacity: 0.3; }
       50% { opacity: 0.9; }
@@ -63,13 +46,11 @@
     }
     .animate-radar { animation: radar-scan 1.5s infinite ease-in-out; }
     .price-value { word-break: break-all; white-space: normal; }
-
     .screen-enter { animation: screenEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
     @keyframes screenEnter {
       from { opacity: 0; transform: translateY(14px) scale(0.985); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
-
     @keyframes pulseRing {
       0% { transform: scale(0.85); opacity: 0.7; }
       100% { transform: scale(1.6); opacity: 0; }
@@ -87,116 +68,72 @@
       33% { transform: translate(30px,-20px) scale(1.08); }
       66% { transform: translate(-20px,20px) scale(0.95); }
     }
-
     .splash-ring {
-      position: absolute;
-      inset: 0;
-      border-radius: 32px;
+      position: absolute; inset: 0; border-radius: 32px;
       background: linear-gradient(135deg, #6366f1, #3b82f6);
       animation: pulseRing 2s ease-out infinite;
     }
     .splash-ring.delay { animation-delay: 0.6s; }
     .splash-logo-inner { animation: logoFloat 3s ease-in-out infinite; }
-
     .shimmer-bar {
       background: linear-gradient(90deg, #6366f1 0%, #3b82f6 25%, #a855f7 50%, #3b82f6 75%, #6366f1 100%);
-      background-size: 200% 100%;
-      animation: barShimmer 1.6s linear infinite;
+      background-size: 200% 100%; animation: barShimmer 1.6s linear infinite;
     }
-
     .blob {
-      position: absolute;
-      border-radius: 9999px;
-      filter: blur(80px);
-      opacity: 0.28;
-      animation: floatBlob 12s ease-in-out infinite;
-      pointer-events: none;
+      position: absolute; border-radius: 9999px; filter: blur(80px);
+      opacity: 0.28; animation: floatBlob 12s ease-in-out infinite; pointer-events: none;
     }
-
     .btn-press { transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease; touch-action: manipulation; }
     .btn-press:active { transform: scale(0.97); }
-
-    .input-modern {
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    }
+    .input-modern { transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
     .input-modern:focus {
-      outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
-      background: #0b1220;
+      outline: none; border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18); background: #0b1220;
     }
-
-    .mobile-wrap {
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    }
+    .mobile-wrap { transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
     .mobile-wrap:focus-within {
       border-color: #6366f1;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
-      background: #0b1220;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18); background: #0b1220;
     }
-    .mobile-prefix {
-      pointer-events: none;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    .mobile-wrap input {
-      background: transparent;
-      border: none;
-      outline: none;
-    }
+    .mobile-prefix { pointer-events: none; user-select: none; -webkit-user-select: none; }
+    .mobile-wrap input { background: transparent; border: none; outline: none; }
     .mobile-wrap input:focus { outline: none; }
-
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
     .gradient-text {
       background: linear-gradient(135deg, #818cf8 0%, #60a5fa 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
     }
-
     input[type=tel]::-webkit-outer-spin-button,
-    input[type=tel]::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-
+    input[type=tel]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .live-dot {
       width: 8px; height: 8px; border-radius: 50%; background: #10b981;
-      box-shadow: 0 0 0 0 rgba(16,185,129,0.7);
-      animation: livePulse 1.6s infinite;
+      box-shadow: 0 0 0 0 rgba(16,185,129,0.7); animation: livePulse 1.6s infinite;
     }
     @keyframes livePulse {
       0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
       70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
       100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
     }
-
     .google-btn {
       display: flex; align-items: center; justify-content: center; gap: 10px;
       width: 100%; padding: 12px 16px;
       background: #0f172a; border: 1px solid #334155; border-radius: 12px;
       font-weight: 700; font-size: 13px; color: #e2e8f0;
       box-shadow: 0 1px 2px rgba(0,0,0,0.4);
-      transition: all 0.2s ease;
-      touch-action: manipulation;
+      transition: all 0.2s ease; touch-action: manipulation;
     }
     .google-btn:hover { background: #16203a; border-color: #475569; }
     .google-btn:active { transform: scale(0.98); }
     .google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
     .divider {
       display: flex; align-items: center; gap: 12px;
       color: #64748b; font-size: 11px; font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.08em;
     }
-    .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: #1e293b;
-    }
-
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #1e293b; }
     input:-webkit-autofill,
     input:-webkit-autofill:hover,
     input:-webkit-autofill:focus,
@@ -205,34 +142,24 @@
       -webkit-text-fill-color: #e2e8f0 !important;
       transition: background-color 5000s ease-in-out 0s;
     }
-
     .scroll-x {
-      overflow-x: auto;
-      overflow-y: hidden;
-      overscroll-behavior-x: contain;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
+      overflow-x: auto; overflow-y: hidden;
+      overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
     .scroll-x::-webkit-scrollbar { display: none; }
-
     .safe-b { padding-bottom: env(safe-area-inset-bottom, 0px); }
     .safe-t { padding-top: env(safe-area-inset-top, 0px); }
-
-    /* Secret long-press button: kill callout/magnifier on mobile */
     #subscribe-btn, #paywall-subscribe-btn {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
+      -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
       touch-action: manipulation;
     }
-
-    /* Hold-progress ring (only visible while pressing subscribe) */
     .hold-ring {
       position: absolute; inset: -3px; border-radius: 14px;
-      border: 2px solid rgba(251,191,36,0.0);
-      transition: border-color .2s ease;
+      border: 2px solid rgba(251,191,36,0.0); transition: border-color .2s ease;
       pointer-events: none;
     }
+    @keyframes scanPulse { 0%,100%{opacity:1;} 50%{opacity:.55;} }
+    .scan-badge-pulse { animation: scanPulse 1.8s ease-in-out infinite; }
   </style>
 </head>
 <body class="bg-[#070b14] text-slate-200 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
@@ -253,21 +180,17 @@
           </svg>
         </div>
       </div>
-
       <h1 class="mt-8 text-3xl font-black tracking-tight text-white">
         Pulse<span class="gradient-text"> Alpha</span>
       </h1>
       <p class="text-[11px] text-slate-500 mt-1.5 font-semibold tracking-[0.2em] uppercase">Smart Market Intelligence</p>
-
       <div class="mt-8 w-56">
         <div class="h-1 bg-slate-800 rounded-full overflow-hidden">
           <div id="splash-progress" class="h-full w-0 shimmer-bar rounded-full transition-all duration-500 ease-out"></div>
         </div>
       </div>
-
       <p id="splash-status" class="text-[11px] text-slate-400 mt-4 font-bold tracking-wider uppercase">Initializing...</p>
     </div>
-
     <div class="absolute bottom-8 text-center z-10 safe-b">
       <p class="text-[10px] text-slate-500 font-medium">Developer <span class="text-slate-300 font-bold">Aayan Likhar</span></p>
     </div>
@@ -387,7 +310,6 @@
           <span id="verify-check-icon">✅</span>
           <span id="verify-check-text">I've Verified — Continue</span>
         </button>
-
         <button type="button" id="verify-resend-btn" class="btn-press w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold py-3 rounded-xl text-xs">
           🔄 Resend Verification Email
         </button>
@@ -457,7 +379,6 @@
 
       <!-- CONTROLS -->
       <div class="bg-[#0f172a] p-2.5 rounded-2xl border border-slate-800 shadow-sm flex flex-wrap items-center gap-2 min-w-0">
-
         <div class="scroll-x flex items-center gap-1.5 w-full min-w-0 sm:w-auto sm:flex-1">
           <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm transition whitespace-nowrap">ETH/USDT</button>
           <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">BTC/USDT</button>
@@ -576,7 +497,7 @@
         <h3 class="text-lg font-black text-white">Access Key</h3>
         <p class="text-[11px] text-slate-400">Enter the secret key to unlock Pro access</p>
       </div>
-      <input type="password" id="free-access-input" placeholder="••••••••" autocomplete="off" autocapitalize="characters" spellcheck="false"
+      <input type="password" id="free-access-input" placeholder="••••••••" autocomplete="off" autocapitalize="off" spellcheck="false"
              class="input-modern w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 text-center tracking-[0.3em] font-black">
       <p id="free-access-msg" class="text-[11px] font-bold hidden"></p>
       <div class="flex gap-2">
@@ -603,15 +524,11 @@
     const GEMINI_MODEL = "gemini-flash-latest";
 
     // ================== SUBSCRIPTION CONFIG ==================
-    // ⚠️ SIRF key_id frontend me use hoti hai. key_secret KABHI bhi client-side
-    // code me na daalein — wo sirf server par order create / signature verify
-    // karne ke liye hoti hai. Jo secret aapne share kiya hai use turant
-    // Razorpay Dashboard se ROTATE kar dein.
     const RAZORPAY_KEY_ID = "rzp_live_T5OZeAeTkrB7YG";
-    const SUBSCRIPTION_PRICE_PAISE = 9900;        // ₹99 in paise
+    const SUBSCRIPTION_PRICE_PAISE = 9900;        // ₹99
     const SUBSCRIPTION_DAYS = 28;                 // 28-day validity
     const FREE_SCANS_PER_DAY = 2;                 // free tier daily limit
-    const FREE_ACCESS_PASSWORD = "pulse28";  // 🔑 secret long-press key (change karein)
+    const FREE_ACCESS_PASSWORD = "pulse28";       // 🔑 secret long-press key
     const LONG_PRESS_DURATION = 4000;             // 4 seconds
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -763,11 +680,8 @@
     function saveCachedUser(user, verified) {
       try {
         localStorage.setItem('pulsealpha_cached_user', JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-          name: user.displayName || '',
-          verified: !!verified,
-          savedAt: Date.now()
+          uid: user.uid, email: user.email, name: user.displayName || '',
+          verified: !!verified, savedAt: Date.now()
         }));
       } catch(e){}
     }
@@ -804,8 +718,7 @@
         el.className = 'text-[11px] text-center font-bold ' + (type === 'success' ? 'text-emerald-400' : 'text-rose-400');
         el.classList.remove('hidden');
       } else {
-        el.innerText = '';
-        el.classList.add('hidden');
+        el.innerText = ''; el.classList.add('hidden');
       }
     }
     function showVerifyMsg(msg, type) {
@@ -816,8 +729,7 @@
         el.className = 'text-[11px] font-bold text-center ' + (type === 'success' ? 'text-emerald-400' : 'text-rose-400');
         el.classList.remove('hidden');
       } else {
-        el.innerText = '';
-        el.classList.add('hidden');
+        el.innerText = ''; el.classList.add('hidden');
       }
     }
 
@@ -825,12 +737,8 @@
     function isGmailAddress(email) {
       return /^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]{4,28}[a-zA-Z0-9])?@gmail\.com$/i.test(email);
     }
-    function normalizeEmail(email) {
-      return (email || '').toLowerCase().trim();
-    }
-    function isValidMobile10(mobile) {
-      return /^[6-9][0-9]{9}$/.test(mobile);
-    }
+    function normalizeEmail(email) { return (email || '').toLowerCase().trim(); }
+    function isValidMobile10(mobile) { return /^[6-9][0-9]{9}$/.test(mobile); }
 
     function clearAuthInputs(keepEmail) {
       const email = document.getElementById('input-email');
@@ -909,19 +817,15 @@
 
     window.addEventListener('popstate', () => {
       if (isTransitioning) return;
-
       if (currentScreen === 'verify') {
         isTransitioning = true;
         doLogout().finally(() => { isTransitioning = false; });
         return;
       }
-
       if (currentScreen === 'app') {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches
           || window.navigator.standalone === true;
-        if (isStandalone) {
-          try { window.close(); } catch(err){}
-        }
+        if (isStandalone) { try { window.close(); } catch(err){} }
         try { history.pushState({ pulseScreen: 'app', ts: Date.now() }, '', location.href); } catch(e){}
         return;
       }
@@ -970,14 +874,10 @@
 
         if (!chartBootstrapped || !chart) {
           chartBootstrapped = true;
-          setTimeout(() => {
-            buildChart();
-            loadAssetData();
-          }, 60);
+          setTimeout(() => { buildChart(); loadAssetData(); }, 60);
         }
         pushScreenState('app', true);
 
-        // ---- subscription init ----
         initSubscription().catch(e => console.warn('sub init', e));
       }
     }
@@ -1061,38 +961,48 @@
       subInitDone = true;
     }
 
+    // ---- free scan counter (robust) ----
     async function getTodayScanCount() {
       const u = auth.currentUser;
       if (!u) return 0;
       const key = todayKey();
-      let localCount = 0;
-      try { localCount = parseInt(localStorage.getItem(`pulsealpha_scan_${u.uid}_${key}`) || '0', 10) || 0; } catch(e){}
       let cloudCount = 0;
       try {
         const snap = await db.ref(`users/${u.uid}/usage/${key}`).once('value');
-        cloudCount = snap.val() || 0;
+        cloudCount = parseInt(snap.val(), 10) || 0;
       } catch(e){}
-      return Math.max(localCount, cloudCount);
+      let localCount = 0;
+      try {
+        localCount = parseInt(localStorage.getItem(`pulsealpha_scan_${u.uid}_${key}`) || '0', 10) || 0;
+      } catch(e){}
+      const max = Math.max(cloudCount, localCount);
+      // keep local in sync so UI is instant
+      if (max !== localCount) {
+        try { localStorage.setItem(`pulsealpha_scan_${u.uid}_${key}`, String(max)); } catch(e){}
+      }
+      return max;
     }
 
     async function consumeFreeScan() {
       const u = auth.currentUser;
-      if (!u) return;
+      if (!u) return 0;
       const key = todayKey();
-      let localCount = 0;
-      try { localCount = parseInt(localStorage.getItem(`pulsealpha_scan_${u.uid}_${key}`) || '0', 10) || 0; } catch(e){}
-      let cloudCount = 0;
+      const ref = db.ref(`users/${u.uid}/usage/${key}`);
+      let newVal = 1;
       try {
-        const snap = await db.ref(`users/${u.uid}/usage/${key}`).once('value');
-        cloudCount = snap.val() || 0;
-      } catch(e){}
-      const next = Math.max(localCount, cloudCount) + 1;
-      try { localStorage.setItem(`pulsealpha_scan_${u.uid}_${key}`, String(next)); } catch(e){}
-      try { await db.ref(`users/${u.uid}/usage/${key}`).set(next); } catch(e){}
+        const res = await ref.transaction(cur => (cur || 0) + 1);
+        newVal = (res && res.snapshot && res.snapshot.val()) || ((cur => (cur || 0) + 1)(0));
+        if (typeof newVal !== 'number') newVal = 1;
+      } catch(e) {
+        // fallback: local only
+        let lc = 0;
+        try { lc = parseInt(localStorage.getItem(`pulsealpha_scan_${u.uid}_${key}`) || '0', 10) || 0; } catch(e){}
+        newVal = lc + 1;
+      }
+      try { localStorage.setItem(`pulsealpha_scan_${u.uid}_${key}`, String(newVal)); } catch(e){}
 
-      // Cleanup old usage keys (>7 days)
-      try {
-        const snap = await db.ref(`users/${u.uid}/usage`).once('value');
+      // cleanup old keys (>7 days) fire & forget
+      db.ref(`users/${u.uid}/usage`).once('value').then(snap => {
         const data = snap.val() || {};
         const cutoff = Date.now() - 7 * 86400000;
         Object.keys(data).forEach(k => {
@@ -1101,13 +1011,19 @@
             db.ref(`users/${u.uid}/usage/${k}`).remove().catch(()=>{});
           }
         });
-      } catch(e){}
+      }).catch(()=>{});
+
+      return newVal;
     }
 
     async function checkScanPermission() {
+      // make sure subscription state is loaded
+      if (!subInitDone) {
+        try { await initSubscription(); } catch(e){}
+      }
       const now = Date.now();
       if (userSubscription.active && userSubscription.expiresAt > now) {
-        return { allowed: true, unlimited: true };
+        return { allowed: true, unlimited: true, used: 0, left: Infinity };
       }
       if (userSubscription.active && userSubscription.expiresAt <= now) {
         userSubscription = { active: false, expiresAt: 0, plan: 'free' };
@@ -1116,9 +1032,9 @@
       let used = 0;
       try { used = await getTodayScanCount(); } catch(e){}
       if (used >= FREE_SCANS_PER_DAY) {
-        return { allowed: false, unlimited: false, used, reason: 'daily_limit' };
+        return { allowed: false, unlimited: false, used, left: 0, reason: 'daily_limit' };
       }
-      return { allowed: true, unlimited: false, used };
+      return { allowed: true, unlimited: false, used, left: FREE_SCANS_PER_DAY - used };
     }
 
     async function refreshSubscriptionUI() {
@@ -1184,15 +1100,8 @@
         name: 'Pulse Alpha',
         description: 'Pro Plan — 28 Days Unlimited Scans',
         image: 'https://pulse-alpha-privacy-policy.vercel.app/favicon.ico',
-        prefill: {
-          email: u.email || '',
-          name: u.displayName || ''
-        },
-        notes: {
-          uid: u.uid,
-          plan: 'monthly-99',
-          validity_days: String(SUBSCRIPTION_DAYS)
-        },
+        prefill: { email: u.email || '', name: u.displayName || '' },
+        notes: { uid: u.uid, plan: 'monthly-99', validity_days: String(SUBSCRIPTION_DAYS) },
         theme: { color: '#6366f1' },
         handler: async function (response) {
           try {
@@ -1202,11 +1111,7 @@
             showToast('Payment ho gaya, lekin activate karne me dikkat aayi. Support se contact karein.');
           }
         },
-        modal: {
-          ondismiss: function () {
-            // user closed checkout
-          }
-        }
+        modal: { ondismiss: function () {} }
       };
 
       try {
@@ -1244,9 +1149,7 @@
 
       try {
         await db.ref('users/' + u.uid + '/subscription').set(sub);
-      } catch (e) {
-        console.warn('sub save failed', e);
-      }
+      } catch (e) { console.warn('sub save failed', e); }
 
       userSubscription = { active: true, expiresAt: expiresAt, plan: plan };
       cacheSubscription();
@@ -1287,9 +1190,9 @@
 
     async function handleFreeAccessSubmit() {
       const inp = document.getElementById('free-access-input');
-      const val = (inp ? inp.value : '').trim().toUpperCase();
+      const val = (inp ? inp.value : '').trim().toLowerCase();
       if (!val) { showFreeAccessMsg('Access key daalein.', 'error'); return; }
-      if (val !== FREE_ACCESS_PASSWORD) {
+      if (val !== FREE_ACCESS_PASSWORD.toLowerCase()) {
         showFreeAccessMsg('❌ Invalid access key.', 'error');
         if (inp) inp.value = '';
         try { if (navigator.vibrate) navigator.vibrate(120); } catch(e){}
@@ -1353,11 +1256,7 @@
           openFreeAccessModal();
         }, LONG_PRESS_DURATION);
       };
-
-      const cancelPress = () => {
-        if (timer) { clearTimeout(timer); timer = null; }
-      };
-
+      const cancelPress = () => { if (timer) { clearTimeout(timer); timer = null; } };
       const movePress = (e) => {
         if (!timer) return;
         const pt = e.touches ? e.touches[0] : e;
@@ -1376,14 +1275,12 @@
       btn.addEventListener('click', (e) => {
         if (suppressClick) {
           suppressClick = false;
-          e.preventDefault();
-          e.stopPropagation();
+          e.preventDefault(); e.stopPropagation();
           return;
         }
         openRazorpayCheckout();
       });
 
-      // block context menu on long press (mobile)
       btn.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
@@ -1404,9 +1301,8 @@
         provider.setCustomParameters({ prompt: 'select_account' });
 
         let result;
-        try {
-          result = await auth.signInWithPopup(provider);
-        } catch (popupErr) {
+        try { result = await auth.signInWithPopup(provider); }
+        catch (popupErr) {
           if (popupErr && (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/operation-not-supported-in-this-environment')) {
             await auth.signInWithRedirect(provider);
             return;
@@ -1415,17 +1311,13 @@
         }
 
         const user = result.user;
-
         try {
           const userRef = db.ref('users/' + user.uid);
           const snap = await userRef.once('value');
           if (!snap.exists()) {
             await userRef.set({
-              name: user.displayName || '',
-              mobile: '',
-              email: user.email,
-              provider: 'google',
-              createdAt: firebase.database.ServerValue.TIMESTAMP
+              name: user.displayName || '', mobile: '', email: user.email,
+              provider: 'google', createdAt: firebase.database.ServerValue.TIMESTAMP
             });
           }
         } catch (e) { console.warn('DB write failed', e); }
@@ -1555,23 +1447,15 @@
       clearCachedUser();
       clearAuthInputs(false);
 
-      try {
-        await auth.signOut();
-      } catch (e) {
-        console.warn('signOut error', e);
-      }
+      try { await auth.signOut(); } catch (e) { console.warn('signOut error', e); }
 
       showScreen('auth');
 
       if (btnText) btnText.innerText = 'Logout';
 
       setTimeout(() => { isLoggingOut = false; }, 800);
-
       setTimeout(() => {
-        if (currentScreen === 'app') {
-          console.warn('Forcing auth screen after logout');
-          showScreen('auth');
-        }
+        if (currentScreen === 'app') { showScreen('auth'); }
       }, 1200);
     }
     window.handleLogout = doLogout;
@@ -1640,10 +1524,7 @@
       setSplashStatus('Loading session...');
 
       const restoredUser = await new Promise((resolve) => {
-        const unsub = auth.onAuthStateChanged((u) => {
-          unsub();
-          resolve(u);
-        });
+        const unsub = auth.onAuthStateChanged((u) => { unsub(); resolve(u); });
         setTimeout(() => { try { unsub(); } catch(e){} resolve(auth.currentUser); }, 3500);
       });
 
@@ -1665,10 +1546,7 @@
       }
 
       let fresh = restoredUser;
-      try {
-        await restoredUser.reload();
-        fresh = auth.currentUser || restoredUser;
-      } catch(e){}
+      try { await restoredUser.reload(); fresh = auth.currentUser || restoredUser; } catch(e){}
 
       setSplashProgress(85);
 
@@ -1724,30 +1602,18 @@
           textColor: THEME.text,
           fontFamily: 'Inter, system-ui, sans-serif'
         },
-        grid: {
-          vertLines: { color: THEME.grid },
-          horzLines: { color: THEME.grid }
-        },
+        grid: { vertLines: { color: THEME.grid }, horzLines: { color: THEME.grid } },
         crosshair: {
           mode: LightweightCharts.CrosshairMode.Normal,
           vertLine: { color: THEME.crosshair, width: 1, style: 2, labelBackgroundColor: THEME.crossLabel },
           horzLine: { color: THEME.crosshair, width: 1, style: 2, labelBackgroundColor: THEME.crossLabel }
         },
-        priceScale: {
-          borderColor: THEME.border,
-          scaleMargins: { top: 0.1, bottom: 0.1 }
-        },
+        priceScale: { borderColor: THEME.border, scaleMargins: { top: 0.1, bottom: 0.1 } },
         timeScale: {
-          borderColor: THEME.border,
-          timeVisible: true,
-          secondsVisible: false,
-          rightOffset: 8,
-          barSpacing: 6,
-          minBarSpacing: 1,
-          fixLeftEdge: false,
-          fixRightEdge: false,
-          lockVisibleTimeRangeOnResize: false,
-          shiftVisibleRangeOnNewBar: true,
+          borderColor: THEME.border, timeVisible: true, secondsVisible: false,
+          rightOffset: 8, barSpacing: 6, minBarSpacing: 1,
+          fixLeftEdge: false, fixRightEdge: false,
+          lockVisibleTimeRangeOnResize: false, shiftVisibleRangeOnNewBar: true,
           allowShiftVisibleRangeOnWhitespaceReplacement: true,
           tickMarkFormatter: (time) => formatTimeFull(time)
         },
@@ -1773,9 +1639,7 @@
       chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
         if (!range) return;
         const totalBars = currentCandles.length;
-        if (totalBars > 0 && range.to < totalBars - 3) {
-          userScrolledTimeScale = true;
-        }
+        if (totalBars > 0 && range.to < totalBars - 3) userScrolledTimeScale = true;
       });
 
       window.addEventListener('resize', () => {
@@ -1824,10 +1688,8 @@
           const candleTime = Math.floor(kline.t / 1000);
           const candle = {
             time: candleTime,
-            open: parseFloat(kline.o),
-            high: parseFloat(kline.h),
-            low: parseFloat(kline.l),
-            close: parseFloat(kline.c)
+            open: parseFloat(kline.o), high: parseFloat(kline.h),
+            low: parseFloat(kline.l), close: parseFloat(kline.c)
           };
           const vol = parseFloat(kline.v);
 
@@ -1844,9 +1706,7 @@
             currentCandles.push(candle);
             currentVolumes.push(vol);
             candleSeries.update(candle);
-          } else {
-            return;
-          }
+          } else { return; }
 
           const recent = currentCandles.slice(-200);
           ema9Series.setData(computeEMA(recent, 9));
@@ -2023,14 +1883,10 @@
           if (isRed && touchedEMA && isGreen && bigger && closesAbove && breaks && aligned) {
             const swingLow = Math.min(pullback.low, rejection.low);
             return {
-              valid: true,
-              type: 'BULLISH_EMA_SETUP',
-              entry: rejection.high,
+              valid: true, type: 'BULLISH_EMA_SETUP', entry: rejection.high,
               sl: swingLow * 0.998,
-              confirmCandleTime: confirmation.time,
-              confirmCandleClose: confirmation.close,
-              confirmCandleLow: confirmation.low,
-              confirmCandleHigh: confirmation.high,
+              confirmCandleTime: confirmation.time, confirmCandleClose: confirmation.close,
+              confirmCandleLow: confirmation.low, confirmCandleHigh: confirmation.high,
               note: 'Bullish 9/20 EMA crossover → Red pullback → Bigger Green rejection → Confirmation high break'
             };
           }
@@ -2046,14 +1902,10 @@
           if (isGreen && touchedEMA && isRed && bigger && closesBelow && breaks && aligned) {
             const swingHigh = Math.max(pullback.high, rejection.high);
             return {
-              valid: true,
-              type: 'BEARISH_EMA_SETUP',
-              entry: rejection.low,
+              valid: true, type: 'BEARISH_EMA_SETUP', entry: rejection.low,
               sl: swingHigh * 1.002,
-              confirmCandleTime: confirmation.time,
-              confirmCandleClose: confirmation.close,
-              confirmCandleLow: confirmation.low,
-              confirmCandleHigh: confirmation.high,
+              confirmCandleTime: confirmation.time, confirmCandleClose: confirmation.close,
+              confirmCandleLow: confirmation.low, confirmCandleHigh: confirmation.high,
               note: 'Bearish 9/20 EMA crossover → Green pullback → Bigger Red rejection → Confirmation low break'
             };
           }
@@ -2170,10 +2022,7 @@
 
           const visibleBars = Math.min(120, currentCandles.length);
           const from = Math.max(0, currentCandles.length - visibleBars);
-          chart.timeScale().setVisibleLogicalRange({
-            from: from,
-            to: currentCandles.length + 5
-          });
+          chart.timeScale().setVisibleLogicalRange({ from: from, to: currentCandles.length + 5 });
           chart.timeScale().scrollToRealTime();
 
           userScrolledTimeScale = false;
@@ -2226,17 +2075,12 @@
               generationConfig: { temperature: 0.7, maxOutputTokens: 256, topP: 0.95 }
             })
           });
-          if (!response.ok) {
-            console.warn('Gemini endpoint failed:', url, response.status);
-            continue;
-          }
+          if (!response.ok) { console.warn('Gemini endpoint failed:', url, response.status); continue; }
           const data = await response.json();
           if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
             return data.candidates[0].content.parts[0].text.trim();
           }
-        } catch (e) {
-          console.warn('Gemini fetch error', e);
-        }
+        } catch (e) { console.warn('Gemini fetch error', e); }
       }
       return null;
     }
@@ -2268,15 +2112,62 @@
     }
 
     // ================== ANALYSIS ENGINE ==================
+    // 🔧 FIXED: scan count is consumed ONLY when a brand-new scan is run.
+    //          Reusing an already-active locked signal = NO scan consumed.
     window.runAnalysisEngine = async function () {
       if (isAnalyzing || currentCandles.length < 80) return;
 
-      // ---------- SUBSCRIPTION GATE ----------
+      // ------------------------------------------------------------------
+      // STEP 1: if a locked signal is already active for this symbol+tf,
+      //         just re-render it. DO NOT consume a scan.
+      // ------------------------------------------------------------------
+      if (lockedSignal && lockedSignal.symbol === currentSymbol && lockedSignal.timeframe === currentTimeframe) {
+        checkLockedSignalLive();
+        if (lockedSignal && lockedSignal.symbol === currentSymbol && lockedSignal.timeframe === currentTimeframe) {
+          isAnalyzing = true;
+          const output = document.getElementById('ai-analysis-output');
+          const spinner = document.getElementById('btn-spinner');
+          const btnText = document.getElementById('btn-text');
+
+          spinner.classList.remove('hidden');
+          btnText.innerText = "Refreshing…";
+          await new Promise(r => setTimeout(r, 250));
+
+          const len = currentCandles.length;
+          const ema9Vals = computeEMA(currentCandles, 9);
+          const ema20Vals = computeEMA(currentCandles, 20);
+          const isBullishTrend = ema9Vals[len - 2].value > ema20Vals[len - 2].value;
+          const sr = calculateDynamicSR(currentCandles);
+          const sweep = detectLiquiditySweep(currentCandles);
+          const volInfo = calculateVolumeMeter(currentVolumes);
+
+          updateMetrics(isBullishTrend, sweep, volInfo, true, lockedSignal.type);
+          clearCanvasLines();
+          drawSRLines(sr);
+          drawSignalLines(lockedSignal);
+          drawSweepLine(sweep);
+          drawEntryMarker(lockedSignal);
+          renderLockedSignal(output, lockedSignal, volInfo, sweep, null);
+
+          spinner.classList.add('hidden');
+          btnText.innerText = "Scan Market Setup";
+          isAnalyzing = false;
+          return; // ⛔ no scan consumed
+        }
+      }
+
+      // ------------------------------------------------------------------
+      // STEP 2: this IS a new scan → check subscription / daily limit
+      // ------------------------------------------------------------------
+      if (!subInitDone) {
+        try { await initSubscription(); } catch(e){}
+      }
+
       let gate;
       try {
         gate = await checkScanPermission();
       } catch (e) {
-        gate = { allowed: true, unlimited: false };
+        gate = { allowed: true, unlimited: false, left: FREE_SCANS_PER_DAY };
       }
 
       if (!gate.allowed) {
@@ -2284,12 +2175,17 @@
         return;
       }
 
-      // consume a free scan (Pro = unlimited, no counting)
+      // ------------------------------------------------------------------
+      // STEP 3: consume 1 free scan ONLY for new scans (Pro = unlimited)
+      // ------------------------------------------------------------------
       if (!gate.unlimited) {
         try { await consumeFreeScan(); } catch(e){}
         refreshSubscriptionUI().catch(()=>{});
       }
 
+      // ------------------------------------------------------------------
+      // STEP 4: run the new scan
+      // ------------------------------------------------------------------
       isAnalyzing = true;
       const output = document.getElementById('ai-analysis-output');
       output.innerHTML = '';
@@ -2318,24 +2214,6 @@
       const sweep = detectLiquiditySweep(currentCandles);
       const volInfo = calculateVolumeMeter(currentVolumes);
       const isChoppy = detectChoppyMarket(currentCandles);
-
-      if (lockedSignal && lockedSignal.symbol === currentSymbol && lockedSignal.timeframe === currentTimeframe) {
-        checkLockedSignalLive();
-        if (lockedSignal && lockedSignal.symbol === currentSymbol && lockedSignal.timeframe === currentTimeframe) {
-          spinner.classList.add('hidden');
-          btnText.innerText = "Scan Market Setup";
-          isAnalyzing = false;
-          updateMetrics(isBullishTrend, sweep, volInfo, true, lockedSignal.type);
-          clearCanvasLines();
-          drawSRLines(sr);
-          drawSignalLines(lockedSignal);
-          drawSweepLine(sweep);
-          drawEntryMarker(lockedSignal);
-          renderLockedSignal(output, lockedSignal, volInfo, sweep, null);
-          playNotificationSound();
-          return;
-        }
-      }
 
       const strategy = detectEmaStrategy(currentCandles);
       updateMetrics(isBullishTrend, sweep, volInfo, strategy.valid, strategy.type);
@@ -2473,10 +2351,7 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       const marker = {
         time: sig.confirmCandleTime,
         position: isBull ? 'belowBar' : 'aboveBar',
-        color: THEME.marker,
-        shape: 'circle',
-        size: 0.15,
-        text: ''
+        color: THEME.marker, shape: 'circle', size: 0.15, text: ''
       };
       candleSeries.setMarkers([marker]);
     }
@@ -2486,10 +2361,7 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       const marker = {
         time: entryMarkerData.time,
         position: entryMarkerData.isBull ? 'belowBar' : 'aboveBar',
-        color: THEME.marker,
-        shape: 'circle',
-        size: 0.15,
-        text: ''
+        color: THEME.marker, shape: 'circle', size: 0.15, text: ''
       };
       candleSeries.setMarkers([marker]);
     }
@@ -2500,8 +2372,7 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       const title = sweep.type === 'BULLISH_SWEEP' ? 'SWEEP↓' : 'SWEEP↑';
       const line = candleSeries.createPriceLine({
         price: sweep.sweepLevel, color, lineWidth: 2,
-        lineStyle: LightweightCharts.LineStyle.Solid,
-        title
+        lineStyle: LightweightCharts.LineStyle.Solid, title
       });
       sweepLines.push(line);
     }
@@ -2531,23 +2402,19 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
 
     function drawSRLines(sr) {
       const { resistances, supports } = sr;
-
       resistances.forEach((price, i) => {
         const color = THEME.rColors[Math.min(i, THEME.rColors.length - 1)];
         const line = candleSeries.createPriceLine({
           price: price, color, lineWidth: 2,
-          lineStyle: LightweightCharts.LineStyle.Solid,
-          title: 'R'
+          lineStyle: LightweightCharts.LineStyle.Solid, title: 'R'
         });
         chartLines.push(line);
       });
-
       supports.forEach((price, i) => {
         const color = THEME.sColors[Math.min(i, THEME.sColors.length - 1)];
         const line = candleSeries.createPriceLine({
           price: price, color, lineWidth: 2,
-          lineStyle: LightweightCharts.LineStyle.Solid,
-          title: 'S'
+          lineStyle: LightweightCharts.LineStyle.Solid, title: 'S'
         });
         chartLines.push(line);
       });
@@ -2599,9 +2466,7 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       mb.addEventListener('input', (e) => {
         let v = e.target.value.replace(/[^0-9]/g, '');
         if (v.length > 10) v = v.slice(0, 10);
-        if (v.length >= 1 && !/[6-9]/.test(v[0])) {
-          v = '';
-        }
+        if (v.length >= 1 && !/[6-9]/.test(v[0])) v = '';
         e.target.value = v;
       });
       mb.addEventListener('paste', (e) => {
@@ -2704,7 +2569,6 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       setupVerifyButtons();
       setupMobileInput();
 
-      // ---- subscription UI wiring ----
       setupPaywallModal();
       setupFreeAccessModal();
       attachSubscribeButton(document.getElementById('subscribe-btn'));
@@ -2735,7 +2599,6 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
               saveCachedUser(fresh, true);
               showScreen('app');
             }
-            // refresh subscription state when coming back
             if (currentScreen === 'app') {
               await loadSubscriptionFromCloud();
               await refreshSubscriptionUI();
@@ -2745,7 +2608,6 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       }
     });
 
-    // ================== CHART RESIZE ON ORIENTATION CHANGE ==================
     window.addEventListener('orientationchange', () => {
       setTimeout(() => {
         const container = document.getElementById('tv-chart');
