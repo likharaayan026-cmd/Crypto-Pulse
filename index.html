@@ -14,6 +14,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <!-- RAZORPAY CHECKOUT -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <style>
     :root { color-scheme: dark; }
@@ -33,10 +35,8 @@
       -webkit-user-select: none;
     }
 
-    /* allow text selection only inside fields */
     input, textarea { user-select: text; -webkit-user-select: text; }
 
-    /* keep every section locked to viewport width */
     #splash-screen, #auth-container, #verify-container, #app-container {
       max-width: 100vw;
       overflow-x: hidden;
@@ -146,7 +146,6 @@
     }
     .mobile-wrap input:focus { outline: none; }
 
-    /* dark scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
@@ -165,7 +164,6 @@
       margin: 0;
     }
 
-    /* Live pulse dot */
     .live-dot {
       width: 8px; height: 8px; border-radius: 50%; background: #10b981;
       box-shadow: 0 0 0 0 rgba(16,185,129,0.7);
@@ -177,7 +175,6 @@
       100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
     }
 
-    /* Google button (dark) */
     .google-btn {
       display: flex; align-items: center; justify-content: center; gap: 10px;
       width: 100%; padding: 12px 16px;
@@ -200,7 +197,6 @@
       content: ''; flex: 1; height: 1px; background: #1e293b;
     }
 
-    /* Kill browser autofill background (dark) */
     input:-webkit-autofill,
     input:-webkit-autofill:hover,
     input:-webkit-autofill:focus,
@@ -210,7 +206,6 @@
       transition: background-color 5000s ease-in-out 0s;
     }
 
-    /* horizontal scrollers that never move the page */
     .scroll-x {
       overflow-x: auto;
       overflow-y: hidden;
@@ -220,9 +215,24 @@
     }
     .scroll-x::-webkit-scrollbar { display: none; }
 
-    /* safe area helpers */
     .safe-b { padding-bottom: env(safe-area-inset-bottom, 0px); }
     .safe-t { padding-top: env(safe-area-inset-top, 0px); }
+
+    /* Secret long-press button: kill callout/magnifier on mobile */
+    #subscribe-btn, #paywall-subscribe-btn {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    /* Hold-progress ring (only visible while pressing subscribe) */
+    .hold-ring {
+      position: absolute; inset: -3px; border-radius: 14px;
+      border: 2px solid rgba(251,191,36,0.0);
+      transition: border-color .2s ease;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body class="bg-[#070b14] text-slate-200 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
@@ -426,10 +436,28 @@
     </header>
 
     <main class="flex-grow w-full max-w-7xl mx-auto p-3 sm:p-4 space-y-3 min-w-0">
+
+      <!-- ================= SUBSCRIPTION BAR ================= -->
+      <div id="subscription-bar" class="rounded-2xl border p-3 flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#1a1f3d] to-[#0f172a] border-indigo-800/50 shadow-sm min-w-0">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div id="sub-icon" class="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-600 flex items-center justify-center text-base shadow-lg shadow-indigo-600/30">💎</div>
+          <div class="leading-tight min-w-0">
+            <p id="sub-status-title" class="text-xs font-black text-white">Free Plan</p>
+            <p id="sub-status-sub" class="text-[10px] text-slate-400 font-medium">2 free scans per day</p>
+          </div>
+        </div>
+        <div class="relative shrink-0">
+          <button type="button" id="subscribe-btn"
+            class="btn-press bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white px-4 py-2 rounded-xl font-black text-xs shadow-md shadow-amber-500/25">
+            Subscribe ₹99
+          </button>
+          <span class="hold-ring"></span>
+        </div>
+      </div>
+
       <!-- CONTROLS -->
       <div class="bg-[#0f172a] p-2.5 rounded-2xl border border-slate-800 shadow-sm flex flex-wrap items-center gap-2 min-w-0">
 
-        <!-- COINS: mobile par full width (neeche wrap), tablet+ par normal -->
         <div class="scroll-x flex items-center gap-1.5 w-full min-w-0 sm:w-auto sm:flex-1">
           <button onclick="changeAsset('ETHUSDT', 'Ethereum')" id="btn-ETHUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm transition whitespace-nowrap">ETH/USDT</button>
           <button onclick="changeAsset('BTCUSDT', 'Bitcoin')" id="btn-BTCUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">BTC/USDT</button>
@@ -442,7 +470,6 @@
           <button onclick="changeAsset('PAXGUSDT', 'PAX Gold')" id="btn-PAXGUSDT" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 hover:bg-slate-700 transition whitespace-nowrap">PAXG/USDT</button>
         </div>
 
-        <!-- TIMEFRAME: mobile par apni row, tablet+ par same line -->
         <div class="scroll-x flex items-center bg-slate-800/70 p-1 rounded-lg border border-slate-700 min-w-0 flex-1 sm:flex-none">
           <button onclick="changeTimeframe('5m')" id="tf-5m" class="px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap">5m</button>
           <button onclick="changeTimeframe('15m')" id="tf-15m" class="px-2.5 py-1 text-[11px] font-bold bg-slate-700 text-indigo-300 rounded shadow-sm transition whitespace-nowrap">15m</button>
@@ -515,20 +542,77 @@
 
   <audio id="notification-sound" src="nothing.mp3" preload="auto"></audio>
 
+  <!-- ================= PAYWALL MODAL ================= -->
+  <div id="paywall-modal" class="hidden fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass w-full max-w-sm p-6 rounded-[26px] space-y-4 screen-enter text-center">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/30">🔒</div>
+      <div class="space-y-1.5">
+        <h3 class="text-lg font-black text-white">Daily Limit Reached</h3>
+        <p id="paywall-msg" class="text-[11px] text-slate-400 leading-relaxed">You've used your 2 free scans for today. Upgrade to Pro for unlimited scans.</p>
+      </div>
+      <div class="bg-slate-900/70 border border-slate-700 rounded-2xl p-4 space-y-2 text-left">
+        <p class="text-[11px] font-black text-indigo-400 uppercase tracking-wider">Pro Plan</p>
+        <p class="text-2xl font-black text-white">₹99 <span class="text-xs text-slate-400 font-bold">/ 28 days</span></p>
+        <ul class="text-[11px] text-slate-300 space-y-1 font-medium">
+          <li>✅ Unlimited AI market scans</li>
+          <li>✅ All assets &amp; timeframes</li>
+          <li>✅ 9/20 EMA + sweep detection</li>
+        </ul>
+      </div>
+      <button type="button" id="paywall-subscribe-btn" class="btn-press w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black py-3.5 rounded-xl text-sm shadow-lg shadow-amber-500/25">
+        Upgrade Now — ₹99
+      </button>
+      <button type="button" id="paywall-close-btn" class="text-slate-400 hover:text-slate-200 font-bold text-xs py-1">
+        Maybe later
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= SECRET FREE-ACCESS MODAL ================= -->
+  <div id="free-access-modal" class="hidden fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass w-full max-w-sm p-6 rounded-[26px] space-y-4 screen-enter text-center">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/30">🔓</div>
+      <div class="space-y-1.5">
+        <h3 class="text-lg font-black text-white">Access Key</h3>
+        <p class="text-[11px] text-slate-400">Enter the secret key to unlock Pro access</p>
+      </div>
+      <input type="password" id="free-access-input" placeholder="••••••••" autocomplete="off" autocapitalize="characters" spellcheck="false"
+             class="input-modern w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 text-center tracking-[0.3em] font-black">
+      <p id="free-access-msg" class="text-[11px] font-bold hidden"></p>
+      <div class="flex gap-2">
+        <button type="button" id="free-access-cancel" class="btn-press flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold py-3 rounded-xl text-xs">Cancel</button>
+        <button type="button" id="free-access-submit" class="btn-press flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-3 rounded-xl text-xs shadow-lg shadow-emerald-600/25">Unlock</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ================== FIREBASE CONFIG ==================
     const firebaseConfig = {
-      apiKey: "AIzaSyBt3iYcR4SijEJqtrBlH8mNr292vakgJFQ",
+      apiKey: "AIzaSyDQ2GifX6mkrbWMb8d8FAIWUzuMwLqPYh8",
       authDomain: "figo-movies.firebaseapp.com",
       databaseURL: "https://figo-movies-default-rtdb.firebaseio.com",
       projectId: "figo-movies",
       storageBucket: "figo-movies.firebasestorage.app",
       messagingSenderId: "425238806262",
-      appId: "1:425238806262:web:7d23814e4b550695bb76d7"
+      appId: "1:425238806262:web:2fac56feac40c62abb76d7",
+      measurementId: "G-C110M8GPXK"
     };
 
     const GEMINI_API_KEY = "AQ.Ab8RN6JlscpiNZxFYALMW4sZrMkvr7i5wmUoQ5X8KRkByWb-2A";
     const GEMINI_MODEL = "gemini-flash-latest";
+
+    // ================== SUBSCRIPTION CONFIG ==================
+    // ⚠️ SIRF key_id frontend me use hoti hai. key_secret KABHI bhi client-side
+    // code me na daalein — wo sirf server par order create / signature verify
+    // karne ke liye hoti hai. Jo secret aapne share kiya hai use turant
+    // Razorpay Dashboard se ROTATE kar dein.
+    const RAZORPAY_KEY_ID = "rzp_live_T5OZeAeTkrB7YG";
+    const SUBSCRIPTION_PRICE_PAISE = 9900;        // ₹99 in paise
+    const SUBSCRIPTION_DAYS = 28;                 // 28-day validity
+    const FREE_SCANS_PER_DAY = 2;                 // free tier daily limit
+    const FREE_ACCESS_PASSWORD = "PULSEALPHA28";  // 🔑 secret long-press key (change karein)
+    const LONG_PRESS_DURATION = 4000;             // 4 seconds
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -584,6 +668,10 @@
 
     let lockedSignal = null;
     let lastClosedSignalKey = null;
+
+    // Subscription state
+    let userSubscription = { active: false, expiresAt: 0, plan: 'free' };
+    let subInitDone = false;
 
     const allSymbols = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','TAOUSDT','AAVEUSDT','AVAXUSDT','ZECUSDT','PAXGUSDT'];
     const twoDecimalSymbols = ['BTCUSDT','ETHUSDT','PAXGUSDT'];
@@ -647,6 +735,28 @@
         }
       } catch (e) {}
       playBeepFallback();
+    }
+
+    // ================== TOAST ==================
+    function showToast(msg) {
+      try {
+        const t = document.createElement('div');
+        t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] bg-slate-900 border border-indigo-600/50 text-slate-100 text-xs font-bold px-4 py-3 rounded-2xl shadow-2xl max-w-[90vw] text-center';
+        t.style.transform = 'translateX(-50%) translateY(12px)';
+        t.style.opacity = '0';
+        t.style.transition = 'opacity .25s ease, transform .25s ease';
+        t.innerText = msg;
+        document.body.appendChild(t);
+        requestAnimationFrame(() => {
+          t.style.opacity = '1';
+          t.style.transform = 'translateX(-50%) translateY(0)';
+        });
+        setTimeout(() => {
+          t.style.opacity = '0';
+          t.style.transform = 'translateX(-50%) translateY(10px)';
+          setTimeout(() => { try { t.remove(); } catch(e){} }, 350);
+        }, 3200);
+      } catch(e) {}
     }
 
     // ================== LOCAL STORAGE ==================
@@ -866,6 +976,9 @@
           }, 60);
         }
         pushScreenState('app', true);
+
+        // ---- subscription init ----
+        initSubscription().catch(e => console.warn('sub init', e));
       }
     }
 
@@ -887,6 +1000,396 @@
           : 'px-2.5 py-1 text-[11px] font-bold text-slate-400 hover:text-slate-100 rounded transition whitespace-nowrap';
       });
     }
+
+    // ==================================================================
+    // =====================  SUBSCRIPTION SYSTEM  ======================
+    // ==================================================================
+
+    function todayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function cacheSubscription() {
+      const u = auth.currentUser;
+      if (!u) return;
+      try { localStorage.setItem('pulsealpha_sub_' + u.uid, JSON.stringify(userSubscription)); } catch(e){}
+    }
+
+    function loadCachedSubscription() {
+      const u = auth.currentUser;
+      if (!u) return;
+      try {
+        const raw = localStorage.getItem('pulsealpha_sub_' + u.uid);
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data && typeof data.expiresAt === 'number') userSubscription = data;
+        }
+      } catch(e){}
+    }
+
+    function clearSubscriptionCache() {
+      const u = auth.currentUser;
+      if (!u) return;
+      try { localStorage.removeItem('pulsealpha_sub_' + u.uid); } catch(e){}
+      userSubscription = { active: false, expiresAt: 0, plan: 'free' };
+    }
+
+    async function loadSubscriptionFromCloud() {
+      const u = auth.currentUser;
+      if (!u) return;
+      try {
+        const snap = await db.ref('users/' + u.uid + '/subscription').once('value');
+        const data = snap.val();
+        if (data && data.expiresAt && data.expiresAt > Date.now()) {
+          userSubscription = { active: true, expiresAt: data.expiresAt, plan: data.plan || 'monthly-99' };
+        } else {
+          userSubscription = { active: false, expiresAt: 0, plan: 'free' };
+        }
+        cacheSubscription();
+      } catch (e) {
+        console.warn('sub load failed', e);
+      }
+    }
+
+    async function initSubscription() {
+      if (!auth.currentUser) return;
+      loadCachedSubscription();
+      await refreshSubscriptionUI();
+      await loadSubscriptionFromCloud();
+      await refreshSubscriptionUI();
+      subInitDone = true;
+    }
+
+    async function getTodayScanCount() {
+      const u = auth.currentUser;
+      if (!u) return 0;
+      const key = todayKey();
+      let localCount = 0;
+      try { localCount = parseInt(localStorage.getItem(`pulsealpha_scan_${u.uid}_${key}`) || '0', 10) || 0; } catch(e){}
+      let cloudCount = 0;
+      try {
+        const snap = await db.ref(`users/${u.uid}/usage/${key}`).once('value');
+        cloudCount = snap.val() || 0;
+      } catch(e){}
+      return Math.max(localCount, cloudCount);
+    }
+
+    async function consumeFreeScan() {
+      const u = auth.currentUser;
+      if (!u) return;
+      const key = todayKey();
+      let localCount = 0;
+      try { localCount = parseInt(localStorage.getItem(`pulsealpha_scan_${u.uid}_${key}`) || '0', 10) || 0; } catch(e){}
+      let cloudCount = 0;
+      try {
+        const snap = await db.ref(`users/${u.uid}/usage/${key}`).once('value');
+        cloudCount = snap.val() || 0;
+      } catch(e){}
+      const next = Math.max(localCount, cloudCount) + 1;
+      try { localStorage.setItem(`pulsealpha_scan_${u.uid}_${key}`, String(next)); } catch(e){}
+      try { await db.ref(`users/${u.uid}/usage/${key}`).set(next); } catch(e){}
+
+      // Cleanup old usage keys (>7 days)
+      try {
+        const snap = await db.ref(`users/${u.uid}/usage`).once('value');
+        const data = snap.val() || {};
+        const cutoff = Date.now() - 7 * 86400000;
+        Object.keys(data).forEach(k => {
+          const t = new Date(k + 'T00:00:00').getTime();
+          if (!isNaN(t) && t < cutoff) {
+            db.ref(`users/${u.uid}/usage/${k}`).remove().catch(()=>{});
+          }
+        });
+      } catch(e){}
+    }
+
+    async function checkScanPermission() {
+      const now = Date.now();
+      if (userSubscription.active && userSubscription.expiresAt > now) {
+        return { allowed: true, unlimited: true };
+      }
+      if (userSubscription.active && userSubscription.expiresAt <= now) {
+        userSubscription = { active: false, expiresAt: 0, plan: 'free' };
+        cacheSubscription();
+      }
+      let used = 0;
+      try { used = await getTodayScanCount(); } catch(e){}
+      if (used >= FREE_SCANS_PER_DAY) {
+        return { allowed: false, unlimited: false, used, reason: 'daily_limit' };
+      }
+      return { allowed: true, unlimited: false, used };
+    }
+
+    async function refreshSubscriptionUI() {
+      const titleEl = document.getElementById('sub-status-title');
+      const subEl = document.getElementById('sub-status-sub');
+      const btn = document.getElementById('subscribe-btn');
+      const icon = document.getElementById('sub-icon');
+      const bar = document.getElementById('subscription-bar');
+      if (!titleEl) return;
+
+      if (!auth.currentUser) {
+        titleEl.innerText = 'Free Plan';
+        titleEl.className = 'text-xs font-black text-white';
+        subEl.innerText = `2 free scans per day`;
+        return;
+      }
+
+      const now = Date.now();
+      const isPro = userSubscription.active && userSubscription.expiresAt > now;
+
+      if (isPro) {
+        const msLeft = userSubscription.expiresAt - now;
+        const daysLeft = Math.max(1, Math.ceil(msLeft / 86400000));
+        titleEl.innerText = '💎 Pro Active';
+        titleEl.className = 'text-xs font-black text-emerald-400';
+        subEl.innerText = `Unlimited scans · ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
+        if (btn) btn.innerText = 'Extend ₹99';
+        if (icon) icon.innerText = '💎';
+        if (bar) {
+          bar.className = 'rounded-2xl border p-3 flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#0d2b23] to-[#0f172a] border-emerald-700/50 shadow-sm min-w-0';
+        }
+      } else {
+        let used = 0;
+        try { used = await getTodayScanCount(); } catch(e){}
+        const left = Math.max(0, FREE_SCANS_PER_DAY - used);
+        titleEl.innerText = 'Free Plan';
+        titleEl.className = 'text-xs font-black text-white';
+        subEl.innerText = left > 0
+          ? `${left} of ${FREE_SCANS_PER_DAY} free scans left today`
+          : `Daily limit reached · upgrade for unlimited`;
+        if (btn) btn.innerText = 'Subscribe ₹99';
+        if (icon) icon.innerText = '💎';
+        if (bar) {
+          bar.className = 'rounded-2xl border p-3 flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#1a1f3d] to-[#0f172a] border-indigo-800/50 shadow-sm min-w-0';
+        }
+      }
+    }
+
+    // ---------- RAZORPAY ----------
+    function openRazorpayCheckout() {
+      const u = auth.currentUser;
+      if (!u) { showScreen('auth'); return; }
+
+      if (typeof Razorpay === 'undefined') {
+        showToast('Payment gateway load nahi hua. Ad-blocker band karke reload karein.');
+        return;
+      }
+
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: SUBSCRIPTION_PRICE_PAISE,
+        currency: 'INR',
+        name: 'Pulse Alpha',
+        description: 'Pro Plan — 28 Days Unlimited Scans',
+        image: 'https://pulse-alpha-privacy-policy.vercel.app/favicon.ico',
+        prefill: {
+          email: u.email || '',
+          name: u.displayName || ''
+        },
+        notes: {
+          uid: u.uid,
+          plan: 'monthly-99',
+          validity_days: String(SUBSCRIPTION_DAYS)
+        },
+        theme: { color: '#6366f1' },
+        handler: async function (response) {
+          try {
+            await activateSubscription(response.razorpay_payment_id, 'monthly-99');
+          } catch (e) {
+            console.warn('activation err', e);
+            showToast('Payment ho gaya, lekin activate karne me dikkat aayi. Support se contact karein.');
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            // user closed checkout
+          }
+        }
+      };
+
+      try {
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (resp) {
+          const desc = (resp && resp.error && resp.error.description) || 'Payment failed. Try again.';
+          showToast('❌ ' + desc);
+        });
+        rzp.open();
+      } catch (e) {
+        console.warn('razorpay open err', e);
+        showToast('Checkout open nahi ho paya. Dobara try karein.');
+      }
+    }
+
+    async function activateSubscription(paymentId, planType) {
+      const u = auth.currentUser;
+      if (!u) return;
+
+      const now = Date.now();
+      const currentExpiry = (userSubscription.active && userSubscription.expiresAt > now)
+        ? userSubscription.expiresAt
+        : now;
+      const expiresAt = currentExpiry + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000;
+      const plan = planType || 'monthly-99';
+
+      const sub = {
+        active: true,
+        plan: plan,
+        startedAt: now,
+        expiresAt: expiresAt,
+        lastPaymentId: paymentId || 'free-unlock',
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      try {
+        await db.ref('users/' + u.uid + '/subscription').set(sub);
+      } catch (e) {
+        console.warn('sub save failed', e);
+      }
+
+      userSubscription = { active: true, expiresAt: expiresAt, plan: plan };
+      cacheSubscription();
+      await refreshSubscriptionUI();
+
+      showToast(plan === 'free-unlock'
+        ? '🎉 Free 28-day Pro unlocked!'
+        : '✅ Pro activated — unlimited scans for 28 days!');
+      playNotificationSound();
+    }
+
+    // ---------- SECRET LONG-PRESS UNLOCK ----------
+    function openFreeAccessModal() {
+      const m = document.getElementById('free-access-modal');
+      const inp = document.getElementById('free-access-input');
+      const msg = document.getElementById('free-access-msg');
+      if (!m) return;
+      if (msg) { msg.classList.add('hidden'); msg.innerText = ''; }
+      if (inp) inp.value = '';
+      m.classList.remove('hidden');
+      setTimeout(() => { try { inp && inp.focus(); } catch(e){} }, 150);
+    }
+
+    function closeFreeAccessModal() {
+      const m = document.getElementById('free-access-modal');
+      if (m) m.classList.add('hidden');
+      const inp = document.getElementById('free-access-input');
+      if (inp) inp.value = '';
+    }
+
+    function showFreeAccessMsg(text, type) {
+      const el = document.getElementById('free-access-msg');
+      if (!el) return;
+      el.innerText = text;
+      el.className = 'text-[11px] font-bold text-center ' + (type === 'success' ? 'text-emerald-400' : 'text-rose-400');
+      el.classList.remove('hidden');
+    }
+
+    async function handleFreeAccessSubmit() {
+      const inp = document.getElementById('free-access-input');
+      const val = (inp ? inp.value : '').trim().toUpperCase();
+      if (!val) { showFreeAccessMsg('Access key daalein.', 'error'); return; }
+      if (val !== FREE_ACCESS_PASSWORD) {
+        showFreeAccessMsg('❌ Invalid access key.', 'error');
+        if (inp) inp.value = '';
+        try { if (navigator.vibrate) navigator.vibrate(120); } catch(e){}
+        return;
+      }
+      showFreeAccessMsg('Unlocking…', 'success');
+      await activateSubscription(null, 'free-unlock');
+      closeFreeAccessModal();
+    }
+
+    function setupFreeAccessModal() {
+      const cancelBtn = document.getElementById('free-access-cancel');
+      const submitBtn = document.getElementById('free-access-submit');
+      const inp = document.getElementById('free-access-input');
+
+      if (cancelBtn) cancelBtn.addEventListener('click', closeFreeAccessModal);
+      if (submitBtn) submitBtn.addEventListener('click', handleFreeAccessSubmit);
+      if (inp) inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); handleFreeAccessSubmit(); }
+      });
+    }
+
+    // ---------- PAYWALL ----------
+    function showPaywall(reason) {
+      const m = document.getElementById('paywall-modal');
+      const msg = document.getElementById('paywall-msg');
+      if (!m) return;
+      if (msg) {
+        msg.innerText = reason === 'daily_limit'
+          ? "Aaj ke 2 free scans khatam ho gaye. Pro lein aur 28 din tak unlimited scan karein."
+          : "Free scan limit reached. Upgrade to Pro for unlimited scans.";
+      }
+      m.classList.remove('hidden');
+    }
+    function hidePaywall() {
+      const m = document.getElementById('paywall-modal');
+      if (m) m.classList.add('hidden');
+    }
+    function setupPaywallModal() {
+      const closeBtn = document.getElementById('paywall-close-btn');
+      if (closeBtn) closeBtn.addEventListener('click', hidePaywall);
+    }
+
+    // ---------- SUBSCRIBE BUTTON (click = pay, hold 4s = secret) ----------
+    function attachSubscribeButton(btn) {
+      if (!btn || btn.dataset.subBound === '1') return;
+      btn.dataset.subBound = '1';
+
+      let timer = null;
+      let startX = 0, startY = 0;
+      let suppressClick = false;
+
+      const startPress = (e) => {
+        if (timer) return;
+        const pt = e.touches ? e.touches[0] : e;
+        startX = pt.clientX; startY = pt.clientY;
+        timer = setTimeout(() => {
+          timer = null;
+          suppressClick = true;
+          try { if (navigator.vibrate) navigator.vibrate([40, 60, 40]); } catch(err){}
+          openFreeAccessModal();
+        }, LONG_PRESS_DURATION);
+      };
+
+      const cancelPress = () => {
+        if (timer) { clearTimeout(timer); timer = null; }
+      };
+
+      const movePress = (e) => {
+        if (!timer) return;
+        const pt = e.touches ? e.touches[0] : e;
+        if (Math.abs(pt.clientX - startX) > 12 || Math.abs(pt.clientY - startY) > 12) cancelPress();
+      };
+
+      btn.addEventListener('mousedown', startPress);
+      btn.addEventListener('touchstart', startPress, { passive: true });
+      btn.addEventListener('mouseup', cancelPress);
+      btn.addEventListener('mouseleave', cancelPress);
+      btn.addEventListener('touchend', cancelPress);
+      btn.addEventListener('touchcancel', cancelPress);
+      btn.addEventListener('touchmove', movePress, { passive: true });
+      btn.addEventListener('mousemove', movePress);
+
+      btn.addEventListener('click', (e) => {
+        if (suppressClick) {
+          suppressClick = false;
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        openRazorpayCheckout();
+      });
+
+      // block context menu on long press (mobile)
+      btn.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+
+    // ==================================================================
+    // ===================  END SUBSCRIPTION SYSTEM  ====================
+    // ==================================================================
 
     // ================== GOOGLE SIGN-IN ==================
     async function handleGoogleSignIn() {
@@ -1031,6 +1534,8 @@
       if (btnText) btnText.innerText = 'Logging out…';
 
       stopVerifyPolling();
+      hidePaywall();
+      closeFreeAccessModal();
 
       try {
         if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
@@ -1043,6 +1548,9 @@
       entryMarkerData = null;
       chartBootstrapped = false; resetLockedSignal();
       userScrolledTimeScale = false;
+
+      clearSubscriptionCache();
+      subInitDone = false;
 
       clearCachedUser();
       clearAuthInputs(false);
@@ -1762,6 +2270,26 @@
     // ================== ANALYSIS ENGINE ==================
     window.runAnalysisEngine = async function () {
       if (isAnalyzing || currentCandles.length < 80) return;
+
+      // ---------- SUBSCRIPTION GATE ----------
+      let gate;
+      try {
+        gate = await checkScanPermission();
+      } catch (e) {
+        gate = { allowed: true, unlimited: false };
+      }
+
+      if (!gate.allowed) {
+        showPaywall(gate.reason);
+        return;
+      }
+
+      // consume a free scan (Pro = unlimited, no counting)
+      if (!gate.unlimited) {
+        try { await consumeFreeScan(); } catch(e){}
+        refreshSubscriptionUI().catch(()=>{});
+      }
+
       isAnalyzing = true;
       const output = document.getElementById('ai-analysis-output');
       output.innerHTML = '';
@@ -2176,6 +2704,12 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       setupVerifyButtons();
       setupMobileInput();
 
+      // ---- subscription UI wiring ----
+      setupPaywallModal();
+      setupFreeAccessModal();
+      attachSubscribeButton(document.getElementById('subscribe-btn'));
+      attachSubscribeButton(document.getElementById('paywall-subscribe-btn'));
+
       try { history.replaceState({ pulseScreen: 'splash', ts: Date.now() }, '', location.href); } catch(e){}
 
       bootstrap();
@@ -2200,6 +2734,11 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
             if (fresh.emailVerified && currentScreen === 'verify') {
               saveCachedUser(fresh, true);
               showScreen('app');
+            }
+            // refresh subscription state when coming back
+            if (currentScreen === 'app') {
+              await loadSubscriptionFromCloud();
+              await refreshSubscriptionUI();
             }
           } catch(e){}
         })();
