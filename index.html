@@ -26,7 +26,7 @@
       user-select: none; -webkit-user-select: none;
     }
     input, textarea { user-select: text; -webkit-user-select: text; }
-    #splash-screen, #auth-container, #verify-container, #app-container {
+    #splash-screen, #auth-container, #verify-container, #app-container, #voice-page {
       max-width: 100vw; overflow-x: hidden;
     }
     .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
@@ -158,154 +158,151 @@
     .header-voice-btn:active { transform: scale(0.92); }
     .header-voice-btn svg { width: 17px; height: 17px; color: #fff; }
 
-    .header-voice-btn.idle {
-      background: linear-gradient(135deg, #6366f1, #3b82f6);
+    /* ================= VOICE PAGE (FULL SCREEN) ================= */
+    #voice-page {
+      position: fixed; inset: 0; z-index: 55;
+      background: radial-gradient(circle at 30% 15%, #131a3a 0%, #0b1220 45%, #070b14 100%);
+      display: flex; flex-direction: column;
+      overflow-y: auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
     }
-    .header-voice-btn.listening {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      box-shadow: 0 0 0 0 rgba(239,68,68,0.7);
-      animation: headerListenPulse 1.2s infinite;
-    }
-    @keyframes headerListenPulse {
-      0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
-      100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
-    }
-    .header-voice-btn.processing {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      animation: spin360 1.2s linear infinite;
-    }
-    .header-voice-btn.speaking {
-      background: linear-gradient(135deg, #10b981, #059669);
-      animation: headerSpeakPulse 0.8s ease-in-out infinite;
-    }
-    @keyframes headerSpeakPulse {
-      0%,100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-    }
-    @keyframes spin360 { to { transform: rotate(360deg); } }
+    #voice-page.hidden { display: none; }
 
-    /* ================= PULSE VOICE ASSISTANT (BOTTOM) ================= */
-    .pulse-orb-wrap {
+    .voice-page-enter { animation: voicePageIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes voicePageIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .voice-orb-wrap {
       position: relative;
-      width: 96px; height: 96px;
+      width: 200px; height: 200px;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto;
     }
-    .pulse-orb-ring {
+    .voice-orb-ring {
       position: absolute; inset: 0; border-radius: 50%;
       border: 2px solid rgba(99,102,241,0.35);
       pointer-events: none;
     }
-    .pulse-orb-ring.r1 { animation: orbPulse 2.4s ease-out infinite; }
-    .pulse-orb-ring.r2 { animation: orbPulse 2.4s ease-out infinite 0.8s; }
-    .pulse-orb-ring.r3 { animation: orbPulse 2.4s ease-out infinite 1.6s; }
+    .voice-orb-ring.r1 { animation: orbPulse 2.4s ease-out infinite; }
+    .voice-orb-ring.r2 { animation: orbPulse 2.4s ease-out infinite 0.8s; }
+    .voice-orb-ring.r3 { animation: orbPulse 2.4s ease-out infinite 1.6s; }
     @keyframes orbPulse {
       0% { transform: scale(0.72); opacity: 0.85; }
       100% { transform: scale(1.55); opacity: 0; }
     }
-    .pulse-orb-core {
+    .voice-orb-core {
       position: relative; z-index: 5;
-      width: 76px; height: 76px; border-radius: 50%;
+      width: 150px; height: 150px; border-radius: 50%;
       background: radial-gradient(circle at 32% 28%, #818cf8 0%, #6366f1 38%, #4f46e5 70%, #312e81 100%);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 32px rgba(99,102,241,0.55), inset 0 -8px 20px rgba(0,0,0,0.35);
+      box-shadow: 0 0 60px rgba(99,102,241,0.6), inset 0 -12px 30px rgba(0,0,0,0.4);
       transition: transform 0.18s ease, box-shadow 0.3s ease, background 0.4s ease;
-      border: 1px solid rgba(165,180,252,0.55);
+      border: 2px solid rgba(165,180,252,0.55);
     }
-    .pulse-orb-core:active { transform: scale(0.94); }
-    .pulse-orb-core svg { width: 32px; height: 32px; color: #fff; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); }
+    .voice-orb-core:active { transform: scale(0.94); }
+    .voice-orb-core svg { width: 62px; height: 62px; color: #fff; filter: drop-shadow(0 3px 10px rgba(0,0,0,0.5)); }
 
-    .pulse-assistant.listening .pulse-orb-core {
+    .voice-page.listening .voice-orb-core {
       background: radial-gradient(circle at 32% 28%, #fca5a5 0%, #ef4444 38%, #dc2626 70%, #7f1d1d 100%);
-      box-shadow: 0 0 44px rgba(239,68,68,0.7), inset 0 -8px 20px rgba(0,0,0,0.35);
+      box-shadow: 0 0 80px rgba(239,68,68,0.75), inset 0 -12px 30px rgba(0,0,0,0.4);
       animation: listenBeat 0.9s ease-in-out infinite;
     }
-    .pulse-assistant.listening .pulse-orb-ring { border-color: rgba(239,68,68,0.55); }
+    .voice-page.listening .voice-orb-ring { border-color: rgba(239,68,68,0.55); }
     @keyframes listenBeat {
       0%,100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+      50% { transform: scale(1.06); }
     }
 
-    .pulse-assistant.processing .pulse-orb-core {
+    .voice-page.processing .voice-orb-core {
       background: radial-gradient(circle at 32% 28%, #fcd34d 0%, #f59e0b 38%, #d97706 70%, #78350f 100%);
-      box-shadow: 0 0 44px rgba(245,158,11,0.65), inset 0 -8px 20px rgba(0,0,0,0.35);
+      box-shadow: 0 0 80px rgba(245,158,11,0.7), inset 0 -12px 30px rgba(0,0,0,0.4);
     }
-    .pulse-assistant.processing .pulse-orb-core svg { animation: spin360 1.2s linear infinite; }
-    .pulse-assistant.processing .pulse-orb-ring { border-color: rgba(245,158,11,0.55); }
+    .voice-page.processing .voice-orb-core svg { animation: spin360 1.2s linear infinite; }
+    .voice-page.processing .voice-orb-ring { border-color: rgba(245,158,11,0.55); }
+    @keyframes spin360 { to { transform: rotate(360deg); } }
 
-    .pulse-assistant.speaking .pulse-orb-core {
+    .voice-page.speaking .voice-orb-core {
       background: radial-gradient(circle at 32% 28%, #6ee7b7 0%, #10b981 38%, #059669 70%, #064e3b 100%);
-      box-shadow: 0 0 48px rgba(16,185,129,0.7), inset 0 -8px 20px rgba(0,0,0,0.35);
+      box-shadow: 0 0 90px rgba(16,185,129,0.75), inset 0 -12px 30px rgba(0,0,0,0.4);
       animation: speakWave 0.7s ease-in-out infinite;
     }
-    .pulse-assistant.speaking .pulse-orb-ring { border-color: rgba(16,185,129,0.6); }
+    .voice-page.speaking .voice-orb-ring { border-color: rgba(16,185,129,0.6); }
     @keyframes speakWave {
       0%,100% { transform: scale(1); }
-      50% { transform: scale(1.07); }
+      50% { transform: scale(1.08); }
     }
 
-    .pulse-status-pill {
+    .voice-status-pill {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 999px;
-      font-size: 10px; font-weight: 800;
+      padding: 7px 14px; border-radius: 999px;
+      font-size: 11px; font-weight: 800;
       letter-spacing: 0.06em; text-transform: uppercase;
       border: 1px solid; transition: all 0.3s ease;
     }
-    .pulse-status-pill.idle { background: rgba(99,102,241,0.1); color: #a5b4fc; border-color: rgba(99,102,241,0.35); }
-    .pulse-status-pill.listening { background: rgba(239,68,68,0.12); color: #fca5a5; border-color: rgba(239,68,68,0.4); }
-    .pulse-status-pill.processing { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.4); }
-    .pulse-status-pill.speaking { background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.4); }
+    .voice-status-pill.idle { background: rgba(99,102,241,0.1); color: #a5b4fc; border-color: rgba(99,102,241,0.35); }
+    .voice-status-pill.listening { background: rgba(239,68,68,0.12); color: #fca5a5; border-color: rgba(239,68,68,0.4); }
+    .voice-status-pill.processing { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.4); }
+    .voice-status-pill.speaking { background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.4); }
 
-    .pulse-chip {
+    .voice-transcript {
+      background: rgba(15,23,42,0.7);
+      border: 1px solid rgba(51,65,85,0.7);
+      border-radius: 18px;
+      padding: 14px 16px;
+      min-height: 84px;
+      max-height: 160px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+    .voice-transcript .label {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 4px; display: block;
+    }
+    .voice-transcript .you .label { color: #a5b4fc; }
+    .voice-transcript .pulse .label { color: #6ee7b7; }
+    .voice-transcript .you { color: #c7d2fe; }
+    .voice-transcript .pulse { color: #cbd5e1; }
+    .voice-transcript .pulse strong { color: #6ee7b7; }
+
+    .voice-wave-bar {
+      display: inline-block; width: 4px; border-radius: 4px;
+      background: currentColor; margin: 0 2px;
+      vertical-align: middle; height: 8px;
+    }
+    .voice-page.listening .voice-wave-bar { animation: waveBounce 0.9s ease-in-out infinite; }
+    .voice-page.listening .voice-wave-bar:nth-child(1) { animation-delay: 0s; }
+    .voice-page.listening .voice-wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .voice-page.listening .voice-wave-bar:nth-child(3) { animation-delay: 0.3s; }
+    .voice-page.listening .voice-wave-bar:nth-child(4) { animation-delay: 0.45s; }
+    .voice-page.listening .voice-wave-bar:nth-child(5) { animation-delay: 0.6s; }
+    @keyframes waveBounce {
+      0%,100% { transform: scaleY(0.4); opacity: 0.6; }
+      50% { transform: scaleY(2.2); opacity: 1; }
+    }
+    .voice-page.speaking .voice-wave-bar { animation: waveBounce 0.55s ease-in-out infinite; }
+    .voice-page.speaking .voice-wave-bar:nth-child(1) { animation-delay: 0s; }
+    .voice-page.speaking .voice-wave-bar:nth-child(2) { animation-delay: 0.1s; }
+    .voice-page.speaking .voice-wave-bar:nth-child(3) { animation-delay: 0.2s; }
+    .voice-page.speaking .voice-wave-bar:nth-child(4) { animation-delay: 0.3s; }
+    .voice-page.speaking .voice-wave-bar:nth-child(5) { animation-delay: 0.4s; }
+
+    .voice-chip {
       display: inline-block;
-      padding: 6px 11px; border-radius: 999px;
-      font-size: 10px; font-weight: 700;
+      padding: 8px 13px; border-radius: 999px;
+      font-size: 11px; font-weight: 700;
       background: rgba(30,41,59,0.75);
       border: 1px solid rgba(71,85,105,0.65);
       color: #cbd5e1; cursor: pointer;
       transition: all 0.2s ease;
       white-space: nowrap;
     }
-    .pulse-chip:hover { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.45); color: #c7d2fe; }
-    .pulse-chip:active { transform: scale(0.96); }
-
-    .wave-bar {
-      display: inline-block; width: 3px; border-radius: 3px;
-      background: currentColor; margin: 0 1.5px;
-      vertical-align: middle;
-    }
-    .listening .wave-bar { animation: waveBounce 0.9s ease-in-out infinite; }
-    .listening .wave-bar:nth-child(1) { animation-delay: 0s; height: 8px; }
-    .listening .wave-bar:nth-child(2) { animation-delay: 0.15s; height: 14px; }
-    .listening .wave-bar:nth-child(3) { animation-delay: 0.3s; height: 10px; }
-    .listening .wave-bar:nth-child(4) { animation-delay: 0.45s; height: 16px; }
-    .listening .wave-bar:nth-child(5) { animation-delay: 0.6s; height: 9px; }
-    @keyframes waveBounce {
-      0%,100% { transform: scaleY(0.4); opacity: 0.6; }
-      50% { transform: scaleY(1.4); opacity: 1; }
-    }
-    .speaking .wave-bar { animation: waveBounce 0.55s ease-in-out infinite; }
-    .speaking .wave-bar:nth-child(1) { animation-delay: 0s; height: 10px; }
-    .speaking .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 16px; }
-    .speaking .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 12px; }
-    .speaking .wave-bar:nth-child(4) { animation-delay: 0.3s; height: 18px; }
-    .speaking .wave-bar:nth-child(5) { animation-delay: 0.4s; height: 11px; }
-
-    .pulse-live-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(15,23,42,0.9);
-      border: 1px solid rgba(71,85,105,0.6);
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 10px; font-weight: 600;
-      color: #cbd5e1;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    .voice-chip:hover { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.45); color: #c7d2fe; }
+    .voice-chip:active { transform: scale(0.96); }
   </style>
 </head>
 <body class="bg-[#070b14] text-slate-200 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
@@ -479,9 +476,9 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-          <!-- ✅ VOICE AI BUTTON (left of WhatsApp) -->
-          <button type="button" id="header-voice-btn" class="header-voice-btn idle btn-press" aria-label="Voice Assistant" title="Pulse Voice Assistant">
-            <svg id="header-voice-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <!-- VOICE AI BUTTON (left of WhatsApp) -->
+          <button type="button" id="header-voice-btn" class="header-voice-btn btn-press" aria-label="Voice Assistant" title="Pulse Voice Assistant">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
               <line x1="12" y1="19" x2="12" y2="22"></line>
@@ -526,67 +523,33 @@
         </div>
       </div>
 
-      <!-- ================= PULSE AI ASSISTANT CARD ================= -->
-      <div id="pulse-assistant-card" class="pulse-assistant bg-[#0f172a] rounded-2xl border border-indigo-800/40 p-4 shadow-lg shadow-indigo-900/20 relative overflow-hidden min-w-0">
+      <!-- ================= PULSE AI CARD (opener only) ================= -->
+      <div class="bg-[#0f172a] rounded-2xl border border-indigo-800/40 p-4 shadow-lg shadow-indigo-900/20 relative overflow-hidden min-w-0">
         <div class="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none"></div>
         <div class="absolute -bottom-20 -left-20 w-48 h-48 rounded-full bg-blue-600/10 blur-3xl pointer-events-none"></div>
 
-        <div class="relative z-10 space-y-3">
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-600/30">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2v20M8 6v12M4 10v4M16 6v12M20 10v4"/>
-                </svg>
-              </div>
-              <div class="leading-tight">
-                <p class="text-sm font-black text-white tracking-tight">PULSE AI</p>
-                <p class="text-[10px] text-slate-500 font-semibold">Hindi Voice Assistant</p>
-              </div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-12 h-12 shrink-0 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+              </svg>
             </div>
-            <span id="pulse-status-pill" class="pulse-status-pill idle">● Ready</span>
-          </div>
-
-          <div class="flex flex-col items-center gap-2 pt-1">
-            <div class="pulse-orb-wrap">
-              <div class="pulse-orb-ring r1"></div>
-              <div class="pulse-orb-ring r2"></div>
-              <div class="pulse-orb-ring r3"></div>
-              <button type="button" id="pulse-mic-btn" class="pulse-orb-core" aria-label="Tap to talk">
-                <svg id="pulse-mic-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  <line x1="12" y1="19" x2="12" y2="22"></line>
-                </svg>
-              </button>
-            </div>
-            <p id="pulse-hint" class="text-[11px] text-slate-400 font-semibold text-center">
-              Tap orb and say <span class="text-indigo-300 font-bold">"Hey Pulse, BTC ka level batao"</span>
-            </p>
-            <div class="h-5 flex items-center justify-center" id="pulse-wave-wrap">
-              <span class="wave-bar text-indigo-400"></span>
-              <span class="wave-bar text-indigo-400"></span>
-              <span class="wave-bar text-indigo-400"></span>
-              <span class="wave-bar text-indigo-400"></span>
-              <span class="wave-bar text-indigo-400"></span>
+            <div class="leading-tight min-w-0">
+              <p class="text-sm font-black text-white tracking-tight">PULSE AI</p>
+              <p class="text-[10px] text-slate-500 font-semibold">Hindi Voice Assistant</p>
             </div>
           </div>
-
-          <div class="flex flex-wrap justify-center gap-1.5 pt-1">
-            <button type="button" class="pulse-chip" data-pulse-chip="Hey Pulse, aaj market ka kya haal hai?">Aaj market?</button>
-            <button type="button" class="pulse-chip" data-pulse-chip="Hey Pulse, BTC ka level batao">BTC Levels</button>
-            <button type="button" class="pulse-chip" data-pulse-chip="Hey Pulse, ETH ka kya scene hai?">ETH Scene</button>
-            <button type="button" class="pulse-chip" data-pulse-chip="Hey Pulse, SOL mein entry bani hai kya?">SOL Entry</button>
-            <button type="button" class="pulse-chip" data-pulse-chip="Hey Pulse, XRP ka support resistance batao">XRP S/R</button>
-          </div>
-
-          <div class="text-center pt-1">
-            <span id="pulse-live-line" class="pulse-live-pill">Voice commands sun ke market levels bataunga</span>
-          </div>
-
-          <div class="flex items-center justify-center gap-2 pt-1">
-            <button type="button" id="pulse-stop-btn" class="btn-press text-[10px] font-bold text-slate-500 hover:text-slate-300 transition hidden">■ Stop Voice</button>
-          </div>
+          <button type="button" id="open-voice-page-btn" class="btn-press shrink-0 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-2.5 rounded-xl font-black text-xs shadow-md shadow-indigo-500/25 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+            <span>Start Voice</span>
+          </button>
         </div>
       </div>
 
@@ -674,6 +637,83 @@
     </footer>
   </div>
 
+  <!-- ================= VOICE ASSISTANT PAGE (SEPARATE, FULL SCREEN) ================= -->
+  <div id="voice-page" class="voice-page hidden">
+    <div class="blob" style="width:260px;height:260px;background:#4f46e5;top:-80px;left:-60px;"></div>
+    <div class="blob" style="width:280px;height:280px;background:#2563eb;bottom:-60px;right:-80px;animation-delay:-4s;"></div>
+    <div class="blob" style="width:200px;height:200px;background:#7c3aed;top:40%;left:50%;animation-delay:-8s;"></div>
+
+    <!-- Header with back -->
+    <div class="sticky top-0 z-20 bg-[#0b1220]/85 backdrop-blur-xl border-b border-slate-800 safe-t">
+      <div class="max-w-2xl mx-auto px-3 py-3 flex items-center justify-between gap-2">
+        <button type="button" id="voice-back-btn" class="btn-press flex items-center gap-1.5 text-slate-300 hover:text-white text-xs font-bold px-3 py-2 rounded-xl bg-slate-800/70 border border-slate-700">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Back
+        </button>
+        <div class="text-center leading-none">
+          <p class="text-sm font-black text-white tracking-tight">PULSE<span class="gradient-text"> AI</span></p>
+          <p class="text-[9px] text-slate-500 font-semibold tracking-widest uppercase mt-0.5">Hindi Voice Assistant</p>
+        </div>
+        <span id="voice-status-pill" class="voice-status-pill idle">● Ready</span>
+      </div>
+    </div>
+
+    <div class="relative z-10 max-w-2xl mx-auto w-full px-4 pt-6 pb-10 space-y-5">
+
+      <!-- Orb -->
+      <div class="flex flex-col items-center gap-3">
+        <div class="voice-orb-wrap">
+          <div class="voice-orb-ring r1"></div>
+          <div class="voice-orb-ring r2"></div>
+          <div class="voice-orb-ring r3"></div>
+          <button type="button" id="voice-orb-btn" class="voice-orb-core" aria-label="Tap to talk">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+          </button>
+        </div>
+
+        <p id="voice-hint" class="text-[12px] text-slate-400 font-semibold text-center px-4">
+          Tap orb and say <span class="text-indigo-300 font-bold">"BTC ka level batao"</span>
+        </p>
+
+        <div class="h-6 flex items-center justify-center text-indigo-400" id="voice-wave-wrap">
+          <span class="voice-wave-bar"></span>
+          <span class="voice-wave-bar"></span>
+          <span class="voice-wave-bar"></span>
+          <span class="voice-wave-bar"></span>
+          <span class="voice-wave-bar"></span>
+        </div>
+      </div>
+
+      <!-- Transcript -->
+      <div class="voice-transcript" id="voice-transcript">
+        <div class="pulse">
+          <span class="label">Pulse</span>
+          Namaste! Main <strong>Pulse</strong> hoon. Mic dabakar Hindi mein poochho — jaise <em>"BTC ka level batao"</em> ya <em>"Aaj market ka kya haal hai?"</em>
+        </div>
+      </div>
+
+      <!-- Quick chips -->
+      <div class="flex flex-wrap justify-center gap-1.5">
+        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, aaj market ka kya haal hai?">Aaj market?</button>
+        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, BTC ka level batao">BTC Levels</button>
+        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, ETH ka kya scene hai?">ETH Scene</button>
+        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, SOL mein entry bani hai kya?">SOL Entry</button>
+        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, XRP ka support resistance batao">XRP S/R</button>
+      </div>
+
+      <!-- Stop buttons -->
+      <div class="flex items-center justify-center gap-2 pt-1">
+        <button type="button" id="voice-stop-btn" class="btn-press text-[11px] font-bold text-slate-500 hover:text-slate-200 px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 hidden">■ Stop</button>
+      </div>
+    </div>
+  </div>
+
   <audio id="notification-sound" src="nothing.mp3" preload="auto"></audio>
 
   <!-- ================= PAYWALL MODAL ================= -->
@@ -736,7 +776,6 @@
     const GEMINI_API_KEY = "AQ.Ab8RN6JlscpiNZxFYALMW4sZrMkvr7i5wmUoQ5X8KRkByWb-2A";
     const GEMINI_MODEL = "gemini-flash-latest";
 
-    // ================== SUBSCRIPTION CONFIG ==================
     const RAZORPAY_KEY_ID = "rzp_live_T5OZeAeTkrB7YG";
     const SUBSCRIPTION_PRICE_PAISE = 9900;
     const SUBSCRIPTION_DAYS = 28;
@@ -760,9 +799,9 @@
     };
     const SETUP_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
     const setupAlertLog = {};
-    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v2';
-    // ✅ Auto-reply delay after user stops speaking (2 seconds)
+    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v3';
     const AUTO_REPLY_DELAY_MS = 2000;
+
     let pulseAssistant = null;
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -772,7 +811,7 @@
     const authReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
       .catch(e => { console.warn('persistence', e); });
 
-    // ================== DARK CHART PALETTE ==================
+    // ================== THEME ==================
     const THEME = {
       chartBg: '#0b1220', grid: '#1e293b', text: '#94a3b8', border: '#1e293b',
       crosshair: '#475569', crossLabel: '#334155', up: '#22c55e', down: '#ef4444',
@@ -820,6 +859,47 @@
     // ================== AUDIO ==================
     let audioCtx = null;
     let audioUnlocked = false;
+    let voiceList = [];
+    let voicesLoaded = false;
+
+    function loadVoices() {
+      return new Promise((resolve) => {
+        if (!('speechSynthesis' in window)) { resolve([]); return; }
+        let voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length) { voiceList = voices; voicesLoaded = true; resolve(voices); return; }
+        // Wait for voiceschanged with timeout fallback
+        let done = false;
+        const handler = () => {
+          if (done) return; done = true;
+          voices = window.speechSynthesis.getVoices();
+          voiceList = voices || [];
+          voicesLoaded = true;
+          try { window.speechSynthesis.onvoiceschanged = null; } catch(e){}
+          resolve(voiceList);
+        };
+        try { window.speechSynthesis.onvoiceschanged = handler; } catch(e){}
+        setTimeout(handler, 800);
+        setTimeout(() => { if (!done) { done = true; resolve(window.speechSynthesis.getVoices() || []); } }, 2500);
+      });
+    }
+
+    function pickHindiVoice() {
+      if (!voiceList || !voiceList.length) voiceList = window.speechSynthesis.getVoices() || [];
+      // Priority 1: hi-IN
+      let v = voiceList.find(x => x.lang && x.lang.toLowerCase() === 'hi-in');
+      if (v) return v;
+      // Priority 2: any Hindi
+      v = voiceList.find(x => x.lang && x.lang.toLowerCase().startsWith('hi'));
+      if (v) return v;
+      // Priority 3: en-IN (Indian English - handles Hindi words ok)
+      v = voiceList.find(x => x.lang && x.lang.toLowerCase() === 'en-in');
+      if (v) return v;
+      // Priority 4: any en
+      v = voiceList.find(x => x.lang && x.lang.toLowerCase().startsWith('en'));
+      if (v) return v;
+      // Fallback: default
+      return null;
+    }
 
     function unlockAudioOnFirstInteraction() {
       if (audioUnlocked) return;
@@ -827,6 +907,18 @@
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
+      } catch (e) {}
+      // Pre-load voices
+      loadVoices().catch(()=>{});
+      // Prime speechSynthesis with a silent utterance so later calls work
+      try {
+        if ('speechSynthesis' in window) {
+          const warm = new SpeechSynthesisUtterance(' ');
+          warm.volume = 0;
+          warm.rate = 1;
+          window.speechSynthesis.speak(warm);
+          setTimeout(() => { try { window.speechSynthesis.cancel(); } catch(e){} }, 200);
+        }
       } catch (e) {}
       try {
         const a = document.getElementById('notification-sound');
@@ -1032,6 +1124,11 @@
 
     window.addEventListener('popstate', () => {
       if (isTransitioning) return;
+      // If voice page open, close it and return to dashboard
+      if (currentScreen === 'voice') {
+        closeVoicePage();
+        return;
+      }
       if (currentScreen === 'verify') {
         isTransitioning = true;
         doLogout().finally(() => { isTransitioning = false; });
@@ -1051,9 +1148,11 @@
       const authEl = document.getElementById('auth-container');
       const verifyEl = document.getElementById('verify-container');
       const appEl = document.getElementById('app-container');
+      const voiceEl = document.getElementById('voice-page');
 
-      [authEl, verifyEl, appEl].forEach(el => el && el.classList.add('hidden'));
+      [authEl, verifyEl, appEl, voiceEl].forEach(el => el && el.classList.add('hidden'));
       appEl && appEl.classList.remove('flex');
+      if (voiceEl) voiceEl.classList.add('hidden');
 
       const prevScreen = currentScreen;
       currentScreen = screen;
@@ -1094,7 +1193,6 @@
         pushScreenState('app', true);
 
         initSubscription().catch(e => console.warn('sub init', e));
-        setTimeout(() => { initPulseAssistant(); }, 500);
       }
     }
 
@@ -1125,13 +1223,11 @@
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
-
     function cacheSubscription() {
       const u = auth.currentUser;
       if (!u) return;
       try { localStorage.setItem('pulsealpha_sub_' + u.uid, JSON.stringify(userSubscription)); } catch(e){}
     }
-
     function loadCachedSubscription() {
       const u = auth.currentUser;
       if (!u) return;
@@ -1143,14 +1239,12 @@
         }
       } catch(e){}
     }
-
     function clearSubscriptionCache() {
       const u = auth.currentUser;
       if (!u) return;
       try { localStorage.removeItem('pulsealpha_sub_' + u.uid); } catch(e){}
       userSubscription = { active: false, expiresAt: 0, plan: 'free' };
     }
-
     async function loadSubscriptionFromCloud() {
       const u = auth.currentUser;
       if (!u) return;
@@ -1165,7 +1259,6 @@
         cacheSubscription();
       } catch (e) { console.warn('sub load failed', e); }
     }
-
     async function initSubscription() {
       if (!auth.currentUser) return;
       loadCachedSubscription();
@@ -1174,7 +1267,6 @@
       await refreshSubscriptionUI();
       subInitDone = true;
     }
-
     async function getTodayScanCount() {
       const u = auth.currentUser;
       if (!u) return 0;
@@ -1192,7 +1284,6 @@
       }
       return max;
     }
-
     async function consumeFreeScan() {
       const u = auth.currentUser;
       if (!u) return 0;
@@ -1209,7 +1300,6 @@
         newVal = lc + 1;
       }
       try { localStorage.setItem(`pulsealpha_scan_${u.uid}_${key}`, String(newVal)); } catch(e){}
-
       db.ref(`users/${u.uid}/usage`).once('value').then(snap => {
         const data = snap.val() || {};
         const cutoff = Date.now() - 7 * 86400000;
@@ -1222,11 +1312,8 @@
       }).catch(()=>{});
       return newVal;
     }
-
     async function checkScanPermission() {
-      if (!subInitDone) {
-        try { await initSubscription(); } catch(e){}
-      }
+      if (!subInitDone) { try { await initSubscription(); } catch(e){} }
       const now = Date.now();
       if (userSubscription.active && userSubscription.expiresAt > now) {
         return { allowed: true, unlimited: true, used: 0, left: Infinity };
@@ -1242,7 +1329,6 @@
       }
       return { allowed: true, unlimited: false, used, left: FREE_SCANS_PER_DAY - used };
     }
-
     async function refreshSubscriptionUI() {
       const titleEl = document.getElementById('sub-status-title');
       const subEl = document.getElementById('sub-status-sub');
@@ -1250,17 +1336,14 @@
       const icon = document.getElementById('sub-icon');
       const bar = document.getElementById('subscription-bar');
       if (!titleEl) return;
-
       if (!auth.currentUser) {
         titleEl.innerText = 'Free Plan';
         titleEl.className = 'text-xs font-black text-white';
         subEl.innerText = `2 free scans per day`;
         return;
       }
-
       const now = Date.now();
       const isPro = userSubscription.active && userSubscription.expiresAt > now;
-
       if (isPro) {
         const msLeft = userSubscription.expiresAt - now;
         const daysLeft = Math.max(1, Math.ceil(msLeft / 86400000));
@@ -1282,8 +1365,6 @@
         if (bar) bar.className = 'rounded-2xl border p-3 flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#1a1f3d] to-[#0f172a] border-indigo-800/50 shadow-sm min-w-0';
       }
     }
-
-    // ---------- RAZORPAY ----------
     function openRazorpayCheckout() {
       const u = auth.currentUser;
       if (!u) { showScreen('auth'); return; }
@@ -1319,7 +1400,6 @@
         showToast('Checkout open nahi ho paya. Dobara try karein.');
       }
     }
-
     async function activateSubscription(paymentId, planType) {
       const u = auth.currentUser;
       if (!u) return;
@@ -1339,8 +1419,6 @@
       showToast(plan === 'free-unlock' ? '🎉 Free 28-day Pro unlocked!' : '✅ Pro activated — unlimited scans for 28 days!');
       playNotificationSound();
     }
-
-    // ---------- SECRET LONG-PRESS UNLOCK ----------
     function openFreeAccessModal() {
       const m = document.getElementById('free-access-modal');
       const inp = document.getElementById('free-access-input');
@@ -1388,8 +1466,6 @@
         if (e.key === 'Enter') { e.preventDefault(); handleFreeAccessSubmit(); }
       });
     }
-
-    // ---------- PAYWALL ----------
     function showPaywall(reason) {
       const m = document.getElementById('paywall-modal');
       const msg = document.getElementById('paywall-msg');
@@ -1409,8 +1485,6 @@
       const closeBtn = document.getElementById('paywall-close-btn');
       if (closeBtn) closeBtn.addEventListener('click', hidePaywall);
     }
-
-    // ---------- SUBSCRIBE BUTTON ----------
     function attachSubscribeButton(btn) {
       if (!btn || btn.dataset.subBound === '1') return;
       btn.dataset.subBound = '1';
@@ -1453,40 +1527,8 @@
     }
 
     // ==================================================================
-    // ===================  END SUBSCRIPTION SYSTEM  ====================
-    // ==================================================================
-
-    // ==================================================================
     // ============  HINDI NUMBER SPEECH CONVERTER  =====================
     // ==================================================================
-    // Converts numbers like 86388 → "chaurasi hazaar teen sau aath'asi"
-    // Handles integer part + optional decimal (spoken as "point X Y Z")
-    function numberToHindiWords(num) {
-      if (num === null || num === undefined || isNaN(num)) return '';
-      const n = Number(num);
-      if (!isFinite(n)) return '';
-      if (n === 0) return 'zero';
-
-      const isNegative = n < 0;
-      const absN = Math.abs(n);
-
-      // Round to 4 decimal places to avoid float noise
-      const rounded = Math.round(absN * 10000) / 10000;
-      const intPart = Math.floor(rounded);
-      const decPart = Math.round((rounded - intPart) * 10000);
-
-      const intWords = integerToHindi(intPart);
-      let result = isNegative ? 'minus ' + intWords : intWords;
-
-      if (decPart > 0) {
-        // Convert decimal digits individually, dropping trailing zeros
-        let decStr = String(decPart).padStart(4, '0').replace(/0+$/, '');
-        const digitWords = decStr.split('').map(d => HINDI_DIGITS[parseInt(d, 10)]).join(' ');
-        result += ' point ' + digitWords;
-      }
-      return result;
-    }
-
     const HINDI_DIGITS = ['zero','ek','do','teen','chaar','paanch','chhe','saat','aath','nau'];
     const HINDI_TEENS = {
       10:'das',11:'gyaarah',12:'baarah',13:'terah',14:'chaudah',15:'pandrah',16:'solah',17:'satrah',18:'athaarah',19:'unnees'
@@ -1501,45 +1543,58 @@
       if (ones === 0) return HINDI_TENS[tens];
       return HINDI_TENS[tens] + ' ' + HINDI_DIGITS[ones];
     }
-
     function integerToHindi(n) {
       if (n === 0) return 'zero';
       if (n < 100) return twoDigitToHindi(n);
       if (n < 1000) {
-        const hundreds = Math.floor(n / 100);
-        const rest = n % 100;
-        let s = HINDI_DIGITS[hundreds] + ' sau';
-        if (rest > 0) s += ' ' + twoDigitToHindi(rest);
+        const h = Math.floor(n / 100);
+        const r = n % 100;
+        let s = HINDI_DIGITS[h] + ' sau';
+        if (r > 0) s += ' ' + twoDigitToHindi(r);
         return s;
       }
       if (n < 100000) {
-        const thousands = Math.floor(n / 1000);
-        const rest = n % 1000;
-        let s = integerToHindi(thousands) + ' hazaar';
-        if (rest > 0) s += ' ' + integerToHindi(rest);
+        const t = Math.floor(n / 1000);
+        const r = n % 1000;
+        let s = integerToHindi(t) + ' hazaar';
+        if (r > 0) s += ' ' + integerToHindi(r);
         return s;
       }
       if (n < 10000000) {
-        const lakhs = Math.floor(n / 100000);
-        const rest = n % 100000;
-        let s = integerToHindi(lakhs) + ' lakh';
-        if (rest > 0) s += ' ' + integerToHindi(rest);
+        const l = Math.floor(n / 100000);
+        const r = n % 100000;
+        let s = integerToHindi(l) + ' lakh';
+        if (r > 0) s += ' ' + integerToHindi(r);
         return s;
       }
-      const crores = Math.floor(n / 10000000);
-      const rest = n % 10000000;
-      let s = integerToHindi(crores) + ' crore';
-      if (rest > 0) s += ' ' + integerToHindi(rest);
+      const c = Math.floor(n / 10000000);
+      const r = n % 10000000;
+      let s = integerToHindi(c) + ' crore';
+      if (r > 0) s += ' ' + integerToHindi(r);
       return s;
     }
-
-    // Replace all standalone numbers in a text with Hindi words.
-    // Keeps symbol names (BTC, ETH etc.) intact.
+    function numberToHindiWords(num) {
+      if (num === null || num === undefined || isNaN(num)) return '';
+      const n = Number(num);
+      if (!isFinite(n)) return '';
+      if (n === 0) return 'zero';
+      const isNeg = n < 0;
+      const absN = Math.abs(n);
+      const rounded = Math.round(absN * 10000) / 10000;
+      const intPart = Math.floor(rounded);
+      const decPart = Math.round((rounded - intPart) * 10000);
+      const intWords = integerToHindi(intPart);
+      let result = isNeg ? 'minus ' + intWords : intWords;
+      if (decPart > 0) {
+        let decStr = String(decPart).padStart(4, '0').replace(/0+$/, '');
+        const digitWords = decStr.split('').map(d => HINDI_DIGITS[parseInt(d, 10)]).join(' ');
+        result += ' point ' + digitWords;
+      }
+      return result;
+    }
     function localizeNumbersForSpeech(text) {
       if (!text) return '';
-      return String(text).replace(/(\d+(?:\.\d+)?)/g, (match) => {
-        return numberToHindiWords(parseFloat(match));
-      });
+      return String(text).replace(/(\d+(?:\.\d+)?)/g, (m) => numberToHindiWords(parseFloat(m)));
     }
 
     // ==================================================================
@@ -1576,20 +1631,17 @@
     function analyseCoinData(symbol, candles, volumes) {
       const len = candles.length;
       if (len < 30) return { symbol, error: 'Not enough data' };
-
       const price = candles[len - 2].close;
       const ema9Vals = computeEMA(candles, 9);
       const ema20Vals = computeEMA(candles, 20);
       const ema9 = ema9Vals[len - 2].value;
       const ema20 = ema20Vals[len - 2].value;
       const isBullishTrend = ema9 > ema20;
-
       const sr = calculateDynamicSR(candles);
       const sweep = detectLiquiditySweep(candles);
       const volInfo = calculateVolumeMeter(volumes);
       const isChoppy = detectChoppyMarket(candles);
       const strategy = detectEmaStrategy(candles);
-
       let direction = null, entry = null, stopLoss = null, tp1 = null, tp2 = null, validEntry = false;
       if (strategy.valid && !isChoppy) {
         validEntry = true;
@@ -1600,7 +1652,6 @@
         tp1 = strategy.type.includes('BULLISH') ? entry + (risk * 2) : entry - (risk * 2);
         tp2 = strategy.type.includes('BULLISH') ? entry + (risk * 3) : entry - (risk * 3);
       }
-
       return {
         symbol, price, ema9, ema20,
         trend: isBullishTrend ? 'bullish' : 'bearish',
@@ -1668,7 +1719,6 @@
       }
       return null;
     }
-
     function detectIntentFromText(text) {
       const lower = text.toLowerCase();
       if (PULSE_INTENT_KEYWORDS.entry.some(k => lower.includes(k))) return 'entry';
@@ -1713,7 +1763,7 @@
         }
       }
 
-      return `You are Pulse, a Hindi crypto market assistant built by Aayan Likhar. You speak naturally in Hindi/Hinglish, like a helpful trading friend on a voice call.
+      return `You are Pulse, a Hindi crypto market assistant built by Aayan Likhar. You speak naturally in Hindi/Hinglish, like a helpful human trading friend on a voice call.
 
 ABSOLUTE RULES — NEVER BREAK:
 1. Use ONLY the supplied live calculated data. NEVER invent or guess any number.
@@ -1724,6 +1774,7 @@ ABSOLUTE RULES — NEVER BREAK:
 6. Never say "100% profit", "guaranteed", "sure shot", "loss nahi hoga" or any profit claim.
 7. Keep it SHORT — 3 to 5 sentences max. Voice-friendly. No markdown, no bullet points, no tables, no lists.
 8. Write numbers as raw digits (e.g. 86388, 4250.50). The app will convert them to Hindi speech automatically. Do NOT spell numbers out.
+9. Speak like a real human friend — "bhai", "dekho", "samjho" jaise natural words use kar sakte ho, but professional raho.
 
 INTENT: ${intent}
 
@@ -1741,42 +1792,70 @@ HOW TO RESPOND based on intent:
 Respond now in Hindi/Hinglish as Pulse.`;
     }
 
-    // ---------- Speak with Hindi number localisation ----------
+    // ---------- Speak (fixed for reliability) ----------
+    let currentUtterance = null;
     function speakPulseResponse(text) {
-      if (!('speechSynthesis' in window)) return;
+      if (!('speechSynthesis' in window)) {
+        console.warn('speechSynthesis not available');
+        if (pulseAssistant) pulseAssistant.setState('idle');
+        return;
+      }
       try {
-        window.speechSynthesis.cancel();
-        // ✅ Convert all numbers to Hindi words before speaking
-        const spokenText = localizeNumbersForSpeech(text);
-        const utter = new SpeechSynthesisUtterance(spokenText);
-        const voices = window.speechSynthesis.getVoices();
-        let hiVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('hi'));
-        if (!hiVoice) hiVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en-in'));
-        if (hiVoice) utter.voice = hiVoice;
-        utter.lang = hiVoice ? hiVoice.lang : 'hi-IN';
-        utter.rate = 0.95;
-        utter.pitch = 1.0;
-        utter.volume = 1.0;
+        // Cancel any ongoing speech
+        try { window.speechSynthesis.cancel(); } catch(e){}
 
-        utter.onstart = () => {
-          if (pulseAssistant) pulseAssistant.setState('speaking');
-        };
-        utter.onend = () => {
-          if (pulseAssistant) pulseAssistant.setState('idle');
-          // ✅ Auto-restart listening after speaking (continuous conversation)
-          if (pulseAssistant && pulseAssistant.autoListenEnabled) {
+        // Convert numbers to Hindi words
+        const spokenText = localizeNumbersForSpeech(text);
+        console.log('[Pulse speak]', spokenText);
+
+        // Ensure voices loaded
+        const doSpeak = () => {
+          const utter = new SpeechSynthesisUtterance(spokenText);
+          const voice = pickHindiVoice();
+          if (voice) {
+            utter.voice = voice;
+            utter.lang = voice.lang;
+          } else {
+            utter.lang = 'hi-IN';
+          }
+          utter.rate = 0.95;
+          utter.pitch = 1.0;
+          utter.volume = 1.0;
+
+          let hasStarted = false;
+          utter.onstart = () => {
+            hasStarted = true;
+            if (pulseAssistant) pulseAssistant.setState('speaking');
+          };
+          utter.onend = () => {
+            if (pulseAssistant) pulseAssistant.setState('idle');
+          };
+          utter.onerror = (e) => {
+            console.warn('speak error', e);
+            if (pulseAssistant) pulseAssistant.setState('idle');
+          };
+
+          currentUtterance = utter;
+          try {
+            window.speechSynthesis.speak(utter);
+            // Failsafe: if onstart never fires within 1.5s, still move to speaking state visually
             setTimeout(() => {
-              if (pulseAssistant.state === 'idle') {
-                pulseAssistant.startListening(true);
+              if (!hasStarted && pulseAssistant && pulseAssistant.state === 'processing') {
+                pulseAssistant.setState('speaking');
               }
-            }, 400);
+            }, 1500);
+          } catch (e) {
+            console.warn('speak throw', e);
+            if (pulseAssistant) pulseAssistant.setState('idle');
           }
         };
-        utter.onerror = () => {
-          if (pulseAssistant) pulseAssistant.setState('idle');
-        };
 
-        window.speechSynthesis.speak(utter);
+        // If voices are not loaded yet, wait for them
+        if (!voiceList || !voiceList.length) {
+          loadVoices().then(() => doSpeak()).catch(() => doSpeak());
+        } else {
+          doSpeak();
+        }
       } catch (e) {
         console.warn('speechSynthesis error', e);
         if (pulseAssistant) pulseAssistant.setState('idle');
@@ -1790,13 +1869,11 @@ Respond now in Hindi/Hinglish as Pulse.`;
         if (pulseAssistant) pulseAssistant.setState('idle');
         return;
       }
-
-      // Clear any pending auto-reply timer
       if (pulseReplyTimer) { clearTimeout(pulseReplyTimer); pulseReplyTimer = null; }
 
       if (pulseAssistant) {
         pulseAssistant.setState('processing');
-        pulseAssistant.setLiveLine(`You: "${transcript}"`);
+        pulseAssistant.addTranscript('you', transcript);
       }
 
       const clean = transcript.trim().toLowerCase();
@@ -1804,48 +1881,36 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const intent = detectIntentFromText(clean);
 
       try {
+        let finalText;
         if (coin) {
           const label = PULSE_SUPPORTED[coin].label;
           if (pulseAssistant) pulseAssistant.setHint(`Analysing ${label} levels...`);
           const analysis = await scanSingleCoin(coin);
-
           if (analysis.error) {
-            const msg = `${label} ka data abhi available nahi hai. Thodi der baad try karo.`;
-            if (pulseAssistant) pulseAssistant.setState('speaking');
-            speakPulseResponse(msg);
-            return;
+            finalText = `${label} ka data abhi available nahi hai. Thodi der baad try karo.`;
+          } else {
+            const prompt = buildPulsePrompt(analysis, intent, label);
+            let aiText = null;
+            try { aiText = await fetchGeminiAiAnalysis(prompt); } catch(e){}
+            finalText = aiText || buildLocalFallbackResponse(analysis, intent);
           }
-
-          const prompt = buildPulsePrompt(analysis, intent, label);
-          let aiText = null;
-          try { aiText = await fetchGeminiAiAnalysis(prompt); } catch(e){}
-          let finalText = aiText;
-          if (!finalText) finalText = buildLocalFallbackResponse(analysis, intent);
-
-          if (pulseAssistant) {
-            pulseAssistant.setState('speaking');
-            pulseAssistant.setLiveLine('Pulse: ' + finalText.slice(0, 90) + (finalText.length > 90 ? '…' : ''));
-          }
-          speakPulseResponse(finalText);
         } else {
-          if (pulseAssistant) pulseAssistant.setHint('Scanning BTC, ETH, SOL, XRP levels...');
+          if (pulseAssistant) pulseAssistant.setHint('Scanning BTC, ETH, SOL, XRP...');
           const overview = await scanMarketOverview();
           const prompt = buildPulsePrompt(overview, intent === 'levels' ? 'overview' : intent, '');
           let aiText = null;
           try { aiText = await fetchGeminiAiAnalysis(prompt); } catch(e){}
-          let finalText = aiText;
-          if (!finalText) finalText = buildLocalFallbackOverview(overview);
-
-          if (pulseAssistant) {
-            pulseAssistant.setState('speaking');
-            pulseAssistant.setLiveLine('Pulse: ' + finalText.slice(0, 90) + (finalText.length > 90 ? '…' : ''));
-          }
-          speakPulseResponse(finalText);
+          finalText = aiText || buildLocalFallbackOverview(overview);
         }
+
+        if (pulseAssistant) {
+          pulseAssistant.addTranscript('pulse', finalText);
+        }
+        speakPulseResponse(finalText);
       } catch (err) {
         console.warn('Pulse command error', err);
         const errMsg = 'Network ya data issue ki wajah se analysis nahi ho paya. Thodi der baad try karo.';
-        if (pulseAssistant) pulseAssistant.setState('idle');
+        if (pulseAssistant) pulseAssistant.addTranscript('pulse', errMsg);
         speakPulseResponse(errMsg);
       } finally {
         if (pulseAssistant) {
@@ -1856,13 +1921,11 @@ Respond now in Hindi/Hinglish as Pulse.`;
       }
     }
 
-    // ---------- Local fallback (levels-first) ----------
     function buildLocalFallbackResponse(a, intent) {
       const label = PULSE_SUPPORTED[a.symbol]?.label || a.symbol;
       const priceStr = formatPrice(a.price, a.symbol);
       const s = a.support ? formatPrice(a.support, a.symbol) : null;
       const r = a.resistance ? formatPrice(a.resistance, a.symbol) : null;
-
       if (intent === 'entry' && a.validEntry) {
         return `${label} mein valid ${a.direction === 'LONG' ? 'buy' : 'sell'} setup bana hai. Entry ${formatPrice(a.entry, a.symbol)} ke aas-paas hai, stop loss ${formatPrice(a.stopLoss, a.symbol)}, aur target ${formatPrice(a.tp1, a.symbol)} aur ${formatPrice(a.tp2, a.symbol)} tak dekh sakte ho.`;
       }
@@ -1887,7 +1950,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       }
       return `${label} abhi ${a.trend === 'bullish' ? 'bullish' : 'bearish'} structure mein hai, current price ${priceStr} hai. Abhi clean entry nahi bani hai, confirmation ka wait karo.`;
     }
-
     function buildLocalFallbackOverview(overview) {
       const parts = [];
       let anyValid = false;
@@ -1908,7 +1970,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       return base + ` Filhaal wait karna better hai, jaise hi confirmation milegi entry signal diya ja sakta hai.`;
     }
 
-    // ---------- Gemini fetch ----------
     async function fetchGeminiAiAnalysis(promptText) {
       const endpoints = [
         `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
@@ -1934,63 +1995,52 @@ Respond now in Hindi/Hinglish as Pulse.`;
       return null;
     }
 
-    // ---------- Welcome ----------
+    // ---------- First-time welcome ----------
     function hasSeenWelcome() {
       try { return localStorage.getItem(PULSE_WELCOME_SEEN_KEY) === '1'; } catch(e){ return false; }
     }
     function markWelcomeSeen() {
       try { localStorage.setItem(PULSE_WELCOME_SEEN_KEY, '1'); } catch(e){}
     }
-
     function playWelcomeIfFirstTime() {
       if (hasSeenWelcome()) return;
       markWelcomeSeen();
       const welcomeText = 'Welcome to Aayan World. Main Pulse hoon, aapka Hindi market assistant. Mic dabakar BTC, ETH, SOL ya XRP ke levels pooch sakte ho.';
+      if (pulseAssistant) pulseAssistant.addTranscript('pulse', welcomeText);
       setTimeout(() => {
         if (pulseAssistant) pulseAssistant.setState('speaking');
         speakPulseResponse(welcomeText);
-      }, 1400);
+      }, 700);
     }
 
-    // ---------- Pulse Assistant UI ----------
+    // ---------- Voice Assistant Controller ----------
     function initPulseAssistant() {
       if (pulseAssistant) return;
 
-      const card = document.getElementById('pulse-assistant-card');
-      const micBtn = document.getElementById('pulse-mic-btn');
-      const statusPill = document.getElementById('pulse-status-pill');
-      const hint = document.getElementById('pulse-hint');
-      const liveLine = document.getElementById('pulse-live-line');
-      const stopBtn = document.getElementById('pulse-stop-btn');
-      const waveWrap = document.getElementById('pulse-wave-wrap');
-      const headerVoiceBtn = document.getElementById('header-voice-btn');
-      const headerVoiceIcon = document.getElementById('header-voice-icon');
+      const voicePage = document.getElementById('voice-page');
+      const statusPill = document.getElementById('voice-status-pill');
+      const hint = document.getElementById('voice-hint');
+      const transcriptEl = document.getElementById('voice-transcript');
+      const stopBtn = document.getElementById('voice-stop-btn');
+      const waveWrap = document.getElementById('voice-wave-wrap');
+      const orbBtn = document.getElementById('voice-orb-btn');
 
-      if (!card || !micBtn || !statusPill) return;
+      if (!voicePage || !statusPill || !orbBtn) return;
 
       let recognition = null;
       let isListening = false;
-      let shouldRestartListening = false;
       let silenceTimer = null;
       let lastTranscript = '';
 
       const setState = (state) => {
         pulseAssistant.state = state;
-        // Bottom card classes
-        card.classList.remove('listening', 'processing', 'speaking');
+        voicePage.classList.remove('listening', 'processing', 'speaking');
         statusPill.classList.remove('idle', 'listening', 'processing', 'speaking');
         statusPill.classList.add(state);
-        // Header button classes
-        if (headerVoiceBtn) {
-          headerVoiceBtn.classList.remove('idle', 'listening', 'processing', 'speaking');
-          headerVoiceBtn.classList.add(state);
-        }
-
         if (state === 'idle') {
           statusPill.innerText = '● Ready';
           if (waveWrap) waveWrap.style.opacity = '0.3';
           if (stopBtn) stopBtn.classList.add('hidden');
-          if (headerVoiceIcon) headerVoiceIcon.style.animation = '';
         } else if (state === 'listening') {
           statusPill.innerText = '● Listening…';
           if (waveWrap) waveWrap.style.opacity = '1';
@@ -2007,9 +2057,28 @@ Respond now in Hindi/Hinglish as Pulse.`;
       };
 
       const setHint = (text) => { if (hint) hint.innerText = text; };
-      const setLiveLine = (text) => { if (liveLine) liveLine.innerText = text; };
 
-      // ✅ Auto-reply: after user stops speaking, wait 2s then process
+      const addTranscript = (who, text) => {
+        if (!transcriptEl) return;
+        const div = document.createElement('div');
+        div.className = who === 'you' ? 'you' : 'pulse';
+        div.style.marginTop = '10px';
+        div.innerHTML = `<span class="label">${who === 'you' ? 'You' : 'Pulse'}</span>${escapeHtml(text)}`;
+        transcriptEl.appendChild(div);
+        transcriptEl.scrollTop = transcriptEl.scrollHeight;
+        // Keep last 8 messages
+        while (transcriptEl.children.length > 8) {
+          transcriptEl.removeChild(transcriptEl.firstChild);
+        }
+      };
+
+      const escapeHtml = (str) => String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
       const scheduleAutoReply = (transcript) => {
         if (pulseReplyTimer) clearTimeout(pulseReplyTimer);
         pulseReplyTimer = setTimeout(() => {
@@ -2018,11 +2087,11 @@ Respond now in Hindi/Hinglish as Pulse.`;
         }, AUTO_REPLY_DELAY_MS);
       };
 
-      const startListening = (fromAuto) => {
+      const startListening = () => {
         if (isListening) return;
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) {
-          setLiveLine('Speech recognition is browser mein support nahi karta. Quick chips use karein.');
+          addTranscript('pulse', 'Is browser mein speech recognition support nahi hai. Quick chips use karein ya Chrome/Edge try karein.');
           setState('idle');
           return;
         }
@@ -2030,8 +2099,8 @@ Respond now in Hindi/Hinglish as Pulse.`;
         try {
           recognition = new SR();
           recognition.lang = 'hi-IN';
-          recognition.interimResults = true; // ✅ interim results for live feel
-          recognition.continuous = true;      // ✅ continuous so we don't cut off mid-sentence
+          recognition.interimResults = true;
+          recognition.continuous = true;
           recognition.maxAlternatives = 1;
 
           let finalTranscript = '';
@@ -2042,7 +2111,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
             lastTranscript = '';
             setState('listening');
             setHint('Sun raha hoon… boliye');
-            setLiveLine('🎙️ Listening…');
           };
 
           recognition.onresult = (event) => {
@@ -2056,19 +2124,18 @@ Respond now in Hindi/Hinglish as Pulse.`;
               }
             }
             const currentText = (finalTranscript + ' ' + interim).trim();
-            lastTranscript = currentText;
-            if (currentText) setLiveLine('🎙️ ' + currentText);
-
-            // ✅ Reset silence timer on every chunk — 2s of silence triggers reply
+            if (currentText) {
+              lastTranscript = currentText;
+              setHint('🎙️ ' + currentText);
+            }
+            // Reset silence timer on every chunk — 2s of silence triggers reply
             if (silenceTimer) clearTimeout(silenceTimer);
             silenceTimer = setTimeout(() => {
               silenceTimer = null;
               const textToProcess = lastTranscript.trim();
               if (!textToProcess) return;
-              // Stop listening and process
               try { recognition.stop(); } catch(e){}
               isListening = false;
-              setHint('Processing…');
               scheduleAutoReply(textToProcess);
             }, AUTO_REPLY_DELAY_MS);
           };
@@ -2077,28 +2144,26 @@ Respond now in Hindi/Hinglish as Pulse.`;
             isListening = false;
             if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
             console.warn('Speech error', event.error);
-            setState('idle');
             if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
               setHint('Mic permission blocked. Browser settings mein allow karein.');
-              setLiveLine('Microphone permission blocked');
+              addTranscript('pulse', 'Microphone permission allow karein, phir dobara try karein.');
             } else if (event.error === 'no-speech') {
               setHint('Kuch suna nahi. Dobara tap karein aur bolein.');
-              setLiveLine('Kuch suna nahi');
             } else if (event.error === 'aborted') {
-              // fine, user stopped
+              // user stopped — fine
             } else {
               setHint('Voice capture fail hua. Dobara try karein.');
             }
+            setState('idle');
           };
 
           recognition.onend = () => {
             isListening = false;
             if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
-            // If we already scheduled a reply, don't restart listening here
-            if (pulseReplyTimer) return;
+            if (pulseReplyTimer) return; // reply scheduled — don't touch state
             if (pulseAssistant && pulseAssistant.state === 'listening') {
               setState('idle');
-              setHint('Tap orb and say "Hey Pulse, BTC ka level batao"');
+              setHint('Tap orb and say "BTC ka level batao"');
             }
           };
 
@@ -2106,7 +2171,7 @@ Respond now in Hindi/Hinglish as Pulse.`;
         } catch (e) {
           console.warn('recognition start err', e);
           setState('idle');
-          setLiveLine('Voice start nahi ho paya. Dobara try karein.');
+          addTranscript('pulse', 'Voice start nahi ho paya. Dobara try karein.');
         }
       };
 
@@ -2119,20 +2184,18 @@ Respond now in Hindi/Hinglish as Pulse.`;
 
       const stopSpeaking = () => {
         try { window.speechSynthesis.cancel(); } catch(e){}
+        currentUtterance = null;
         setState('idle');
       };
 
-      const toggleAssistant = () => {
+      const toggleListening = () => {
         unlockAudioOnFirstInteraction();
         if (pulseAssistant.state === 'speaking') { stopSpeaking(); return; }
         if (isListening) { stopListening(); return; }
         startListening();
       };
 
-      // Wire both mic buttons
-      micBtn.addEventListener('click', toggleAssistant);
-      if (headerVoiceBtn) headerVoiceBtn.addEventListener('click', toggleAssistant);
-
+      orbBtn.addEventListener('click', toggleListening);
       if (stopBtn) {
         stopBtn.addEventListener('click', () => {
           if (pulseAssistant.state === 'listening') stopListening();
@@ -2140,34 +2203,68 @@ Respond now in Hindi/Hinglish as Pulse.`;
         });
       }
 
-      document.querySelectorAll('[data-pulse-chip]').forEach(chip => {
+      document.querySelectorAll('[data-voice-chip]').forEach(chip => {
         chip.addEventListener('click', () => {
           unlockAudioOnFirstInteraction();
-          const text = chip.getAttribute('data-pulse-chip');
+          const text = chip.getAttribute('data-voice-chip');
           if (text) processPulseCommand(text);
         });
       });
 
       pulseAssistant = {
         state: 'idle',
-        autoListenEnabled: true, // ✅ continuous conversation mode
         setState,
         setHint,
-        setLiveLine,
+        addTranscript,
         startListening,
         stopListening,
-        stopSpeaking
+        stopSpeaking,
+        hasPlayedWelcome: false
       };
 
       setState('idle');
 
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.getVoices();
-        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-      }
+      // Preload voices
+      loadVoices().catch(()=>{});
+    }
 
-      // ✅ First-time welcome
-      playWelcomeIfFirstTime();
+    // ---------- Open / Close Voice Page ----------
+    function openVoicePage() {
+      // Must be logged in
+      if (!auth.currentUser) { showScreen('auth'); return; }
+      // Ensure pulseAssistant is initialized
+      if (!pulseAssistant) initPulseAssistant();
+
+      const voicePage = document.getElementById('voice-page');
+      if (!voicePage) return;
+
+      voicePage.classList.remove('hidden');
+      voicePage.classList.remove('voice-page-enter');
+      void voicePage.offsetWidth;
+      voicePage.classList.add('voice-page-enter');
+
+      currentScreen = 'voice';
+      pushScreenState('voice', false);
+
+      // First-time welcome
+      setTimeout(() => {
+        if (pulseAssistant && !pulseAssistant.hasPlayedWelcome) {
+          pulseAssistant.hasPlayedWelcome = true;
+          playWelcomeIfFirstTime();
+        }
+      }, 500);
+    }
+
+    function closeVoicePage() {
+      // Stop any voice / listening
+      if (pulseAssistant) {
+        try { pulseAssistant.stopListening(); } catch(e){}
+        try { pulseAssistant.stopSpeaking(); } catch(e){}
+      }
+      const voicePage = document.getElementById('voice-page');
+      if (voicePage) voicePage.classList.add('hidden');
+      currentScreen = 'app';
+      pushScreenState('app', true);
     }
 
     function maybeSendSetupAlert(sig) {
@@ -2180,12 +2277,11 @@ Respond now in Hindi/Hinglish as Pulse.`;
 
       const label = PULSE_SUPPORTED[sig.symbol]?.label || sig.symbol;
       const msg = `Pulse Alert: ${label} mein valid ${sig.direction === 'LONG' ? 'bullish' : 'bearish'} setup confirm hua hai. Agar price ${formatPrice(sig.entry, sig.symbol)} pe aaye toh ${sig.direction === 'LONG' ? 'long' : 'short'} kar sakte ho, stop loss ${formatPrice(sig.sl, sig.symbol)} aur target ${formatPrice(sig.tp1, sig.symbol)}.`;
-
-      if (pulseAssistant) {
-        pulseAssistant.setLiveLine('Setup alert: ' + label);
+      if (pulseAssistant && currentScreen === 'voice') {
+        pulseAssistant.addTranscript('pulse', msg);
         pulseAssistant.setState('speaking');
+        speakPulseResponse(msg);
       }
-      speakPulseResponse(msg);
       playNotificationSound();
     }
 
@@ -2342,7 +2438,7 @@ Respond now in Hindi/Hinglish as Pulse.`;
       }
       if (fresh.emailVerified) {
         saveCachedUser(fresh, true);
-        if (currentScreen !== 'app') showScreen('app');
+        if (currentScreen !== 'app' && currentScreen !== 'voice') showScreen('app');
       } else {
         saveCachedUser(fresh, false);
         if (currentScreen !== 'verify') showScreen('verify');
@@ -2594,7 +2690,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       }
       return lows;
     }
-
     function calculateDynamicSR(candles) {
       const len = candles.length;
       const recent = candles.slice(-250);
@@ -2629,7 +2724,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       }
       return { resistances, supports };
     }
-
     function detectEmaStrategy(candles) {
       const len = candles.length;
       if (len < 80) return { valid: false, reason: 'Not enough data' };
@@ -2704,7 +2798,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       }
       return { valid: false, reason: 'Waiting for pullback + bigger rejection candle + confirmation' };
     }
-
     function detectChoppyMarket(candles) {
       const len = candles.length;
       if (len < 40) return false;
@@ -2719,7 +2812,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const sep = Math.abs(ema9Vals[len - 2].value - ema20Vals[len - 2].value) / ema20Vals[len - 2].value;
       return crosses >= 3 || sep < 0.0015;
     }
-
     function detectLiquiditySweep(candles) {
       const len = candles.length;
       if (len < 30) return { swept: false, type: 'NONE' };
@@ -2736,7 +2828,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
         return { swept: true, type: 'BEARISH_SWEEP', sweepLevel: highestHigh };
       return { swept: false, type: 'NONE' };
     }
-
     function calculateVolumeMeter(volumes) {
       if (volumes.length < 30) return { label: '--' };
       const recent = volumes.slice(-30, -1);
@@ -3237,6 +3328,15 @@ Write 4-5 lines: (1) why setup is valid, (2) volume confirmation, (3) key risk, 
       if (forgotLink) forgotLink.addEventListener('click', () => setAuthMode('forgot'));
       const headerLogout = document.getElementById('header-logout-btn');
       if (headerLogout) headerLogout.addEventListener('click', doLogout);
+
+      // ✅ Voice page openers
+      const headerVoiceBtn = document.getElementById('header-voice-btn');
+      if (headerVoiceBtn) headerVoiceBtn.addEventListener('click', openVoicePage);
+      const openVoiceBtn = document.getElementById('open-voice-page-btn');
+      if (openVoiceBtn) openVoiceBtn.addEventListener('click', openVoicePage);
+      const voiceBackBtn = document.getElementById('voice-back-btn');
+      if (voiceBackBtn) voiceBackBtn.addEventListener('click', closeVoicePage);
+
       setupPasswordToggle();
       setupVerifyButtons();
       setupMobileInput();
@@ -3244,6 +3344,13 @@ Write 4-5 lines: (1) why setup is valid, (2) volume confirmation, (3) key risk, 
       setupFreeAccessModal();
       attachSubscribeButton(document.getElementById('subscribe-btn'));
       attachSubscribeButton(document.getElementById('paywall-subscribe-btn'));
+
+      // Preload voices ASAP
+      if ('speechSynthesis' in window) {
+        loadVoices().catch(()=>{});
+        window.speechSynthesis.onvoiceschanged = () => { loadVoices().catch(()=>{}); };
+      }
+
       try { history.replaceState({ pulseScreen: 'splash', ts: Date.now() }, '', location.href); } catch(e){}
       bootstrap();
       setTimeout(() => {
