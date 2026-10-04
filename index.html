@@ -79,12 +79,10 @@
     .safe-t { padding-top: env(safe-area-inset-top, 0px); }
     .hold-ring { position: absolute; inset: -3px; border-radius: 14px; border: 2px solid rgba(251,191,36,0.0); transition: border-color .2s ease; pointer-events: none; }
 
-    /* ✅ HEADER — fixed at top, never scrolls away */
+    /* ✅ APP HEADER — fixed top */
     #app-header {
       position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
+      top: 0 !important; left: 0 !important; right: 0 !important;
       z-index: 40 !important;
       background: rgba(11, 18, 32, 0.95);
       backdrop-filter: blur(20px) saturate(180%);
@@ -126,11 +124,22 @@
     #voice-overlay.enter .voice-orb-container { animation: orbEnter 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
     @keyframes orbEnter { 0% { opacity: 0; transform: scale(0.3) translateY(40px); filter: blur(20px); } 60% { opacity: 1; filter: blur(2px); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
 
+    /* ✅ Voice header — fixed to top */
+    .voice-header-fixed {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 60;
+      background: linear-gradient(180deg, rgba(7,11,20,0.98) 0%, rgba(7,11,20,0.82) 70%, transparent 100%);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      padding-top: env(safe-area-inset-top, 0px);
+      border-bottom: 1px solid rgba(99,102,241,0.18);
+    }
     .voice-content-wrap {
       flex: 1; display: flex; flex-direction: column;
       justify-content: center; align-items: center;
-      width: 100%; padding: 16px; padding-bottom: 60px;
-      min-height: 100%;
+      width: 100%; padding: 16px; padding-top: 90px; padding-bottom: 60px;
+      min-height: 100vh;
     }
     .voice-orb-container { position: relative; width: 200px; height: 200px; margin: 0 auto; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .siri-ring { position: absolute; border-radius: 50%; pointer-events: none; opacity: 1; }
@@ -272,7 +281,6 @@
 
   <!-- APP -->
   <div id="app-container" class="hidden">
-    <!-- ✅ FIXED HEADER — always on top -->
     <header id="app-header">
       <div class="max-w-7xl mx-auto px-3 py-2.5 flex justify-between items-center gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
@@ -378,9 +386,11 @@
 
   <div id="voice-backdrop"></div>
 
+  <!-- VOICE OVERLAY with FIXED header -->
   <div id="voice-overlay" class="voice-overlay">
-    <div class="voice-content-wrap">
-      <div class="w-full max-w-2xl mx-auto mb-4 flex items-center justify-between gap-2">
+    <!-- ✅ Fixed header -->
+    <div class="voice-header-fixed">
+      <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
         <button type="button" id="voice-close-btn" class="btn-press flex items-center gap-1.5 text-slate-100 text-xs font-bold px-3 py-2 rounded-xl bg-slate-900/60 border border-slate-700">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="15 18 9 12 15 6"></polyline></svg>
           Back
@@ -391,7 +401,9 @@
         </div>
         <span id="voice-status-pill" class="voice-status-pill idle">● Ready</span>
       </div>
+    </div>
 
+    <div class="voice-content-wrap">
       <div class="voice-orb-container">
         <div class="siri-ring siri-ring-1"></div>
         <div class="siri-ring siri-ring-2"></div>
@@ -457,10 +469,11 @@
     const RAZORPAY_KEY_ID = "rzp_live_T5OZeAeTkrB7YG";
     const SUBSCRIPTION_PRICE_PAISE = 9900;
     const SUBSCRIPTION_DAYS = 28;
-    const FREE_SCANS_PER_DAY = 3;   // ✅ Changed from 2 to 3
+    const FREE_SCANS_PER_DAY = 3;
     const FREE_ACCESS_PASSWORD = "pulse28";
     const LONG_PRESS_DURATION = 4000;
 
+    // ✅ Only coins the app supports
     const PULSE_SUPPORTED = {
       BTCUSDT:  { names: ['btc', 'bitcoin', 'bit coin', 'बिटकॉइन', 'बीटीसी'], label: 'BTC', hi: 'बिटकॉइन' },
       ETHUSDT:  { names: ['eth', 'ethereum', 'ether', 'इथीरियम', 'एथ'], label: 'ETH', hi: 'इथीरियम' },
@@ -472,18 +485,18 @@
       ZECUSDT:  { names: ['zec', 'zcash', 'जेडकैश', 'जेड'], label: 'ZEC', hi: 'जेडकैश' },
       PAXGUSDT: { names: ['paxg', 'pax gold', 'paxgold', 'पैक्स गोल्ड', 'पैक्सगोल्ड'], label: 'PAXG', hi: 'पैक्स गोल्ड' }
     };
+
     const PULSE_INTENT_KEYWORDS = {
       price: ['price', 'kya rate', 'kitna', 'kitne', 'rate', 'value'],
       trend: ['trend', 'bias', 'direction', 'kaha ja raha'],
       entry: ['entry', 'trade', 'buy', 'sell', 'long', 'short', 'setup', 'signal'],
       sr: ['support', 'resistance', 's/r', 'level', 'level batao', 'level btao'],
       overview: ['market', 'aaj', 'overall', 'haal', 'hal', 'sab', 'scene'],
-      anyEntry: ['kisi', 'koi', 'kisi mein', 'koi coin', 'kis coin', 'entry ban rahi', 'entry bani', 'konsa', 'kaunsa', 'any', 'which coin', 'kisme', 'kisme entry', 'kaha entry'],
-      developer: ['developer', 'tumhe kisne banaya', 'kisne banaya', 'tumhara developer', 'who made you', 'who is your developer', 'tumhe kaun banaya', 'creator', 'tumhara creator', 'owner', 'founder', 'kisne develop']
+      anyEntry: ['kisi', 'koi', 'kisi mein', 'koi coin', 'kis coin', 'entry ban rahi', 'entry bani', 'konsa', 'kaunsa', 'any', 'which coin', 'kisme', 'kisme entry', 'kaha entry']
     };
     const SETUP_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
     const setupAlertLog = {};
-    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v14';
+    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v15';
 
     const SILENCE_TIMEOUT_MS = 2500;
     const MAX_RECORDING_MS = 15000;
@@ -740,6 +753,7 @@
       });
     }
 
+    // ================== SUBSCRIPTION ==================
     function todayKey() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function cacheSubscription() { const u = auth.currentUser; if (!u) return; try { localStorage.setItem('pulsealpha_sub_' + u.uid, JSON.stringify(userSubscription)); } catch(e){} }
     function loadCachedSubscription() { const u = auth.currentUser; if (!u) return; try { const raw = localStorage.getItem('pulsealpha_sub_' + u.uid); if (raw) { const data = JSON.parse(raw); if (data && typeof data.expiresAt === 'number') userSubscription = data; } } catch(e){} }
@@ -899,6 +913,7 @@
       return String(text).replace(/(\d+(?:\.\d+)?)/g, (m) => numberToHindiWords(parseFloat(m)));
     }
 
+    // ================== ANALYSIS ==================
     async function fetchCoinCandles(symbol, interval, total) {
       const maxPerReq = 1000; let all = [], endTime = Date.now(), remaining = total;
       while (remaining > 0) {
@@ -963,12 +978,22 @@
       }
       return null;
     }
+
     function detectIntentFromText(text) {
       const lower = text.toLowerCase();
-      // ✅ Developer question check first
-      if (PULSE_INTENT_KEYWORDS.developer.some(k => lower.includes(k))) return 'developer';
-      // ✅ Any coin entry check
+
+      // ✅ Developer — HIGHEST PRIORITY
+      const devKeywords = ['developer', 'tumhe kisne banaya', 'kisne banaya', 'tumhara developer',
+                            'who made you', 'tumhe kaun banaya', 'creator', 'tumhara creator',
+                            'owner', 'founder', 'kisne develop', 'kaun banaya', 'developer kaun',
+                            'developer kon', 'pulse alpha ka developer', 'tumhara owner',
+                            'tumhara malik', 'who is your developer', 'who built you',
+                            'tumhe banaya', 'kisne banai', 'kisne banaiya', 'tumhara banane wala'];
+      if (devKeywords.some(k => lower.includes(k))) return 'developer';
+
+      // ✅ Any entry (koi entry ban rahi hai?)
       if (PULSE_INTENT_KEYWORDS.anyEntry.some(k => lower.includes(k))) return 'anyEntry';
+
       // Standard intents
       if (PULSE_INTENT_KEYWORDS.entry.some(k => lower.includes(k))) return 'entry';
       if (PULSE_INTENT_KEYWORDS.sr.some(k => lower.includes(k))) return 'sr';
@@ -978,37 +1003,55 @@
       return 'levels';
     }
 
-    // ✅ Check if the user's question is off-topic (not market/crypto related)
+    // ✅ STRICT Off-topic detector
     function isOffTopic(text) {
       const lower = text.toLowerCase();
-      // Crypto/market keywords allow-list
-      const allowed = ['btc','eth','sol','xrp','tao','aave','avax','zec','paxg','bitcoin','ethereum','solana','ripple','bittensor','avalanche','zcash','pax gold','market','chart','crypto','coin','trade','entry','support','resistance','level','price','trend','analysis','buy','sell','long','short','target','stop','loss','profit','setup','signal','volume','sweep','ema','bias','pattern','timeframe','asset','bull','bear','haar','jeet','kaha','kya','kaise','batao','bolo','poocho','hello','hi','namaste','hey','thanks','shukriya','developer','aayan','likhar','creator','tumhe','kisne'];
-      for (const word of allowed) { if (lower.includes(word)) return false; }
+
+      // If user mentions any of our 9 coins → it's on-topic
+      for (const meta of Object.values(PULSE_SUPPORTED)) {
+        for (const name of meta.names) {
+          if (lower.includes(name.toLowerCase())) return false;
+        }
+      }
+
+      // Market/crypto related keywords → on-topic
+      const onTopic = ['market', 'chart', 'crypto', 'coin', 'trade', 'entry', 'support',
+                        'resistance', 'level', 'price', 'trend', 'analysis', 'buy', 'sell',
+                        'long', 'short', 'target', 'stop', 'loss', 'profit', 'setup',
+                        'signal', 'volume', 'sweep', 'ema', 'bias', 'pattern', 'timeframe',
+                        'asset', 'bull', 'bear', 'kaha', 'kaise', 'batao', 'bolo', 'poocho',
+                        'hello', 'hi', 'namaste', 'hey', 'thanks', 'shukriya', 'aaj',
+                        'developer', 'aayan', 'likhar', 'creator', 'tumhe', 'kisne',
+                        'koi', 'kisi', 'kisme', 'konsa', 'kaunsa'];
+      for (const word of onTopic) { if (lower.includes(word)) return false; }
+
+      // Otherwise → off-topic
       return true;
     }
 
-    // ✅ Handle developer question
+    // ✅ Developer response — Hindi, mentions Aayan Likhar + 17-year-old trader
     function buildDeveloperResponse() {
       const variants = [
-        'Mere developer hain Aayan Likhar — ek 17 saal ke talented crypto trader. Unhone apni real trading strategy mujhme inbuild ki hai, isliye main bilkul unke style me analysis karti hoon.',
-        'Mujhe Aayan Likhar ne banaya hai. Wo 17 saal ke crypto trader hain, aur unki apni trading strategy hai jo unhone mujhme inbuild ki hai. Isi strategy se main aapko analysis deti hoon.',
-        'Main Pulse Alpha hoon, aur mera developer Aayan Likhar hai. Wo 17 saal ke trader hain jo crypto trading karte hain. Unhone apni personal strategy mujhme daali hai — isliye mere analysis real hote hain.'
+        'Mera developer Aayan Likhar hai. Woh 17 saal ka crypto trader hai aur apni real trading strategy unhone mujh me inbuild ki hai. Isliye mere analysis, entry, stop loss aur target sab unki actual strategy par based hote hain, guess nahi.',
+        'Mujhe Aayan Likhar ne banaya hai. Woh sirf 17 saal ka hai, lekin ek serious crypto trader hai. Usne apni personal 9/20 EMA aur Liquidity Sweep strategy mujh me daali hai, aur usi ke hisaab se main aapko real analysis deti hoon.',
+        'Pulse Alpha ka developer Aayan Likhar hai — ek 17 saal ka young trader jo crypto markets me serious hai. Meri poori analysis engine unki apni trading strategy par chalti hai, jo unhone khud banai aur test ki hai.',
+        'Mera naam Pulse Alpha hai, aur mujhe Aayan Likhar ne banaya hai. Wo 17 saal ka crypto trader hai. Apni strategy se pura system design kiya, aur wahi strategy mujh me inbuild hai.'
       ];
       return variants[Math.floor(Math.random() * variants.length)];
     }
 
-    // ✅ Handle off-topic politely
+    // ✅ Off-topic response
     function buildOffTopicResponse() {
       const variants = [
         'Maaf kijiye, main is vishay par jawab nahi de sakti. Aap mujhse market analysis ke sawal pooch sakte hain — jaise "BTC ka level batao" ya "Aaj market ka kya haal hai".',
-        'Yeh mere knowledge ke bahar hai. Main sirf crypto market analysis me help kar sakti hoon. Aap kisi bhi coin ke baare me pooch sakte hain.',
+        'Yeh mere knowledge ke bahar hai. Main sirf crypto market analysis me help kar sakti hoon. Aap kisi bhi coin ke baare me pooch sakte hain — jaise Bitcoin, Ethereum, Solana, ya XRP.',
         'Is sawal ka jawab dena mere kaam me nahi aata. Main aapko market analysis, entry setup, support resistance aur trend ke baare me bata sakti hoon.'
       ];
       return variants[Math.floor(Math.random() * variants.length)];
     }
 
-    // ✅ Handle "koi entry ban rahi hai?" — check all 4 main coins
-    async function handleAnyEntryQuestion(userTranscript) {
+    // ✅ Any entry — checks 4 main coins
+    async function handleAnyEntryQuestion() {
       const symbols = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT'];
       const results = await Promise.all(symbols.map(s => scanSingleCoin(s)));
 
@@ -1030,7 +1073,7 @@
           responseText += `${label} mein valid ${dir} setup bana hai — agar price ${formatPrice(item.r.entry, item.r.symbol)} pe aaye toh entry le sakte ho, stop loss ${formatPrice(item.r.stopLoss, item.r.symbol)} aur target ${formatPrice(item.r.tp1, item.r.symbol)}. `;
         });
         if (notFound.length > 0) {
-          responseText += `Baki, `;
+          responseText += 'Baki ';
           notFound.forEach((item, i) => {
             const label = item.meta.hi;
             responseText += `${label} mein abhi clean entry nahi bani${i < notFound.length - 1 ? ', ' : '. '}`;
@@ -1039,7 +1082,7 @@
         }
       } else {
         responseText = 'Nahi, abhi kisi bhi coin mein clean entry nahi bani hai. ';
-        notFound.forEach((item, i) => {
+        notFound.forEach((item) => {
           const label = item.meta.hi;
           const support = item.r.support ? formatPrice(item.r.support, item.r.symbol) : '';
           const resistance = item.r.resistance ? formatPrice(item.r.resistance, item.r.symbol) : '';
@@ -1047,11 +1090,12 @@
             responseText += `${label} mein agar price ${resistance} ke upar close de toh bullish setup ban sakta hai, support ${support} pe hai. `;
           }
         });
-        responseText += 'Filhaal wait karna better hai, confirmation ka wait karo.';
+        responseText += 'Filhaal wait karna better hai.';
       }
       return responseText;
     }
 
+    // ✅ STRICT prompt — only user's coin, only real data
     function buildPulsePrompt(analysis, intent, userTranscript, previousResponse) {
       const dataLines = [];
       if (Array.isArray(analysis)) {
@@ -1073,28 +1117,28 @@
 
       let noRepeatRule = '';
       if (previousResponse) {
-        noRepeatRule = `\n\n⚠️ CRITICAL: Do NOT repeat this exact answer from before: "${previousResponse.slice(0, 150)}..."\nGive a DIFFERENT response with different wording.`;
+        noRepeatRule = `\n\n⚠️ CRITICAL: Do NOT repeat this exact answer: "${previousResponse.slice(0, 150)}..."\nGive a DIFFERENT response.`;
       }
 
       return `You are Pulse — Hindi-speaking crypto market assistant by Aayan Likhar. Natural warm Hindi.
 
-CRITICAL RULES:
-${onlyOne ? `1. User asked ONLY about ${coinLabel}. Talk ONLY about ${coinLabel}. NEVER mention other coins.` : `1. User asked overall market. Cover each provided coin briefly.`}
-2. Use ONLY LIVE data numbers. NEVER invent numbers.
-3. Give ACTIONABLE LEVELS. Never just "price is X".
+ABSOLUTE RULES — NEVER BREAK:
+${onlyOne ? `1. User asked ONLY about ${coinLabel}. Talk ONLY about ${coinLabel}. NEVER mention any other coin name.` : `1. User asked overall market. Cover each provided coin briefly.`}
+2. Use ONLY LIVE data numbers. NEVER invent any number.
+3. Give ACTIONABLE LEVELS. Never just say "price is X".
 4. Format: "agar [coin] [level] pe aaye toh [long/short], stop loss [SL], target [TP]".
 5. If ValidEntry=false → say "abhi clean entry nahi bani, confirmation ka wait karo" + nearest S/R.
 6. If ValidEntry=true → use EXACT Entry/SL/TP numbers as conditional levels.
 7. NEVER say "guaranteed", "100% profit", "sure shot".
 8. Natural Hindi (Devanagari). Numbers in RAW DIGITS — app speaks Hindi.
 9. Length: 3-4 SHORT sentences. No markdown.
-10. Vary your sentence structure. Don't repeat phrases.
-11. If intent is "price" → just price + one key level. Don't ramble.
+10. Vary sentence structure. Don't repeat phrases.
+11. If intent is "price" → just price + one key level.
 12. If intent is "sr" → nearest S/R + break meaning.
-13. If intent is "entry" → focus entirely on entry setup.${noRepeatRule}
+13. If intent is "entry" → focus entirely on entry setup.
 
-USER SAID: "${userTranscript}"
-INTENT: ${intent}
+User said: "${userTranscript}"
+Intent: ${intent}
 
 LIVE DATA:
 ${dataLines.join('\n')}
@@ -1105,7 +1149,7 @@ Respond now in natural Hindi (Devanagari). SHORT and DIFFERENT from before.`;
     async function processPulseCommand(transcript) {
       if (!transcript || !transcript.trim()) { if (pulseAssistant) pulseAssistant.setState('idle'); return; }
 
-      // ✅ Check permission FIRST for voice scans
+      // Check permission FIRST for real scans
       if (!subInitDone) { try { await initSubscription(); } catch(e){} }
       let gate;
       try { gate = await checkScanPermission(); } catch (e) { gate = { allowed: true, unlimited: false, left: FREE_SCANS_PER_DAY }; }
@@ -1120,7 +1164,6 @@ Respond now in natural Hindi (Devanagari). SHORT and DIFFERENT from before.`;
         return;
       }
 
-      // Consume a free scan (not for developer / off-topic — only for real analysis)
       if (pulseAssistant) {
         pulseAssistant.setState('processing');
         pulseAssistant.setLiveText(`<span class="text-amber-300">Samajh raha hoon: "${escapeHtml(transcript)}"</span>`);
@@ -1130,30 +1173,30 @@ Respond now in natural Hindi (Devanagari). SHORT and DIFFERENT from before.`;
       const intent = detectIntentFromText(clean);
       const coin = detectCoinFromText(clean);
 
-      // ✅ Developer question — no scan consumption, no Gemini
+      // ✅ Developer question — NO scan consumption
       if (intent === 'developer') {
         const devText = buildDeveloperResponse();
-        if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${devText}</span>`);
+        if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${escapeHtml(devText)}</span>`);
         speakPulseResponse(devText);
         return;
       }
 
-      // ✅ Off-topic — no scan consumption
+      // ✅ Off-topic — NO scan consumption
       if (!coin && isOffTopic(clean) && intent !== 'anyEntry' && intent !== 'overview' && intent !== 'levels') {
         const offText = buildOffTopicResponse();
-        if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${offText}</span>`);
+        if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${escapeHtml(offText)}</span>`);
         speakPulseResponse(offText);
         return;
       }
 
-      // ✅ "Any entry?" — check all 4 main coins — consumes ONE scan
+      // ✅ Any entry — consumes ONE scan
       if (intent === 'anyEntry' && !coin) {
         try {
           await consumeFreeScan();
           refreshSubscriptionUI().catch(()=>{});
           if (pulseAssistant) pulseAssistant.setHint('Saare coins check kar raha hoon...');
-          const anyEntryText = await handleAnyEntryQuestion(transcript);
-          if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${anyEntryText}</span>`);
+          const anyEntryText = await handleAnyEntryQuestion();
+          if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${escapeHtml(anyEntryText)}</span>`);
           speakPulseResponse(anyEntryText);
         } catch (e) {
           const errMsg = 'Analysis nahi ho paya. Dobara try karein.';
@@ -1277,7 +1320,7 @@ Respond now in natural Hindi (Devanagari). SHORT and DIFFERENT from before.`;
     function playWelcomeIfFirstTime() {
       if (hasSeenWelcome()) return false;
       markWelcomeSeen();
-      const welcomeText = 'Welcome to Aayan World. Main Pulse hoon, aapka Hindi market assistant. Aap mic dabakar BTC, Ethereum, Solana, XRP, ya kisi bhi coin ke baare me pooch sakte ho. Roz 3 free voice scans milenge.';
+      const welcomeText = 'Welcome to Aayan World. Main Pulse hoon, aapka Hindi market assistant. Aap mic dabakar Bitcoin, Ethereum, Solana, XRP, ya kisi bhi coin ke baare me pooch sakte ho. Roz 3 free voice scans milenge.';
       if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${welcomeText}</span>`);
       setTimeout(() => { if (pulseAssistant) pulseAssistant.setState('speaking'); speakPulseResponse(welcomeText); }, 500);
       return true;
