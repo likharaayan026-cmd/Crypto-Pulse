@@ -144,10 +144,51 @@
     @keyframes scanPulse { 0%,100%{opacity:1;} 50%{opacity:.55;} }
     .scan-badge-pulse { animation: scanPulse 1.8s ease-in-out infinite; }
 
-    /* ================= PULSE VOICE ASSISTANT STYLES ================= */
+    /* ================= HEADER VOICE BUTTON ================= */
+    .header-voice-btn {
+      position: relative;
+      width: 34px; height: 34px; border-radius: 12px;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: 1px solid rgba(165,180,252,0.5);
+      box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+      transition: transform 0.15s ease, box-shadow 0.3s ease, background 0.3s ease;
+      flex-shrink: 0;
+    }
+    .header-voice-btn:active { transform: scale(0.92); }
+    .header-voice-btn svg { width: 17px; height: 17px; color: #fff; }
+
+    .header-voice-btn.idle {
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+    }
+    .header-voice-btn.listening {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 0 0 0 rgba(239,68,68,0.7);
+      animation: headerListenPulse 1.2s infinite;
+    }
+    @keyframes headerListenPulse {
+      0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+      100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+    }
+    .header-voice-btn.processing {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      animation: spin360 1.2s linear infinite;
+    }
+    .header-voice-btn.speaking {
+      background: linear-gradient(135deg, #10b981, #059669);
+      animation: headerSpeakPulse 0.8s ease-in-out infinite;
+    }
+    @keyframes headerSpeakPulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    @keyframes spin360 { to { transform: rotate(360deg); } }
+
+    /* ================= PULSE VOICE ASSISTANT (BOTTOM) ================= */
     .pulse-orb-wrap {
       position: relative;
-      width: 108px; height: 108px;
+      width: 96px; height: 96px;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto;
     }
@@ -165,7 +206,7 @@
     }
     .pulse-orb-core {
       position: relative; z-index: 5;
-      width: 84px; height: 84px; border-radius: 50%;
+      width: 76px; height: 76px; border-radius: 50%;
       background: radial-gradient(circle at 32% 28%, #818cf8 0%, #6366f1 38%, #4f46e5 70%, #312e81 100%);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
@@ -174,7 +215,7 @@
       border: 1px solid rgba(165,180,252,0.55);
     }
     .pulse-orb-core:active { transform: scale(0.94); }
-    .pulse-orb-core svg { width: 36px; height: 36px; color: #fff; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); }
+    .pulse-orb-core svg { width: 32px; height: 32px; color: #fff; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); }
 
     .pulse-assistant.listening .pulse-orb-core {
       background: radial-gradient(circle at 32% 28%, #fca5a5 0%, #ef4444 38%, #dc2626 70%, #7f1d1d 100%);
@@ -193,7 +234,6 @@
     }
     .pulse-assistant.processing .pulse-orb-core svg { animation: spin360 1.2s linear infinite; }
     .pulse-assistant.processing .pulse-orb-ring { border-color: rgba(245,158,11,0.55); }
-    @keyframes spin360 { to { transform: rotate(360deg); } }
 
     .pulse-assistant.speaking .pulse-orb-core {
       background: radial-gradient(circle at 32% 28%, #6ee7b7 0%, #10b981 38%, #059669 70%, #064e3b 100%);
@@ -252,6 +292,20 @@
     .speaking .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 12px; }
     .speaking .wave-bar:nth-child(4) { animation-delay: 0.3s; height: 18px; }
     .speaking .wave-bar:nth-child(5) { animation-delay: 0.4s; height: 11px; }
+
+    .pulse-live-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(71,85,105,0.6);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 10px; font-weight: 600;
+      color: #cbd5e1;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body class="bg-[#070b14] text-slate-200 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
@@ -425,6 +479,15 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
+          <!-- ✅ VOICE AI BUTTON (left of WhatsApp) -->
+          <button type="button" id="header-voice-btn" class="header-voice-btn idle btn-press" aria-label="Voice Assistant" title="Pulse Voice Assistant">
+            <svg id="header-voice-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+          </button>
+
           <div class="hidden sm:flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">
             <span class="live-dot"></span>
             <span class="text-[10px] font-bold text-emerald-400">LIVE</span>
@@ -463,7 +526,7 @@
         </div>
       </div>
 
-      <!-- ================= PULSE AI ASSISTANT (NO CHAT UI) ================= -->
+      <!-- ================= PULSE AI ASSISTANT CARD ================= -->
       <div id="pulse-assistant-card" class="pulse-assistant bg-[#0f172a] rounded-2xl border border-indigo-800/40 p-4 shadow-lg shadow-indigo-900/20 relative overflow-hidden min-w-0">
         <div class="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none"></div>
         <div class="absolute -bottom-20 -left-20 w-48 h-48 rounded-full bg-blue-600/10 blur-3xl pointer-events-none"></div>
@@ -484,7 +547,6 @@
             <span id="pulse-status-pill" class="pulse-status-pill idle">● Ready</span>
           </div>
 
-          <!-- Mic Orb -->
           <div class="flex flex-col items-center gap-2 pt-1">
             <div class="pulse-orb-wrap">
               <div class="pulse-orb-ring r1"></div>
@@ -510,7 +572,6 @@
             </div>
           </div>
 
-          <!-- Quick chips -->
           <div class="flex flex-wrap justify-center gap-1.5 pt-1">
             <button type="button" class="pulse-chip" data-pulse-chip="Hey Pulse, aaj market ka kya haal hai?">Aaj market?</button>
             <button type="button" class="pulse-chip" data-pulse-chip="Hey Pulse, BTC ka level batao">BTC Levels</button>
@@ -519,9 +580,8 @@
             <button type="button" class="pulse-chip" data-pulse-chip="Hey Pulse, XRP ka support resistance batao">XRP S/R</button>
           </div>
 
-          <!-- Live status line (single, replaces chat) -->
-          <div id="pulse-live-line" class="text-center text-[10px] text-slate-500 font-medium pt-1 min-h-[14px]">
-            Voice commands sun ke market levels bataunga
+          <div class="text-center pt-1">
+            <span id="pulse-live-line" class="pulse-live-pill">Voice commands sun ke market levels bataunga</span>
           </div>
 
           <div class="flex items-center justify-center gap-2 pt-1">
@@ -678,11 +738,11 @@
 
     // ================== SUBSCRIPTION CONFIG ==================
     const RAZORPAY_KEY_ID = "rzp_live_T5OZeAeTkrB7YG";
-    const SUBSCRIPTION_PRICE_PAISE = 9900;        // ₹99
-    const SUBSCRIPTION_DAYS = 28;                 // 28-day validity
-    const FREE_SCANS_PER_DAY = 2;                 // free tier daily limit
-    const FREE_ACCESS_PASSWORD = "pulse28";       // 🔑 secret long-press key
-    const LONG_PRESS_DURATION = 4000;             // 4 seconds
+    const SUBSCRIPTION_PRICE_PAISE = 9900;
+    const SUBSCRIPTION_DAYS = 28;
+    const FREE_SCANS_PER_DAY = 2;
+    const FREE_ACCESS_PASSWORD = "pulse28";
+    const LONG_PRESS_DURATION = 4000;
 
     // ================== PULSE ASSISTANT CONFIG ==================
     const PULSE_SUPPORTED = {
@@ -698,9 +758,11 @@
       sr: ['support', 'resistance', 's/r', 'level', 'level batao', 'level btao'],
       overview: ['market', 'aaj', 'overall', 'haal', 'hal', 'sab', 'sabka', 'situation', 'condition', 'scene']
     };
-    const SETUP_ALERT_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
-    const setupAlertLog = {}; // key -> last alert timestamp
-    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v1';
+    const SETUP_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
+    const setupAlertLog = {};
+    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v2';
+    // ✅ Auto-reply delay after user stops speaking (2 seconds)
+    const AUTO_REPLY_DELAY_MS = 2000;
     let pulseAssistant = null;
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -712,25 +774,12 @@
 
     // ================== DARK CHART PALETTE ==================
     const THEME = {
-      chartBg:    '#0b1220',
-      grid:       '#1e293b',
-      text:       '#94a3b8',
-      border:     '#1e293b',
-      crosshair:  '#475569',
-      crossLabel: '#334155',
-      up:         '#22c55e',
-      down:       '#ef4444',
-      ema9:       '#60a5fa',
-      ema20:      '#f87171',
-      entry:      '#60a5fa',
-      tp1:        '#22c55e',
-      tp2:        '#16a34a',
-      sl:         '#ef4444',
-      marker:     '#e2e8f0',
-      sweepBull:  '#22d3ee',
-      sweepBear:  '#c084fc',
-      rColors:    ['#fb923c', '#f59e0b', '#fbbf24', '#facc15'],
-      sColors:    ['#f472b6', '#ec4899', '#f9a8d4', '#fb7185']
+      chartBg: '#0b1220', grid: '#1e293b', text: '#94a3b8', border: '#1e293b',
+      crosshair: '#475569', crossLabel: '#334155', up: '#22c55e', down: '#ef4444',
+      ema9: '#60a5fa', ema20: '#f87171', entry: '#60a5fa', tp1: '#22c55e',
+      tp2: '#16a34a', sl: '#ef4444', marker: '#e2e8f0', sweepBull: '#22d3ee',
+      sweepBear: '#c084fc', rColors: ['#fb923c', '#f59e0b', '#fbbf24', '#facc15'],
+      sColors: ['#f472b6', '#ec4899', '#f9a8d4', '#fb7185']
     };
 
     // ================== STATE ==================
@@ -805,10 +854,8 @@
           gain.gain.setValueAtTime(0.0001, now + i * 0.13);
           gain.gain.exponentialRampToValueAtTime(0.18, now + i * 0.13 + 0.02);
           gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.13 + 0.22);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(now + i * 0.13);
-          osc.stop(now + i * 0.13 + 0.25);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.13); osc.stop(now + i * 0.13 + 0.25);
         });
       } catch (e) {}
     }
@@ -889,9 +936,7 @@
         el.innerText = msg;
         el.className = 'text-[11px] text-center font-bold ' + (type === 'success' ? 'text-emerald-400' : 'text-rose-400');
         el.classList.remove('hidden');
-      } else {
-        el.innerText = ''; el.classList.add('hidden');
-      }
+      } else { el.innerText = ''; el.classList.add('hidden'); }
     }
     function showVerifyMsg(msg, type) {
       const el = document.getElementById('verify-msg');
@@ -900,9 +945,7 @@
         el.innerText = msg;
         el.className = 'text-[11px] font-bold text-center ' + (type === 'success' ? 'text-emerald-400' : 'text-rose-400');
         el.classList.remove('hidden');
-      } else {
-        el.innerText = ''; el.classList.add('hidden');
-      }
+      } else { el.innerText = ''; el.classList.add('hidden'); }
     }
 
     // ================== VALIDATION ==================
@@ -1120,9 +1163,7 @@
           userSubscription = { active: false, expiresAt: 0, plan: 'free' };
         }
         cacheSubscription();
-      } catch (e) {
-        console.warn('sub load failed', e);
-      }
+      } catch (e) { console.warn('sub load failed', e); }
     }
 
     async function initSubscription() {
@@ -1144,9 +1185,7 @@
         cloudCount = parseInt(snap.val(), 10) || 0;
       } catch(e){}
       let localCount = 0;
-      try {
-        localCount = parseInt(localStorage.getItem(`pulsealpha_scan_${u.uid}_${key}`) || '0', 10) || 0;
-      } catch(e){}
+      try { localCount = parseInt(localStorage.getItem(`pulsealpha_scan_${u.uid}_${key}`) || '0', 10) || 0; } catch(e){}
       const max = Math.max(cloudCount, localCount);
       if (max !== localCount) {
         try { localStorage.setItem(`pulsealpha_scan_${u.uid}_${key}`, String(max)); } catch(e){}
@@ -1181,7 +1220,6 @@
           }
         });
       }).catch(()=>{});
-
       return newVal;
     }
 
@@ -1231,23 +1269,17 @@
         subEl.innerText = `Unlimited scans · ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
         if (btn) btn.innerText = 'Extend ₹99';
         if (icon) icon.innerText = '💎';
-        if (bar) {
-          bar.className = 'rounded-2xl border p-3 flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#0d2b23] to-[#0f172a] border-emerald-700/50 shadow-sm min-w-0';
-        }
+        if (bar) bar.className = 'rounded-2xl border p-3 flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#0d2b23] to-[#0f172a] border-emerald-700/50 shadow-sm min-w-0';
       } else {
         let used = 0;
         try { used = await getTodayScanCount(); } catch(e){}
         const left = Math.max(0, FREE_SCANS_PER_DAY - used);
         titleEl.innerText = 'Free Plan';
         titleEl.className = 'text-xs font-black text-white';
-        subEl.innerText = left > 0
-          ? `${left} of ${FREE_SCANS_PER_DAY} free scans left today`
-          : `Daily limit reached · upgrade for unlimited`;
+        subEl.innerText = left > 0 ? `${left} of ${FREE_SCANS_PER_DAY} free scans left today` : `Daily limit reached · upgrade for unlimited`;
         if (btn) btn.innerText = 'Subscribe ₹99';
         if (icon) icon.innerText = '💎';
-        if (bar) {
-          bar.className = 'rounded-2xl border p-3 flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#1a1f3d] to-[#0f172a] border-indigo-800/50 shadow-sm min-w-0';
-        }
+        if (bar) bar.className = 'rounded-2xl border p-3 flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#1a1f3d] to-[#0f172a] border-indigo-800/50 shadow-sm min-w-0';
       }
     }
 
@@ -1255,33 +1287,26 @@
     function openRazorpayCheckout() {
       const u = auth.currentUser;
       if (!u) { showScreen('auth'); return; }
-
       if (typeof Razorpay === 'undefined') {
         showToast('Payment gateway load nahi hua. Ad-blocker band karke reload karein.');
         return;
       }
-
       const options = {
-        key: RAZORPAY_KEY_ID,
-        amount: SUBSCRIPTION_PRICE_PAISE,
-        currency: 'INR',
-        name: 'Pulse Alpha',
-        description: 'Pro Plan — 28 Days Unlimited Scans',
+        key: RAZORPAY_KEY_ID, amount: SUBSCRIPTION_PRICE_PAISE, currency: 'INR',
+        name: 'Pulse Alpha', description: 'Pro Plan — 28 Days Unlimited Scans',
         image: 'https://pulse-alpha-privacy-policy.vercel.app/favicon.ico',
         prefill: { email: u.email || '', name: u.displayName || '' },
         notes: { uid: u.uid, plan: 'monthly-99', validity_days: String(SUBSCRIPTION_DAYS) },
         theme: { color: '#6366f1' },
         handler: async function (response) {
-          try {
-            await activateSubscription(response.razorpay_payment_id, 'monthly-99');
-          } catch (e) {
+          try { await activateSubscription(response.razorpay_payment_id, 'monthly-99'); }
+          catch (e) {
             console.warn('activation err', e);
             showToast('Payment ho gaya, lekin activate karne me dikkat aayi. Support se contact karein.');
           }
         },
         modal: { ondismiss: function () {} }
       };
-
       try {
         const rzp = new Razorpay(options);
         rzp.on('payment.failed', function (resp) {
@@ -1298,34 +1323,20 @@
     async function activateSubscription(paymentId, planType) {
       const u = auth.currentUser;
       if (!u) return;
-
       const now = Date.now();
-      const currentExpiry = (userSubscription.active && userSubscription.expiresAt > now)
-        ? userSubscription.expiresAt
-        : now;
+      const currentExpiry = (userSubscription.active && userSubscription.expiresAt > now) ? userSubscription.expiresAt : now;
       const expiresAt = currentExpiry + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000;
       const plan = planType || 'monthly-99';
-
       const sub = {
-        active: true,
-        plan: plan,
-        startedAt: now,
-        expiresAt: expiresAt,
+        active: true, plan: plan, startedAt: now, expiresAt: expiresAt,
         lastPaymentId: paymentId || 'free-unlock',
         updatedAt: firebase.database.ServerValue.TIMESTAMP
       };
-
-      try {
-        await db.ref('users/' + u.uid + '/subscription').set(sub);
-      } catch (e) { console.warn('sub save failed', e); }
-
+      try { await db.ref('users/' + u.uid + '/subscription').set(sub); } catch (e) { console.warn('sub save failed', e); }
       userSubscription = { active: true, expiresAt: expiresAt, plan: plan };
       cacheSubscription();
       await refreshSubscriptionUI();
-
-      showToast(plan === 'free-unlock'
-        ? '🎉 Free 28-day Pro unlocked!'
-        : '✅ Pro activated — unlimited scans for 28 days!');
+      showToast(plan === 'free-unlock' ? '🎉 Free 28-day Pro unlocked!' : '✅ Pro activated — unlimited scans for 28 days!');
       playNotificationSound();
     }
 
@@ -1340,14 +1351,12 @@
       m.classList.remove('hidden');
       setTimeout(() => { try { inp && inp.focus(); } catch(e){} }, 150);
     }
-
     function closeFreeAccessModal() {
       const m = document.getElementById('free-access-modal');
       if (m) m.classList.add('hidden');
       const inp = document.getElementById('free-access-input');
       if (inp) inp.value = '';
     }
-
     function showFreeAccessMsg(text, type) {
       const el = document.getElementById('free-access-msg');
       if (!el) return;
@@ -1355,7 +1364,6 @@
       el.className = 'text-[11px] font-bold text-center ' + (type === 'success' ? 'text-emerald-400' : 'text-rose-400');
       el.classList.remove('hidden');
     }
-
     async function handleFreeAccessSubmit() {
       const inp = document.getElementById('free-access-input');
       const val = (inp ? inp.value : '').trim().toLowerCase();
@@ -1370,12 +1378,10 @@
       await activateSubscription(null, 'free-unlock');
       closeFreeAccessModal();
     }
-
     function setupFreeAccessModal() {
       const cancelBtn = document.getElementById('free-access-cancel');
       const submitBtn = document.getElementById('free-access-submit');
       const inp = document.getElementById('free-access-input');
-
       if (cancelBtn) cancelBtn.addEventListener('click', closeFreeAccessModal);
       if (submitBtn) submitBtn.addEventListener('click', handleFreeAccessSubmit);
       if (inp) inp.addEventListener('keydown', (e) => {
@@ -1404,22 +1410,19 @@
       if (closeBtn) closeBtn.addEventListener('click', hidePaywall);
     }
 
-    // ---------- SUBSCRIBE BUTTON (click = pay, hold 4s = secret) ----------
+    // ---------- SUBSCRIBE BUTTON ----------
     function attachSubscribeButton(btn) {
       if (!btn || btn.dataset.subBound === '1') return;
       btn.dataset.subBound = '1';
-
       let timer = null;
       let startX = 0, startY = 0;
       let suppressClick = false;
-
       const startPress = (e) => {
         if (timer) return;
         const pt = e.touches ? e.touches[0] : e;
         startX = pt.clientX; startY = pt.clientY;
         timer = setTimeout(() => {
-          timer = null;
-          suppressClick = true;
+          timer = null; suppressClick = true;
           try { if (navigator.vibrate) navigator.vibrate([40, 60, 40]); } catch(err){}
           openFreeAccessModal();
         }, LONG_PRESS_DURATION);
@@ -1430,7 +1433,6 @@
         const pt = e.touches ? e.touches[0] : e;
         if (Math.abs(pt.clientX - startX) > 12 || Math.abs(pt.clientY - startY) > 12) cancelPress();
       };
-
       btn.addEventListener('mousedown', startPress);
       btn.addEventListener('touchstart', startPress, { passive: true });
       btn.addEventListener('mouseup', cancelPress);
@@ -1439,7 +1441,6 @@
       btn.addEventListener('touchcancel', cancelPress);
       btn.addEventListener('touchmove', movePress, { passive: true });
       btn.addEventListener('mousemove', movePress);
-
       btn.addEventListener('click', (e) => {
         if (suppressClick) {
           suppressClick = false;
@@ -1448,7 +1449,6 @@
         }
         openRazorpayCheckout();
       });
-
       btn.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
@@ -1457,16 +1457,100 @@
     // ==================================================================
 
     // ==================================================================
+    // ============  HINDI NUMBER SPEECH CONVERTER  =====================
+    // ==================================================================
+    // Converts numbers like 86388 → "chaurasi hazaar teen sau aath'asi"
+    // Handles integer part + optional decimal (spoken as "point X Y Z")
+    function numberToHindiWords(num) {
+      if (num === null || num === undefined || isNaN(num)) return '';
+      const n = Number(num);
+      if (!isFinite(n)) return '';
+      if (n === 0) return 'zero';
+
+      const isNegative = n < 0;
+      const absN = Math.abs(n);
+
+      // Round to 4 decimal places to avoid float noise
+      const rounded = Math.round(absN * 10000) / 10000;
+      const intPart = Math.floor(rounded);
+      const decPart = Math.round((rounded - intPart) * 10000);
+
+      const intWords = integerToHindi(intPart);
+      let result = isNegative ? 'minus ' + intWords : intWords;
+
+      if (decPart > 0) {
+        // Convert decimal digits individually, dropping trailing zeros
+        let decStr = String(decPart).padStart(4, '0').replace(/0+$/, '');
+        const digitWords = decStr.split('').map(d => HINDI_DIGITS[parseInt(d, 10)]).join(' ');
+        result += ' point ' + digitWords;
+      }
+      return result;
+    }
+
+    const HINDI_DIGITS = ['zero','ek','do','teen','chaar','paanch','chhe','saat','aath','nau'];
+    const HINDI_TEENS = {
+      10:'das',11:'gyaarah',12:'baarah',13:'terah',14:'chaudah',15:'pandrah',16:'solah',17:'satrah',18:'athaarah',19:'unnees'
+    };
+    const HINDI_TENS = { 20:'bees',30:'tees',40:'chalis',50:'pachaas',60:'saath',70:'sattar',80:'assi',90:'nabbe' };
+
+    function twoDigitToHindi(n) {
+      if (n < 10) return HINDI_DIGITS[n];
+      if (n < 20) return HINDI_TEENS[n];
+      const tens = Math.floor(n / 10) * 10;
+      const ones = n % 10;
+      if (ones === 0) return HINDI_TENS[tens];
+      return HINDI_TENS[tens] + ' ' + HINDI_DIGITS[ones];
+    }
+
+    function integerToHindi(n) {
+      if (n === 0) return 'zero';
+      if (n < 100) return twoDigitToHindi(n);
+      if (n < 1000) {
+        const hundreds = Math.floor(n / 100);
+        const rest = n % 100;
+        let s = HINDI_DIGITS[hundreds] + ' sau';
+        if (rest > 0) s += ' ' + twoDigitToHindi(rest);
+        return s;
+      }
+      if (n < 100000) {
+        const thousands = Math.floor(n / 1000);
+        const rest = n % 1000;
+        let s = integerToHindi(thousands) + ' hazaar';
+        if (rest > 0) s += ' ' + integerToHindi(rest);
+        return s;
+      }
+      if (n < 10000000) {
+        const lakhs = Math.floor(n / 100000);
+        const rest = n % 100000;
+        let s = integerToHindi(lakhs) + ' lakh';
+        if (rest > 0) s += ' ' + integerToHindi(rest);
+        return s;
+      }
+      const crores = Math.floor(n / 10000000);
+      const rest = n % 10000000;
+      let s = integerToHindi(crores) + ' crore';
+      if (rest > 0) s += ' ' + integerToHindi(rest);
+      return s;
+    }
+
+    // Replace all standalone numbers in a text with Hindi words.
+    // Keeps symbol names (BTC, ETH etc.) intact.
+    function localizeNumbersForSpeech(text) {
+      if (!text) return '';
+      return String(text).replace(/(\d+(?:\.\d+)?)/g, (match) => {
+        return numberToHindiWords(parseFloat(match));
+      });
+    }
+
+    // ==================================================================
     // ====================  PULSE VOICE ASSISTANT  =====================
     // ==================================================================
 
-    // ---------- Fetch coin candles ----------
     async function fetchCoinCandles(symbol, interval, total) {
       const maxPerReq = 1000;
       let all = [];
       let endTime = Date.now();
       let remaining = total;
-
       while (remaining > 0) {
         const limit = Math.min(maxPerReq, remaining);
         const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}&endTime=${endTime}`;
@@ -1479,7 +1563,6 @@
         remaining -= batch.length;
         if (batch.length < limit) break;
       }
-
       const seen = new Set();
       const deduped = [];
       for (const d of all) {
@@ -1490,12 +1573,9 @@
       return deduped;
     }
 
-    // ---------- Build analysis object ----------
     function analyseCoinData(symbol, candles, volumes) {
       const len = candles.length;
-      if (len < 30) {
-        return { symbol, error: 'Not enough data' };
-      }
+      if (len < 30) return { symbol, error: 'Not enough data' };
 
       const price = candles[len - 2].close;
       const ema9Vals = computeEMA(candles, 9);
@@ -1511,7 +1591,6 @@
       const strategy = detectEmaStrategy(candles);
 
       let direction = null, entry = null, stopLoss = null, tp1 = null, tp2 = null, validEntry = false;
-
       if (strategy.valid && !isChoppy) {
         validEntry = true;
         direction = strategy.type.includes('BULLISH') ? 'LONG' : 'SHORT';
@@ -1523,10 +1602,7 @@
       }
 
       return {
-        symbol,
-        price,
-        ema9,
-        ema20,
+        symbol, price, ema9, ema20,
         trend: isBullishTrend ? 'bullish' : 'bearish',
         support: sr.supports[0] || null,
         resistance: sr.resistances[0] || null,
@@ -1537,22 +1613,15 @@
         liquiditySweep: sweep.swept ? sweep.type : 'none',
         isChoppy,
         strategy: strategy.valid ? strategy.type : strategy.reason,
-        validEntry,
-        direction,
-        entry,
-        stopLoss,
-        tp1,
-        tp2,
+        validEntry, direction, entry, stopLoss, tp1, tp2,
         note: strategy.note || strategy.reason || ''
       };
     }
 
-    // ---------- scanMarketOverview ----------
     async function scanMarketOverview() {
       const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT'];
       const interval = '15m';
       const total = 9000;
-
       const promises = symbols.map(async (sym) => {
         try {
           const raw = await fetchCoinCandles(sym, interval, total);
@@ -1568,11 +1637,9 @@
           return { symbol: sym, error: 'Data fetch failed' };
         }
       });
-
       return await Promise.all(promises);
     }
 
-    // ---------- scanSingleCoin ----------
     async function scanSingleCoin(symbol) {
       const interval = '15m';
       const total = 9000;
@@ -1591,7 +1658,6 @@
       }
     }
 
-    // ---------- Detect coin ----------
     function detectCoinFromText(text) {
       const lower = text.toLowerCase();
       for (const [symbol, meta] of Object.entries(PULSE_SUPPORTED)) {
@@ -1603,7 +1669,6 @@
       return null;
     }
 
-    // ---------- Detect intent ----------
     function detectIntentFromText(text) {
       const lower = text.toLowerCase();
       if (PULSE_INTENT_KEYWORDS.entry.some(k => lower.includes(k))) return 'entry';
@@ -1614,17 +1679,11 @@
       return 'levels';
     }
 
-    // ---------- Gemini prompt builder ----------
-    // Key change: AI must speak "agar X pe aaye toh short/long" style levels
     function buildPulsePrompt(analysis, intent, coinLabel) {
       const dataLines = [];
-
       if (Array.isArray(analysis)) {
         analysis.forEach(a => {
-          if (a.error) {
-            dataLines.push(`${a.symbol}: DATA UNAVAILABLE (${a.error})`);
-            return;
-          }
+          if (a.error) { dataLines.push(`${a.symbol}: DATA UNAVAILABLE (${a.error})`); return; }
           dataLines.push(
             `${a.symbol}: LivePrice=$${formatPrice(a.price, a.symbol)}, ` +
             `EMA9=$${formatPrice(a.ema9, a.symbol)}, EMA20=$${formatPrice(a.ema20, a.symbol)}, ` +
@@ -1633,15 +1692,12 @@
             `NearestResistance=$${a.resistance ? formatPrice(a.resistance, a.symbol) : 'N/A'}, ` +
             `Volume=${a.volume}, Sweep=${a.liquiditySweep}, Choppy=${a.isChoppy}, ` +
             `ValidSetup=${a.validEntry}` +
-            (a.validEntry
-              ? `, Direction=${a.direction}, Entry=$${formatPrice(a.entry, a.symbol)}, SL=$${formatPrice(a.stopLoss, a.symbol)}, TP1=$${formatPrice(a.tp1, a.symbol)}, TP2=$${formatPrice(a.tp2, a.symbol)}`
-              : '')
+            (a.validEntry ? `, Direction=${a.direction}, Entry=$${formatPrice(a.entry, a.symbol)}, SL=$${formatPrice(a.stopLoss, a.symbol)}, TP1=$${formatPrice(a.tp1, a.symbol)}, TP2=$${formatPrice(a.tp2, a.symbol)}` : '')
           );
         });
       } else {
-        if (analysis.error) {
-          dataLines.push(`${analysis.symbol}: DATA UNAVAILABLE`);
-        } else {
+        if (analysis.error) { dataLines.push(`${analysis.symbol}: DATA UNAVAILABLE`); }
+        else {
           dataLines.push(
             `${analysis.symbol}: LivePrice=$${formatPrice(analysis.price, analysis.symbol)}, ` +
             `EMA9=$${formatPrice(analysis.ema9, analysis.symbol)}, EMA20=$${formatPrice(analysis.ema20, analysis.symbol)}, ` +
@@ -1652,9 +1708,7 @@
             `NextResistance=$${analysis.resistance2 ? formatPrice(analysis.resistance2, analysis.symbol) : 'N/A'}, ` +
             `Volume=${analysis.volume}, Sweep=${analysis.liquiditySweep}, Choppy=${analysis.isChoppy}, ` +
             `ValidSetup=${analysis.validEntry}` +
-            (analysis.validEntry
-              ? `, Direction=${analysis.direction}, Entry=$${formatPrice(analysis.entry, analysis.symbol)}, SL=$${formatPrice(analysis.stopLoss, analysis.symbol)}, TP1=$${formatPrice(analysis.tp1, analysis.symbol)}, TP2=$${formatPrice(analysis.tp2, analysis.symbol)}`
-              : '')
+            (analysis.validEntry ? `, Direction=${analysis.direction}, Entry=$${formatPrice(analysis.entry, analysis.symbol)}, SL=$${formatPrice(analysis.stopLoss, analysis.symbol)}, TP1=$${formatPrice(analysis.tp1, analysis.symbol)}, TP2=$${formatPrice(analysis.tp2, analysis.symbol)}` : '')
           );
         }
       }
@@ -1663,13 +1717,13 @@
 
 ABSOLUTE RULES — NEVER BREAK:
 1. Use ONLY the supplied live calculated data. NEVER invent or guess any number.
-2. NEVER just announce "price is X" — the user can already see the price. Instead give ACTIONABLE LEVELS.
+2. NEVER just announce "price is X". Instead give ACTIONABLE LEVELS.
 3. Speak in LEVELS format: "agar [coin] [level] pe aaye toh [long/short] kar sakte ho, stop loss [SL] aur target [TP]".
-4. If ValidSetup=true, use the exact Entry/SL/TP1/TP2 values from data and frame them as levels.
-5. If ValidSetup=false, DO NOT invent a trade. Instead say the nearest support and resistance as levels to watch, and clearly say "abhi clean entry nahi bani hai, confirmation ka wait karo".
+4. If ValidSetup=true, use the exact Entry/SL/TP1/TP2 values from data and frame them as conditional levels.
+5. If ValidSetup=false, DO NOT invent a trade. Give nearest support and resistance as watch levels, and clearly say "abhi clean entry nahi bani hai, confirmation ka wait karo".
 6. Never say "100% profit", "guaranteed", "sure shot", "loss nahi hoga" or any profit claim.
 7. Keep it SHORT — 3 to 5 sentences max. Voice-friendly. No markdown, no bullet points, no tables, no lists.
-8. Speak naturally in Hindi/Hinglish. Numbers can be said in English (e.g. "chhiattis hazaar", "eighty six thousand", or the raw number — pick what sounds natural).
+8. Write numbers as raw digits (e.g. 86388, 4250.50). The app will convert them to Hindi speech automatically. Do NOT spell numbers out.
 
 INTENT: ${intent}
 
@@ -1677,36 +1731,50 @@ LIVE CALCULATED DATA (from Binance — accurate, do not invent):
 ${dataLines.join('\n')}
 
 HOW TO RESPOND based on intent:
-- "levels" or "price": Give the actionable levels (support/resistance or entry/SL/TP if valid). Frame as "agar X pe aaye toh..." — NOT as "price is X".
-- "entry": Focus on entry setup. If valid, give exact entry/SL/TP levels. If not valid, say no clean entry, and give the levels to watch.
+- "levels" or "price": Give the actionable levels. Frame as "agar X pe aaye toh..." — NOT as "price is X".
+- "entry": Focus on entry. If valid, give exact entry/SL/TP levels. If not valid, say no clean entry, and give levels to watch.
 - "sr": Give nearest support and resistance as watch levels, and what a break or rejection would mean.
-- "trend": Explain the trend from EMA9 vs EMA20, and give the level where the trend would flip.
-- "overview": Briefly cover BTC, ETH, SOL, XRP — for each, give one actionable level. Real prices from data only.
-- "analysis": Default — combine trend + levels + entry status in a natural way.
+- "trend": Explain trend from EMA9 vs EMA20, and give the level where trend would flip.
+- "overview": Briefly cover BTC, ETH, SOL, XRP — for each, give one actionable level.
+- "analysis": Default — combine trend + levels + entry status naturally.
 
 Respond now in Hindi/Hinglish as Pulse.`;
     }
 
-    // ---------- speak ----------
+    // ---------- Speak with Hindi number localisation ----------
     function speakPulseResponse(text) {
       if (!('speechSynthesis' in window)) return;
       try {
         window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
+        // ✅ Convert all numbers to Hindi words before speaking
+        const spokenText = localizeNumbersForSpeech(text);
+        const utter = new SpeechSynthesisUtterance(spokenText);
         const voices = window.speechSynthesis.getVoices();
         let hiVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('hi'));
         if (!hiVoice) hiVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en-in'));
         if (hiVoice) utter.voice = hiVoice;
         utter.lang = hiVoice ? hiVoice.lang : 'hi-IN';
-        utter.rate = 1.0;
+        utter.rate = 0.95;
         utter.pitch = 1.0;
         utter.volume = 1.0;
 
-        if (pulseAssistant) {
-          utter.onstart = () => pulseAssistant.setState('speaking');
-          utter.onend = () => pulseAssistant.setState('idle');
-          utter.onerror = () => pulseAssistant.setState('idle');
-        }
+        utter.onstart = () => {
+          if (pulseAssistant) pulseAssistant.setState('speaking');
+        };
+        utter.onend = () => {
+          if (pulseAssistant) pulseAssistant.setState('idle');
+          // ✅ Auto-restart listening after speaking (continuous conversation)
+          if (pulseAssistant && pulseAssistant.autoListenEnabled) {
+            setTimeout(() => {
+              if (pulseAssistant.state === 'idle') {
+                pulseAssistant.startListening(true);
+              }
+            }, 400);
+          }
+        };
+        utter.onerror = () => {
+          if (pulseAssistant) pulseAssistant.setState('idle');
+        };
 
         window.speechSynthesis.speak(utter);
       } catch (e) {
@@ -1716,11 +1784,15 @@ Respond now in Hindi/Hinglish as Pulse.`;
     }
 
     // ---------- Process command ----------
+    let pulseReplyTimer = null;
     async function processPulseCommand(transcript) {
       if (!transcript || !transcript.trim()) {
         if (pulseAssistant) pulseAssistant.setState('idle');
         return;
       }
+
+      // Clear any pending auto-reply timer
+      if (pulseReplyTimer) { clearTimeout(pulseReplyTimer); pulseReplyTimer = null; }
 
       if (pulseAssistant) {
         pulseAssistant.setState('processing');
@@ -1747,24 +1819,27 @@ Respond now in Hindi/Hinglish as Pulse.`;
           const prompt = buildPulsePrompt(analysis, intent, label);
           let aiText = null;
           try { aiText = await fetchGeminiAiAnalysis(prompt); } catch(e){}
-
           let finalText = aiText;
           if (!finalText) finalText = buildLocalFallbackResponse(analysis, intent);
 
-          if (pulseAssistant) pulseAssistant.setState('speaking');
+          if (pulseAssistant) {
+            pulseAssistant.setState('speaking');
+            pulseAssistant.setLiveLine('Pulse: ' + finalText.slice(0, 90) + (finalText.length > 90 ? '…' : ''));
+          }
           speakPulseResponse(finalText);
         } else {
           if (pulseAssistant) pulseAssistant.setHint('Scanning BTC, ETH, SOL, XRP levels...');
           const overview = await scanMarketOverview();
-
           const prompt = buildPulsePrompt(overview, intent === 'levels' ? 'overview' : intent, '');
           let aiText = null;
           try { aiText = await fetchGeminiAiAnalysis(prompt); } catch(e){}
-
           let finalText = aiText;
           if (!finalText) finalText = buildLocalFallbackOverview(overview);
 
-          if (pulseAssistant) pulseAssistant.setState('speaking');
+          if (pulseAssistant) {
+            pulseAssistant.setState('speaking');
+            pulseAssistant.setLiveLine('Pulse: ' + finalText.slice(0, 90) + (finalText.length > 90 ? '…' : ''));
+          }
           speakPulseResponse(finalText);
         }
       } catch (err) {
@@ -1776,7 +1851,7 @@ Respond now in Hindi/Hinglish as Pulse.`;
         if (pulseAssistant) {
           setTimeout(() => {
             if (pulseAssistant.state === 'processing') pulseAssistant.setState('idle');
-          }, 15000);
+          }, 20000);
         }
       }
     }
@@ -1791,36 +1866,25 @@ Respond now in Hindi/Hinglish as Pulse.`;
       if (intent === 'entry' && a.validEntry) {
         return `${label} mein valid ${a.direction === 'LONG' ? 'buy' : 'sell'} setup bana hai. Entry ${formatPrice(a.entry, a.symbol)} ke aas-paas hai, stop loss ${formatPrice(a.stopLoss, a.symbol)}, aur target ${formatPrice(a.tp1, a.symbol)} aur ${formatPrice(a.tp2, a.symbol)} tak dekh sakte ho.`;
       }
-
       if (intent === 'entry') {
-        if (s && r) {
-          return `Abhi ${label} mein clean entry nahi bani hai. Agar price ${r} ke upar strong close de toh bullish setup ban sakta hai, aur ${s} ke neeche close aaye toh bearish. Confirmation ka wait karo.`;
-        }
+        if (s && r) return `Abhi ${label} mein clean entry nahi bani hai. Agar price ${r} ke upar strong close de toh bullish setup ban sakta hai, aur ${s} ke neeche close aaye toh bearish. Confirmation ka wait karo.`;
         return `Abhi ${label} mein clean entry nahi bani hai. Confirmation ka wait karo.`;
       }
-
       if (intent === 'sr') {
-        if (s && r) {
-          return `${label} ka nearest support ${s} hai aur resistance ${r} ke aas-paas hai. Agar price ${r} ke upar strong confirmation deta hai toh bullish continuation possible hai, aur ${s} ke neeche close aaye toh weakness dikh sakti hai.`;
-        }
+        if (s && r) return `${label} ka nearest support ${s} hai aur resistance ${r} ke aas-paas hai. Agar price ${r} ke upar strong confirmation deta hai toh bullish continuation possible hai, aur ${s} ke neeche close aaye toh weakness dikh sakti hai.`;
         return `${label} ke levels abhi calculate nahi ho paye. Thodi der baad try karo.`;
       }
-
       if (intent === 'trend') {
         const pos = a.trend === 'bullish' ? 'bullish hai, EMA 9 EMA 20 ke upar hai' : 'bearish hai, EMA 9 EMA 20 ke neeche hai';
         const watch = a.trend === 'bullish' && s ? `Agar price ${s} ke neeche close kare toh trend flip ho sakta hai.` : (r ? `Agar price ${r} ke upar close kare toh trend flip ho sakta hai.` : '');
         return `${label} ka trend abhi ${pos}. Current price ${priceStr} hai. ${watch}`;
       }
-
-      // Default / levels
       if (a.validEntry) {
         return `${label} mein valid setup bana hai. Agar price ${formatPrice(a.entry, a.symbol)} pe aaye toh ${a.direction === 'LONG' ? 'long' : 'short'} kar sakte ho, stop loss ${formatPrice(a.stopLoss, a.symbol)} aur target ${formatPrice(a.tp1, a.symbol)} aur ${formatPrice(a.tp2, a.symbol)}.`;
       }
-
       if (s && r) {
         return `${label} abhi ${a.trend === 'bullish' ? 'bullish' : 'bearish'} structure mein hai. Agar price ${s} pe aaye toh bounce dekh sakte ho, aur ${r} pe rejection aaye toh short ka scope ban sakta hai. Abhi clean entry nahi hai, confirmation ka wait karo.`;
       }
-
       return `${label} abhi ${a.trend === 'bullish' ? 'bullish' : 'bearish'} structure mein hai, current price ${priceStr} hai. Abhi clean entry nahi bani hai, confirmation ka wait karo.`;
     }
 
@@ -1839,11 +1903,8 @@ Respond now in Hindi/Hinglish as Pulse.`;
           parts.push(`${label} mein abhi levels clear nahi`);
         }
       });
-
       const base = `Pulse ke analysis ke according, ${parts.join('. ')}.`;
-      if (anyValid) {
-        return base + ` Jahan setup bana hai wahan risk management zaroor karein.`;
-      }
+      if (anyValid) return base + ` Jahan setup bana hai wahan risk management zaroor karein.`;
       return base + ` Filhaal wait karna better hai, jaise hi confirmation milegi entry signal diya ja sakta hai.`;
     }
 
@@ -1873,7 +1934,7 @@ Respond now in Hindi/Hinglish as Pulse.`;
       return null;
     }
 
-    // ---------- Welcome (first-time) ----------
+    // ---------- Welcome ----------
     function hasSeenWelcome() {
       try { return localStorage.getItem(PULSE_WELCOME_SEEN_KEY) === '1'; } catch(e){ return false; }
     }
@@ -1884,11 +1945,11 @@ Respond now in Hindi/Hinglish as Pulse.`;
     function playWelcomeIfFirstTime() {
       if (hasSeenWelcome()) return;
       markWelcomeSeen();
-      const welcomeText = 'Welcome to Aayan Likhar world. Main Pulse hoon, aapka Hindi market assistant. Mic dabakar BTC, ETH, SOL ya XRP ke levels pooch sakte ho.';
+      const welcomeText = 'Welcome to Aayan World. Main Pulse hoon, aapka Hindi market assistant. Mic dabakar BTC, ETH, SOL ya XRP ke levels pooch sakte ho.';
       setTimeout(() => {
         if (pulseAssistant) pulseAssistant.setState('speaking');
         speakPulseResponse(welcomeText);
-      }, 1200);
+      }, 1400);
     }
 
     // ---------- Pulse Assistant UI ----------
@@ -1902,22 +1963,34 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const liveLine = document.getElementById('pulse-live-line');
       const stopBtn = document.getElementById('pulse-stop-btn');
       const waveWrap = document.getElementById('pulse-wave-wrap');
+      const headerVoiceBtn = document.getElementById('header-voice-btn');
+      const headerVoiceIcon = document.getElementById('header-voice-icon');
 
       if (!card || !micBtn || !statusPill) return;
 
       let recognition = null;
       let isListening = false;
+      let shouldRestartListening = false;
+      let silenceTimer = null;
+      let lastTranscript = '';
 
       const setState = (state) => {
         pulseAssistant.state = state;
+        // Bottom card classes
         card.classList.remove('listening', 'processing', 'speaking');
         statusPill.classList.remove('idle', 'listening', 'processing', 'speaking');
         statusPill.classList.add(state);
+        // Header button classes
+        if (headerVoiceBtn) {
+          headerVoiceBtn.classList.remove('idle', 'listening', 'processing', 'speaking');
+          headerVoiceBtn.classList.add(state);
+        }
 
         if (state === 'idle') {
           statusPill.innerText = '● Ready';
           if (waveWrap) waveWrap.style.opacity = '0.3';
           if (stopBtn) stopBtn.classList.add('hidden');
+          if (headerVoiceIcon) headerVoiceIcon.style.animation = '';
         } else if (state === 'listening') {
           statusPill.innerText = '● Listening…';
           if (waveWrap) waveWrap.style.opacity = '1';
@@ -1936,7 +2009,16 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const setHint = (text) => { if (hint) hint.innerText = text; };
       const setLiveLine = (text) => { if (liveLine) liveLine.innerText = text; };
 
-      const startListening = () => {
+      // ✅ Auto-reply: after user stops speaking, wait 2s then process
+      const scheduleAutoReply = (transcript) => {
+        if (pulseReplyTimer) clearTimeout(pulseReplyTimer);
+        pulseReplyTimer = setTimeout(() => {
+          pulseReplyTimer = null;
+          processPulseCommand(transcript);
+        }, AUTO_REPLY_DELAY_MS);
+      };
+
+      const startListening = (fromAuto) => {
         if (isListening) return;
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) {
@@ -1948,29 +2030,52 @@ Respond now in Hindi/Hinglish as Pulse.`;
         try {
           recognition = new SR();
           recognition.lang = 'hi-IN';
-          recognition.interimResults = false;
-          recognition.continuous = false;
+          recognition.interimResults = true; // ✅ interim results for live feel
+          recognition.continuous = true;      // ✅ continuous so we don't cut off mid-sentence
           recognition.maxAlternatives = 1;
+
+          let finalTranscript = '';
 
           recognition.onstart = () => {
             isListening = true;
+            finalTranscript = '';
+            lastTranscript = '';
             setState('listening');
             setHint('Sun raha hoon… boliye');
+            setLiveLine('🎙️ Listening…');
           };
 
           recognition.onresult = (event) => {
-            isListening = false;
-            let transcript = '';
+            let interim = '';
             for (let i = event.resultIndex; i < event.results.length; i++) {
-              transcript += event.results[i][0].transcript;
+              const res = event.results[i];
+              if (res.isFinal) {
+                finalTranscript += res[0].transcript;
+              } else {
+                interim += res[0].transcript;
+              }
             }
-            transcript = transcript.trim();
-            setHint('Processing…');
-            processPulseCommand(transcript);
+            const currentText = (finalTranscript + ' ' + interim).trim();
+            lastTranscript = currentText;
+            if (currentText) setLiveLine('🎙️ ' + currentText);
+
+            // ✅ Reset silence timer on every chunk — 2s of silence triggers reply
+            if (silenceTimer) clearTimeout(silenceTimer);
+            silenceTimer = setTimeout(() => {
+              silenceTimer = null;
+              const textToProcess = lastTranscript.trim();
+              if (!textToProcess) return;
+              // Stop listening and process
+              try { recognition.stop(); } catch(e){}
+              isListening = false;
+              setHint('Processing…');
+              scheduleAutoReply(textToProcess);
+            }, AUTO_REPLY_DELAY_MS);
           };
 
           recognition.onerror = (event) => {
             isListening = false;
+            if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
             console.warn('Speech error', event.error);
             setState('idle');
             if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
@@ -1978,6 +2083,9 @@ Respond now in Hindi/Hinglish as Pulse.`;
               setLiveLine('Microphone permission blocked');
             } else if (event.error === 'no-speech') {
               setHint('Kuch suna nahi. Dobara tap karein aur bolein.');
+              setLiveLine('Kuch suna nahi');
+            } else if (event.error === 'aborted') {
+              // fine, user stopped
             } else {
               setHint('Voice capture fail hua. Dobara try karein.');
             }
@@ -1985,6 +2093,9 @@ Respond now in Hindi/Hinglish as Pulse.`;
 
           recognition.onend = () => {
             isListening = false;
+            if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+            // If we already scheduled a reply, don't restart listening here
+            if (pulseReplyTimer) return;
             if (pulseAssistant && pulseAssistant.state === 'listening') {
               setState('idle');
               setHint('Tap orb and say "Hey Pulse, BTC ka level batao"');
@@ -2000,6 +2111,7 @@ Respond now in Hindi/Hinglish as Pulse.`;
       };
 
       const stopListening = () => {
+        if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
         if (recognition) { try { recognition.stop(); } catch(e){} }
         isListening = false;
         setState('idle');
@@ -2010,12 +2122,16 @@ Respond now in Hindi/Hinglish as Pulse.`;
         setState('idle');
       };
 
-      micBtn.addEventListener('click', () => {
+      const toggleAssistant = () => {
         unlockAudioOnFirstInteraction();
         if (pulseAssistant.state === 'speaking') { stopSpeaking(); return; }
         if (isListening) { stopListening(); return; }
         startListening();
-      });
+      };
+
+      // Wire both mic buttons
+      micBtn.addEventListener('click', toggleAssistant);
+      if (headerVoiceBtn) headerVoiceBtn.addEventListener('click', toggleAssistant);
 
       if (stopBtn) {
         stopBtn.addEventListener('click', () => {
@@ -2034,6 +2150,7 @@ Respond now in Hindi/Hinglish as Pulse.`;
 
       pulseAssistant = {
         state: 'idle',
+        autoListenEnabled: true, // ✅ continuous conversation mode
         setState,
         setHint,
         setLiveLine,
@@ -2049,11 +2166,10 @@ Respond now in Hindi/Hinglish as Pulse.`;
         window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
       }
 
-      // First-time welcome
+      // ✅ First-time welcome
       playWelcomeIfFirstTime();
     }
 
-    // ---------- Setup alert ----------
     function maybeSendSetupAlert(sig) {
       if (!sig || !sig.validEntry || !sig.symbol) return;
       const key = `${sig.symbol}_${sig.direction || 'unknown'}`;
@@ -2108,13 +2224,11 @@ Respond now in Hindi/Hinglish as Pulse.`;
       if (authMode === 'signup') {
         const name = document.getElementById('input-name').value.trim();
         const mobile = document.getElementById('input-mobile').value.trim();
-
         if (!name || name.length < 2) return showAuthMsg('Please enter your full name.');
         if (!isValidMobile10(mobile)) return showAuthMsg('Please enter a valid 10-digit mobile number.');
         if (!email) return showAuthMsg('Please enter your email address.');
         if (!isGmailAddress(email)) return showAuthMsg('Please enter a valid Gmail address.');
         if (password.length < 6) return showAuthMsg('Password must be at least 6 characters.');
-
         btn.innerText = 'Creating...'; btn.disabled = true;
         try {
           const cred = await auth.createUserWithEmailAndPassword(email, password);
@@ -2143,9 +2257,8 @@ Respond now in Hindi/Hinglish as Pulse.`;
       if (!email) return showAuthMsg('Please enter your email address.');
       if (!isGmailAddress(email)) return showAuthMsg('Please enter a valid Gmail address.');
       btn.innerText = 'Logging in...'; btn.disabled = true;
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-      } catch (err) {
+      try { await auth.signInWithEmailAndPassword(email, password); }
+      catch (err) {
         let msg = 'Login failed. Check your email and password.';
         if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
         else if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';
@@ -2161,10 +2274,8 @@ Respond now in Hindi/Hinglish as Pulse.`;
     async function doLogout() {
       if (isLoggingOut) return;
       isLoggingOut = true;
-
       const btnText = document.getElementById('header-logout-text');
       if (btnText) btnText.innerText = 'Logging out…';
-
       stopVerifyPolling();
       hidePaywall();
       closeFreeAccessModal();
@@ -2172,35 +2283,25 @@ Respond now in Hindi/Hinglish as Pulse.`;
         try { pulseAssistant.stopListening(); } catch(e){}
         try { pulseAssistant.stopSpeaking(); } catch(e){}
       }
-
       try {
         if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
         if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
         if (chart) { try { chart.remove(); } catch(e){} }
       } catch (e) { console.warn('teardown err', e); }
-
       chart = null; candleSeries = null; ema9Series = null; ema20Series = null;
       chartLines = []; sweepLines = []; currentCandles = []; currentVolumes = [];
       entryMarkerData = null;
       chartBootstrapped = false; resetLockedSignal();
       userScrolledTimeScale = false;
-
       clearSubscriptionCache();
       subInitDone = false;
-
       clearCachedUser();
       clearAuthInputs(false);
-
       try { await auth.signOut(); } catch (e) { console.warn('signOut error', e); }
-
       showScreen('auth');
-
       if (btnText) btnText.innerText = 'Logout';
-
       setTimeout(() => { isLoggingOut = false; }, 800);
-      setTimeout(() => {
-        if (currentScreen === 'app') { showScreen('auth'); }
-      }, 1200);
+      setTimeout(() => { if (currentScreen === 'app') { showScreen('auth'); } }, 1200);
     }
     window.handleLogout = doLogout;
 
@@ -2233,14 +2334,12 @@ Respond now in Hindi/Hinglish as Pulse.`;
         if (currentScreen !== 'auth') showScreen('auth');
         return;
       }
-
       try { await user.reload(); } catch(e){}
       const fresh = auth.currentUser;
       if (!fresh) {
         if (currentScreen !== 'auth') showScreen('auth');
         return;
       }
-
       if (fresh.emailVerified) {
         saveCachedUser(fresh, true);
         if (currentScreen !== 'app') showScreen('app');
@@ -2255,12 +2354,9 @@ Respond now in Hindi/Hinglish as Pulse.`;
       setSplashProgress(15);
       setSplashStatus('Connecting...');
       await new Promise(r => setTimeout(r, 400));
-
       setSplashProgress(40);
       setSplashStatus('Loading session...');
-
       try { await authReady; } catch(e){}
-
       const restoredUser = await new Promise((resolve) => {
         let done = false;
         const unsub = auth.onAuthStateChanged((u) => {
@@ -2270,22 +2366,14 @@ Respond now in Hindi/Hinglish as Pulse.`;
           resolve(u);
         });
         setTimeout(() => {
-          if (!done) {
-            done = true;
-            try { unsub(); } catch(e){}
-            resolve(auth.currentUser);
-          }
+          if (!done) { done = true; try { unsub(); } catch(e){} resolve(auth.currentUser); }
         }, 4000);
       });
-
       setSplashProgress(75);
       setSplashStatus('Verifying access...');
-
       fetch('https://api.binance.com/api/v3/ping').catch(() => {});
       await new Promise(r => setTimeout(r, 300));
-
       bootstrapped = true;
-
       if (!restoredUser) {
         setSplashProgress(100);
         setSplashStatus('Welcome');
@@ -2294,10 +2382,8 @@ Respond now in Hindi/Hinglish as Pulse.`;
         setTimeout(() => showScreen('auth'), 150);
         return;
       }
-
       let fresh = restoredUser;
       try { await restoredUser.reload(); fresh = auth.currentUser || restoredUser; } catch(e){}
-
       if (fresh && fresh.emailVerified) {
         saveCachedUser(fresh, true);
         setSplashProgress(100);
@@ -2341,15 +2427,9 @@ Respond now in Hindi/Hinglish as Pulse.`;
       if (!container) return;
       container.innerHTML = '';
       if (chart) { try { chart.remove(); } catch(e){} chart = null; }
-
       chart = LightweightCharts.createChart(container, {
-        width: container.clientWidth,
-        height: container.clientHeight,
-        layout: {
-          background: { type: 'solid', color: THEME.chartBg },
-          textColor: THEME.text,
-          fontFamily: 'Inter, system-ui, sans-serif'
-        },
+        width: container.clientWidth, height: container.clientHeight,
+        layout: { background: { type: 'solid', color: THEME.chartBg }, textColor: THEME.text, fontFamily: 'Inter, system-ui, sans-serif' },
         grid: { vertLines: { color: THEME.grid }, horzLines: { color: THEME.grid } },
         crosshair: {
           mode: LightweightCharts.CrosshairMode.Normal,
@@ -2370,7 +2450,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
         handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
         kineticScroll: { touch: true, mouse: false }
       });
-
       candleSeries = chart.addCandlestickSeries({
         upColor: THEME.up, downColor: THEME.down,
         borderDownColor: THEME.down, borderUpColor: THEME.up,
@@ -2383,13 +2462,11 @@ Respond now in Hindi/Hinglish as Pulse.`;
       });
       ema9Series = chart.addLineSeries({ color: THEME.ema9, lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
       ema20Series = chart.addLineSeries({ color: THEME.ema20, lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
-
       chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
         if (!range) return;
         const totalBars = currentCandles.length;
         if (totalBars > 0 && range.to < totalBars - 3) userScrolledTimeScale = true;
       });
-
       window.addEventListener('resize', () => {
         if (chart && container) {
           chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
@@ -2415,37 +2492,25 @@ Respond now in Hindi/Hinglish as Pulse.`;
     function connectLiveWebSocket() {
       if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
       if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e){} ws = null; }
-
       const wsSymbol = currentSymbol.toLowerCase();
       const wsInterval = currentTimeframe;
       const url = `wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${wsInterval}`;
-
       ws = new WebSocket(url);
-
       ws.onopen = () => {
         const ind = document.getElementById('live-indicator');
         if (ind) { ind.className = 'text-[10px] text-emerald-400 font-extrabold ml-2'; ind.innerText = '● LIVE FEED'; }
       };
-
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
           if (!message || !message.k) return;
           const kline = message.k;
-
           const candleTime = Math.floor(kline.t / 1000);
-          const candle = {
-            time: candleTime,
-            open: parseFloat(kline.o), high: parseFloat(kline.h),
-            low: parseFloat(kline.l), close: parseFloat(kline.c)
-          };
+          const candle = { time: candleTime, open: parseFloat(kline.o), high: parseFloat(kline.h), low: parseFloat(kline.l), close: parseFloat(kline.c) };
           const vol = parseFloat(kline.v);
-
           if (currentCandles.length === 0 || !candleSeries) return;
-
           const lastIdx = currentCandles.length - 1;
           const lastCandle = currentCandles[lastIdx];
-
           if (lastCandle.time === candleTime) {
             currentCandles[lastIdx] = candle;
             currentVolumes[lastIdx] = vol;
@@ -2455,24 +2520,17 @@ Respond now in Hindi/Hinglish as Pulse.`;
             currentVolumes.push(vol);
             candleSeries.update(candle);
           } else { return; }
-
           const recent = currentCandles.slice(-200);
           ema9Series.setData(computeEMA(recent, 9));
           ema20Series.setData(computeEMA(recent, 20));
-
-          if (!userScrolledTimeScale) {
-            try { chart.timeScale().scrollToRealTime(); } catch(e){}
-          }
-
+          if (!userScrolledTimeScale) { try { chart.timeScale().scrollToRealTime(); } catch(e){} }
           checkLockedSignalLive();
         } catch (e) { console.warn('WS parse err', e); }
       };
-
       ws.onerror = () => {
         const ind = document.getElementById('live-indicator');
         if (ind) { ind.className = 'text-[10px] text-rose-400 font-extrabold ml-2'; ind.innerText = '● ERROR'; }
       };
-
       ws.onclose = () => {
         const ind = document.getElementById('live-indicator');
         if (ind) { ind.className = 'text-[10px] text-amber-400 font-extrabold ml-2'; ind.innerText = '● RECONNECTING'; }
@@ -2487,7 +2545,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const lastClosed = currentCandles[len - 2];
       const isBull = lockedSignal.type === 'BULLISH_EMA_SETUP';
       let result = null;
-
       if (isBull) {
         if (lastClosed.low <= lockedSignal.sl) result = { outcome: 'SL_HIT', exitPrice: lockedSignal.sl };
         else if (lastClosed.high >= lockedSignal.tp2) result = { outcome: 'TP2_HIT', exitPrice: lockedSignal.tp2 };
@@ -2497,14 +2554,12 @@ Respond now in Hindi/Hinglish as Pulse.`;
         else if (lastClosed.low <= lockedSignal.tp2) result = { outcome: 'TP2_HIT', exitPrice: lockedSignal.tp2 };
         else if (lastClosed.low <= lockedSignal.tp1) result = { outcome: 'TP1_HIT', exitPrice: lockedSignal.tp1 };
       }
-
       if (result) {
         lastClosedSignalKey = `${lockedSignal.symbol}_${lockedSignal.timeframe}_${lockedSignal.confirmCandleTime}`;
         resetLockedSignal();
         entryMarkerData = null;
         if (candleSeries) candleSeries.setMarkers([]);
         clearCanvasLines();
-
         const output = document.getElementById('ai-analysis-output');
         if (output) {
           output.innerHTML = `
@@ -2546,7 +2601,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const swingHighs = findSwingHighs(recent, 5).map(s => s.price);
       const swingLows = findSwingLows(recent, 5).map(s => s.price);
       const currentPrice = candles[len - 2].close;
-
       function dedupe(arr, tolerance = 0.012) {
         const sorted = [...arr].sort((a, b) => a - b);
         const out = [];
@@ -2557,16 +2611,12 @@ Respond now in Hindi/Hinglish as Pulse.`;
         }
         return out;
       }
-
       const uniqueHighs = dedupe(swingHighs);
       const uniqueLows = dedupe(swingLows);
-
       let resistances = uniqueHighs.filter(h => h > currentPrice).sort((a, b) => a - b);
       let supports = uniqueLows.filter(l => l < currentPrice).sort((a, b) => b - a);
-
       resistances = resistances.slice(0, 4);
       supports = supports.slice(0, 4);
-
       if (resistances.length < 2) {
         const top = Math.max(...recent.map(c => c.high));
         resistances = [top, top * 1.008];
@@ -2577,7 +2627,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
         supports = [bot, bot * 0.992];
         supports.sort((a, b) => b - a);
       }
-
       return { resistances, supports };
     }
 
@@ -2589,7 +2638,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const lastClosed = len - 2;
       const scanStart = Math.max(2, lastClosed - 40);
       let crossIdx = -1, crossType = null;
-
       for (let i = scanStart; i <= lastClosed; i++) {
         const e9p = ema9Vals[i - 1].value, e20p = ema20Vals[i - 1].value;
         const e9c = ema9Vals[i].value, e20c = ema20Vals[i].value;
@@ -2597,29 +2645,24 @@ Respond now in Hindi/Hinglish as Pulse.`;
         else if (e9p >= e20p && e9c < e20c) { crossIdx = i; crossType = 'BEARISH_CROSSOVER'; }
       }
       if (crossIdx === -1) return { valid: false, reason: 'No recent 9/20 EMA crossover' };
-
       for (let i = crossIdx + 1; i <= lastClosed; i++) {
         const e9p = ema9Vals[i - 1].value, e20p = ema20Vals[i - 1].value;
         const e9c = ema9Vals[i].value, e20c = ema20Vals[i].value;
         if (crossType === 'BULLISH_CROSSOVER' && e9p >= e20p && e9c < e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
         if (crossType === 'BEARISH_CROSSOVER' && e9p <= e20p && e9c > e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
       }
-
       for (let i = crossIdx + 3; i <= lastClosed - 1; i++) {
         const pullback = candles[i - 1];
         const rejection = candles[i];
         const confirmation = candles[i + 1];
         if (i + 1 > lastClosed) continue;
-
         const confirmKey = `${currentSymbol}_${currentTimeframe}_${confirmation.time}`;
         if (lastClosedSignalKey === confirmKey) continue;
-
         const pullbackEma9 = ema9Vals[i - 1].value;
         const pullbackEma20 = ema20Vals[i - 1].value;
         const rejectEma9 = ema9Vals[i].value;
         const rejectBody = Math.abs(rejection.close - rejection.open);
         const pullBody = Math.abs(pullback.close - pullback.open);
-
         if (crossType === 'BULLISH_CROSSOVER') {
           const isRed = pullback.close < pullback.open;
           const touchedEMA = pullback.low <= pullbackEma9 * 1.005 || pullback.low <= pullbackEma20 * 1.005;
@@ -2711,7 +2754,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       let all = [];
       let endTime = Date.now();
       let remaining = totalCandles;
-
       while (remaining > 0) {
         const limit = Math.min(maxPerReq, remaining);
         const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}&endTime=${endTime}`;
@@ -2724,7 +2766,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
         remaining -= batch.length;
         if (batch.length < limit) break;
       }
-
       const seen = new Set();
       const deduped = [];
       for (const d of all) {
@@ -2746,7 +2787,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
         else if (currentTimeframe === '1h') total = 3000;
         else if (currentTimeframe === '4h') total = 1000;
         else if (currentTimeframe === '1d') total = 500;
-
         const raw = await fetchKlinesPaged(currentSymbol, currentTimeframe, total);
         currentCandles = raw.map(d => ({
           time: Math.floor(d[0] / 1000),
@@ -2754,7 +2794,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
           low: parseFloat(d[3]), close: parseFloat(d[4])
         }));
         currentVolumes = raw.map(d => parseFloat(d[5]));
-
         if (candleSeries) {
           candleSeries.applyOptions({
             priceFormat: {
@@ -2767,12 +2806,10 @@ Respond now in Hindi/Hinglish as Pulse.`;
           ema9Series.setData(computeEMA(currentCandles, 9));
           ema20Series.setData(computeEMA(currentCandles, 20));
           candleSeries.setMarkers([]);
-
           const visibleBars = Math.min(120, currentCandles.length);
           const from = Math.max(0, currentCandles.length - visibleBars);
           chart.timeScale().setVisibleLogicalRange({ from: from, to: currentCandles.length + 5 });
           chart.timeScale().scrollToRealTime();
-
           userScrolledTimeScale = false;
           connectLiveWebSocket();
         }
@@ -2836,7 +2873,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
     // ================== ANALYSIS ENGINE ==================
     window.runAnalysisEngine = async function () {
       if (isAnalyzing || currentCandles.length < 80) return;
-
       if (lockedSignal && lockedSignal.symbol === currentSymbol && lockedSignal.timeframe === currentTimeframe) {
         checkLockedSignalLive();
         if (lockedSignal && lockedSignal.symbol === currentSymbol && lockedSignal.timeframe === currentTimeframe) {
@@ -2844,11 +2880,9 @@ Respond now in Hindi/Hinglish as Pulse.`;
           const output = document.getElementById('ai-analysis-output');
           const spinner = document.getElementById('btn-spinner');
           const btnText = document.getElementById('btn-text');
-
           spinner.classList.remove('hidden');
           btnText.innerText = "Refreshing…";
           await new Promise(r => setTimeout(r, 250));
-
           const len = currentCandles.length;
           const ema9Vals = computeEMA(currentCandles, 9);
           const ema20Vals = computeEMA(currentCandles, 20);
@@ -2856,7 +2890,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
           const sr = calculateDynamicSR(currentCandles);
           const sweep = detectLiquiditySweep(currentCandles);
           const volInfo = calculateVolumeMeter(currentVolumes);
-
           updateMetrics(isBullishTrend, sweep, volInfo, true, lockedSignal.type);
           clearCanvasLines();
           drawSRLines(sr);
@@ -2864,42 +2897,26 @@ Respond now in Hindi/Hinglish as Pulse.`;
           drawSweepLine(sweep);
           drawEntryMarker(lockedSignal);
           renderLockedSignal(output, lockedSignal, volInfo, sweep, null);
-
           spinner.classList.add('hidden');
           btnText.innerText = "Scan Market Setup";
           isAnalyzing = false;
           return;
         }
       }
-
-      if (!subInitDone) {
-        try { await initSubscription(); } catch(e){}
-      }
-
+      if (!subInitDone) { try { await initSubscription(); } catch(e){} }
       let gate;
-      try {
-        gate = await checkScanPermission();
-      } catch (e) {
-        gate = { allowed: true, unlimited: false, left: FREE_SCANS_PER_DAY };
-      }
-
-      if (!gate.allowed) {
-        showPaywall(gate.reason);
-        return;
-      }
-
+      try { gate = await checkScanPermission(); }
+      catch (e) { gate = { allowed: true, unlimited: false, left: FREE_SCANS_PER_DAY }; }
+      if (!gate.allowed) { showPaywall(gate.reason); return; }
       if (!gate.unlimited) {
         try { await consumeFreeScan(); } catch(e){}
         refreshSubscriptionUI().catch(()=>{});
       }
-
       isAnalyzing = true;
       const output = document.getElementById('ai-analysis-output');
       output.innerHTML = '';
-
       const spinner = document.getElementById('btn-spinner');
       const btnText = document.getElementById('btn-text');
-
       spinner.classList.remove('hidden');
       btnText.innerText = "Scanning (3s)...";
       output.innerHTML = `
@@ -2912,7 +2929,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
           </div>
         </div>`;
       await new Promise(r => setTimeout(r, 3000));
-
       const len = currentCandles.length;
       const ema9Vals = computeEMA(currentCandles, 9);
       const ema20Vals = computeEMA(currentCandles, 20);
@@ -2921,49 +2937,38 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const sweep = detectLiquiditySweep(currentCandles);
       const volInfo = calculateVolumeMeter(currentVolumes);
       const isChoppy = detectChoppyMarket(currentCandles);
-
       const strategy = detectEmaStrategy(currentCandles);
       updateMetrics(isBullishTrend, sweep, volInfo, strategy.valid, strategy.type);
-
       clearCanvasLines();
       drawSRLines(sr);
       drawSweepLine(sweep);
-
       const latestClose = currentCandles[len - 1].close;
       const high30 = Math.max(...currentCandles.slice(-30).map(c => c.high));
       const low30 = Math.min(...currentCandles.slice(-30).map(c => c.low));
       const nearestR = sr.resistances[0] || high30;
       const nearestS = sr.supports[0] || low30;
-
       if (!strategy.valid || isChoppy) {
         let waitReason = 'No valid entry right now. Wait for a clear setup.';
         if (isChoppy) waitReason = 'Choppy market — no-trade zone. Wait for a clean 9/20 EMA trend, then a pullback.';
         else if (strategy.reason) waitReason = strategy.reason + '. Wait for a clear setup.';
-
-        const prompt = `You are a professional crypto market analyst. Analyze this market snapshot and provide a SHORT, specific analysis (3-4 lines maximum) in English.
+        const prompt = `You are a professional crypto market analyst. Provide SHORT specific analysis (3-4 lines) in English.
 
 ASSET: ${currentSymbol} | TIMEFRAME: ${currentTimeframe}
 CURRENT PRICE: $${formatPrice(latestClose, currentSymbol)}
 9 EMA: ${formatPrice(ema9Vals[len-2].value, currentSymbol)} | 20 EMA: ${formatPrice(ema20Vals[len-2].value, currentSymbol)}
-TREND: ${isBullishTrend ? 'BULLISH (9 EMA above 20 EMA)' : 'BEARISH (9 EMA below 20 EMA)'}
+TREND: ${isBullishTrend ? 'BULLISH' : 'BEARISH'}
 NEAREST RESISTANCE: $${formatPrice(nearestR, currentSymbol)}
 NEAREST SUPPORT: $${formatPrice(nearestS, currentSymbol)}
-30-CANDLE HIGH: $${formatPrice(high30, currentSymbol)} | 30-CANDLE LOW: $${formatPrice(low30, currentSymbol)}
-LIQUIDITY SWEEP: ${sweep.swept ? sweep.type : 'None detected'}
+LIQUIDITY SWEEP: ${sweep.swept ? sweep.type : 'None'}
 VOLUME: ${volInfo.label}
-EMA CROSSOVER: ${strategy.reason}
+STATUS: NO VALID SETUP right now.
 
-STATUS: NO VALID 9/20 EMA PULLBACK SETUP right now.
-
-Give a real, actionable analysis covering: (1) current market structure, (2) what price action you're waiting for, (3) a specific key level to watch. Keep it under 45 words. Do NOT use markdown or bullet points.`;
-
+Cover: (1) market structure, (2) what to wait for, (3) key level. Under 45 words. No markdown.`;
         let aiWait = null;
         try { aiWait = await fetchGeminiAiAnalysis(prompt); } catch(e){}
-
         spinner.classList.add('hidden');
         btnText.innerText = "Scan Market Setup";
         isAnalyzing = false;
-
         output.innerHTML = `
           <div class="w-full space-y-3">
             <div class="flex flex-wrap items-center justify-between border-b border-slate-700 pb-2 gap-2">
@@ -2988,13 +2993,11 @@ Give a real, actionable analysis covering: (1) current market structure, (2) wha
         playNotificationSound();
         return;
       }
-
       const entry = strategy.entry;
       const sl = strategy.sl;
       const risk = Math.abs(entry - sl);
       const tp1 = strategy.type.includes('BULLISH') ? entry + (risk * 2) : entry - (risk * 2);
       const tp2 = strategy.type.includes('BULLISH') ? entry + (risk * 3) : entry - (risk * 3);
-
       lockedSignal = {
         type: strategy.type, entry, sl, tp1, tp2,
         note: strategy.note,
@@ -3005,33 +3008,25 @@ Give a real, actionable analysis covering: (1) current market structure, (2) wha
         confirmCandleHigh: strategy.confirmCandleHigh,
         timestamp: Date.now()
       };
-
       const isLong = strategy.type.includes('BULLISH');
-      const prompt = `You are a professional crypto trade analyst. Provide a real, actionable trade analysis in 4-5 SHORT lines (English only, no markdown).
+      const prompt = `You are a professional crypto trade analyst. Provide real actionable analysis in 4-5 SHORT lines (English only, no markdown).
 
 TRADE SETUP:
 Asset: ${currentSymbol} | Timeframe: ${currentTimeframe}
-Direction: ${isLong ? 'LONG / BUY' : 'SHORT / SELL'}
+Direction: ${isLong ? 'LONG' : 'SHORT'}
 Current Price: $${formatPrice(latestClose, currentSymbol)}
 Entry: $${formatPrice(entry, currentSymbol)}
 Stop Loss: $${formatPrice(sl, currentSymbol)}
-TP1 (1:2 RR): $${formatPrice(tp1, currentSymbol)}
-TP2 (1:3 RR): $${formatPrice(tp2, currentSymbol)}
-Risk Amount: $${formatPrice(risk, currentSymbol)}
-
-CONTEXT:
-Trend: ${isBullishTrend ? 'Bullish (9 EMA > 20 EMA)' : 'Bearish (9 EMA < 20 EMA)'}
-Setup: ${strategy.type} — 9/20 EMA crossover, pullback to EMA zone, bigger rejection candle, confirmation break
-Liquidity Sweep: ${sweep.swept ? sweep.type + ' at $' + formatPrice(sweep.sweepLevel, currentSymbol) : 'None'}
+TP1: $${formatPrice(tp1, currentSymbol)}
+TP2: $${formatPrice(tp2, currentSymbol)}
+Trend: ${isBullishTrend ? 'Bullish' : 'Bearish'}
 Volume: ${volInfo.label}
 Nearest Resistance: $${formatPrice(nearestR, currentSymbol)}
 Nearest Support: $${formatPrice(nearestS, currentSymbol)}
 
-Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, (3) key risk to watch, (4) suggested management (e.g. move SL to BE after TP1). Keep each line under 18 words. No bullet points, no markdown.`;
-
+Write 4-5 lines: (1) why setup is valid, (2) volume confirmation, (3) key risk, (4) management suggestion. Each line under 18 words. No bullets, no markdown.`;
       let aiText = null;
       try { aiText = await fetchGeminiAiAnalysis(prompt); } catch(e){}
-
       spinner.classList.add('hidden');
       btnText.innerText = "Scan Market Setup";
       isAnalyzing = false;
@@ -3040,7 +3035,6 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       drawSweepLine(sweep);
       drawEntryMarker(lockedSignal);
       playNotificationSound();
-
       if (PULSE_SUPPORTED[currentSymbol]) {
         maybeSendSetupAlert({
           symbol: currentSymbol,
@@ -3057,81 +3051,54 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       chartLines.push(candleSeries.createPriceLine({ price: sig.tp2, color: THEME.tp2, lineWidth: 2, title: 'TP2' }));
       chartLines.push(candleSeries.createPriceLine({ price: sig.sl, color: THEME.sl, lineWidth: 2, title: 'SL' }));
     }
-
     function drawEntryMarker(sig) {
       if (!candleSeries || !sig.confirmCandleTime) return;
       const isBull = sig.type.includes('BULLISH');
       const markerPrice = isBull ? sig.confirmCandleLow : sig.confirmCandleHigh;
       entryMarkerData = { time: sig.confirmCandleTime, price: markerPrice, isBull };
-      const marker = {
-        time: sig.confirmCandleTime,
-        position: isBull ? 'belowBar' : 'aboveBar',
-        color: THEME.marker, shape: 'circle', size: 0.15, text: ''
-      };
+      const marker = { time: sig.confirmCandleTime, position: isBull ? 'belowBar' : 'aboveBar', color: THEME.marker, shape: 'circle', size: 0.15, text: '' };
       candleSeries.setMarkers([marker]);
     }
-
     function rerenderEntryMarker() {
       if (!entryMarkerData || !candleSeries) return;
-      const marker = {
-        time: entryMarkerData.time,
-        position: entryMarkerData.isBull ? 'belowBar' : 'aboveBar',
-        color: THEME.marker, shape: 'circle', size: 0.15, text: ''
-      };
+      const marker = { time: entryMarkerData.time, position: entryMarkerData.isBull ? 'belowBar' : 'aboveBar', color: THEME.marker, shape: 'circle', size: 0.15, text: '' };
       candleSeries.setMarkers([marker]);
     }
-
     function drawSweepLine(sweep) {
       if (!sweep.swept) return;
       const color = sweep.type === 'BULLISH_SWEEP' ? THEME.sweepBull : THEME.sweepBear;
       const title = sweep.type === 'BULLISH_SWEEP' ? 'SWEEP↓' : 'SWEEP↑';
-      const line = candleSeries.createPriceLine({
-        price: sweep.sweepLevel, color, lineWidth: 2,
-        lineStyle: LightweightCharts.LineStyle.Solid, title
-      });
+      const line = candleSeries.createPriceLine({ price: sweep.sweepLevel, color, lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title });
       sweepLines.push(line);
     }
-
     function updateMetrics(isBullishTrend, sweep, volInfo, hasSetup, setupType) {
       const emaEl = document.getElementById('metric-ema');
       emaEl.innerText = isBullishTrend ? "Bullish (9 > 20 EMA)" : "Bearish (9 < 20 EMA)";
       emaEl.className = isBullishTrend ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-
       const swEl = document.getElementById('metric-sweep');
       if (sweep.swept) {
         swEl.innerText = sweep.type === 'BULLISH_SWEEP' ? "Bullish Sweep" : "Bearish Sweep";
         swEl.className = sweep.type === 'BULLISH_SWEEP' ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
       } else { swEl.innerText = "No Sweep"; swEl.className = "text-slate-400"; }
-
       const volEl = document.getElementById('metric-volatility');
       let biasText;
       if (hasSetup && setupType) biasText = setupType.includes('BULLISH') ? 'BULLISH SETUP' : 'BEARISH SETUP';
       else biasText = isBullishTrend ? 'BULLISH BIAS' : 'BEARISH BIAS';
       volEl.innerText = biasText;
       volEl.className = biasText.includes('BULLISH') ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
-
       const vmEl = document.getElementById('metric-volume');
       vmEl.innerText = volInfo.label;
       vmEl.className = volInfo.label === 'High' ? 'text-emerald-400 font-bold' : (volInfo.label === 'Low' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
     }
-
     function drawSRLines(sr) {
       const { resistances, supports } = sr;
       resistances.forEach((price, i) => {
         const color = THEME.rColors[Math.min(i, THEME.rColors.length - 1)];
-        const line = candleSeries.createPriceLine({
-          price: price, color, lineWidth: 2,
-          lineStyle: LightweightCharts.LineStyle.Solid, title: 'R'
-        });
-        chartLines.push(line);
+        chartLines.push(candleSeries.createPriceLine({ price, color, lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title: 'R' }));
       });
       supports.forEach((price, i) => {
         const color = THEME.sColors[Math.min(i, THEME.sColors.length - 1)];
-        const line = candleSeries.createPriceLine({
-          price: price, color, lineWidth: 2,
-          lineStyle: LightweightCharts.LineStyle.Solid, title: 'S'
-        });
-        chartLines.push(line);
+        chartLines.push(candleSeries.createPriceLine({ price, color, lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, title: 'S' }));
       });
     }
 
@@ -3145,7 +3112,6 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       applyTimeframeButtons();
       loadAssetData();
     };
-
     window.changeAsset = function (symbol, name) {
       currentSymbol = symbol; currentAssetName = name;
       resetLockedSignal();
@@ -3224,7 +3190,6 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
           }
         });
       }
-
       const resendBtn = document.getElementById('verify-resend-btn');
       if (resendBtn) {
         resendBtn.addEventListener('click', async () => {
@@ -3258,7 +3223,6 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
           }
         });
       }
-
       const logoutBtn = document.getElementById('verify-logout-btn');
       if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
     }
@@ -3267,29 +3231,21 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
     window.addEventListener('DOMContentLoaded', () => {
       const authForm = document.getElementById('auth-form');
       if (authForm) authForm.addEventListener('submit', window.handleAuth);
-
       const toggleBtn = document.getElementById('auth-toggle-btn');
       if (toggleBtn) toggleBtn.addEventListener('click', window.toggleAuthMode);
-
       const forgotLink = document.getElementById('forgot-link');
       if (forgotLink) forgotLink.addEventListener('click', () => setAuthMode('forgot'));
-
       const headerLogout = document.getElementById('header-logout-btn');
       if (headerLogout) headerLogout.addEventListener('click', doLogout);
-
       setupPasswordToggle();
       setupVerifyButtons();
       setupMobileInput();
-
       setupPaywallModal();
       setupFreeAccessModal();
       attachSubscribeButton(document.getElementById('subscribe-btn'));
       attachSubscribeButton(document.getElementById('paywall-subscribe-btn'));
-
       try { history.replaceState({ pulseScreen: 'splash', ts: Date.now() }, '', location.href); } catch(e){}
-
       bootstrap();
-
       setTimeout(() => {
         const splash = document.getElementById('splash-screen');
         if (splash && !splash.classList.contains('fade-out')) {
