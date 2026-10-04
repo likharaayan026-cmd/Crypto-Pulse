@@ -19,11 +19,13 @@
   <style>
     :root { color-scheme: dark; }
     * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-    html, body {
+    html { height: 100%; overflow-x: hidden; }
+    body {
       width: 100%; max-width: 100%; overflow-x: hidden;
-      overscroll-behavior: none; background-color: #070b14; height: 100%;
-      -webkit-tap-highlight-color: transparent; touch-action: pan-y;
+      overscroll-behavior: none; background-color: #070b14; min-height: 100%;
+      -webkit-tap-highlight-color: transparent;
       user-select: none; -webkit-user-select: none;
+      display: flex; flex-direction: column;
     }
     input, textarea { user-select: text; -webkit-user-select: text; }
     .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
@@ -48,71 +50,31 @@
       from { opacity: 0; transform: translateY(14px) scale(0.985); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
-    @keyframes pulseRing {
-      0% { transform: scale(0.85); opacity: 0.7; }
-      100% { transform: scale(1.6); opacity: 0; }
-    }
-    @keyframes logoFloat {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-6px) rotate(2deg); }
-    }
-    @keyframes barShimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-    @keyframes floatBlob {
-      0%, 100% { transform: translate(0,0) scale(1); }
-      33% { transform: translate(30px,-20px) scale(1.08); }
-      66% { transform: translate(-20px,20px) scale(0.95); }
-    }
-    .splash-ring {
-      position: absolute; inset: 0; border-radius: 32px;
-      background: linear-gradient(135deg, #6366f1, #3b82f6);
-      animation: pulseRing 2s ease-out infinite;
-    }
+    @keyframes pulseRing { 0% { transform: scale(0.85); opacity: 0.7; } 100% { transform: scale(1.6); opacity: 0; } }
+    @keyframes logoFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-6px) rotate(2deg); } }
+    @keyframes barShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes floatBlob { 0%, 100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.08); } 66% { transform: translate(-20px,20px) scale(0.95); } }
+    .splash-ring { position: absolute; inset: 0; border-radius: 32px; background: linear-gradient(135deg, #6366f1, #3b82f6); animation: pulseRing 2s ease-out infinite; }
     .splash-ring.delay { animation-delay: 0.6s; }
     .splash-logo-inner { animation: logoFloat 3s ease-in-out infinite; }
-    .shimmer-bar {
-      background: linear-gradient(90deg, #6366f1 0%, #3b82f6 25%, #a855f7 50%, #3b82f6 75%, #6366f1 100%);
-      background-size: 200% 100%; animation: barShimmer 1.6s linear infinite;
-    }
-    .blob {
-      position: absolute; border-radius: 9999px; filter: blur(80px);
-      opacity: 0.28; animation: floatBlob 12s ease-in-out infinite; pointer-events: none;
-    }
+    .shimmer-bar { background: linear-gradient(90deg, #6366f1 0%, #3b82f6 25%, #a855f7 50%, #3b82f6 75%, #6366f1 100%); background-size: 200% 100%; animation: barShimmer 1.6s linear infinite; }
+    .blob { position: absolute; border-radius: 9999px; filter: blur(80px); opacity: 0.28; animation: floatBlob 12s ease-in-out infinite; pointer-events: none; }
     .btn-press { transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease; touch-action: manipulation; }
     .btn-press:active { transform: scale(0.97); }
     .input-modern { transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
-    .input-modern:focus {
-      outline: none; border-color: #6366f1;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18); background: #0b1220;
-    }
+    .input-modern:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18); background: #0b1220; }
     .mobile-wrap { transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
-    .mobile-wrap:focus-within {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18); background: #0b1220;
-    }
+    .mobile-wrap:focus-within { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18); background: #0b1220; }
     .mobile-prefix { pointer-events: none; user-select: none; -webkit-user-select: none; }
     .mobile-wrap input { background: transparent; border: none; outline: none; }
     .mobile-wrap input:focus { outline: none; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
-    .gradient-text {
-      background: linear-gradient(135deg, #818cf8 0%, #60a5fa 100%);
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    input[type=tel]::-webkit-outer-spin-button,
-    input[type=tel]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .live-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: #10b981;
-      box-shadow: 0 0 0 0 rgba(16,185,129,0.7); animation: livePulse 1.6s infinite;
-    }
-    @keyframes livePulse {
-      0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
-      70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
-      100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
-    }
+    .gradient-text { background: linear-gradient(135deg, #818cf8 0%, #60a5fa 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    input[type=tel]::-webkit-outer-spin-button, input[type=tel]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 0 0 rgba(16,185,129,0.7); animation: livePulse 1.6s infinite; }
+    @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); } 70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
     input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active {
       -webkit-box-shadow: 0 0 0 30px #0f172a inset !important;
       -webkit-text-fill-color: #e2e8f0 !important;
@@ -126,8 +88,7 @@
 
     /* HEADER VOICE BUTTON */
     .header-voice-btn {
-      position: relative;
-      width: 36px; height: 36px; border-radius: 12px;
+      position: relative; width: 36px; height: 36px; border-radius: 12px;
       background: linear-gradient(135deg, #6366f1, #3b82f6);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; border: 1px solid rgba(165,180,252,0.5);
@@ -141,10 +102,7 @@
       border: 2px solid rgba(99,102,241,0.5);
       animation: headerVoicePulse 2s ease-out infinite; pointer-events: none;
     }
-    @keyframes headerVoicePulse {
-      0% { transform: scale(0.9); opacity: 0.9; }
-      100% { transform: scale(1.35); opacity: 0; }
-    }
+    @keyframes headerVoicePulse { 0% { transform: scale(0.9); opacity: 0.9; } 100% { transform: scale(1.35); opacity: 0; } }
 
     /* BLUR */
     body.voice-open { overflow: hidden; }
@@ -174,10 +132,7 @@
       60% { opacity: 1; filter: blur(2px); }
       100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
     }
-    .voice-orb-container {
-      position: relative; width: 240px; height: 240px;
-      margin: 0 auto; display: flex; align-items: center; justify-content: center;
-    }
+    .voice-orb-container { position: relative; width: 240px; height: 240px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
     .siri-ring { position: absolute; border-radius: 50%; pointer-events: none; opacity: 1; }
     .siri-ring-1 { inset: 0; background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #ec4899, #f59e0b, #10b981, #06b6d4, #6366f1); filter: blur(22px); animation: siriSpin 4s linear infinite; }
     .siri-ring-2 { inset: 14px; background: conic-gradient(from 90deg, #3b82f6, #a855f7, #f43f5e, #f59e0b, #22c55e, #06b6d4, #3b82f6); filter: blur(18px); animation: siriSpin 6s linear infinite reverse; }
@@ -213,30 +168,39 @@
     .voice-status-pill.processing { background: rgba(245,158,11,0.18); color: #fcd34d; border-color: rgba(245,158,11,0.5); }
     .voice-status-pill.speaking { background: rgba(16,185,129,0.18); color: #6ee7b7; border-color: rgba(16,185,129,0.5); }
 
-    /* Live transcript view (single line, disappears after) */
     .voice-live-text {
       background: rgba(15,23,42,0.75);
       border: 1px solid rgba(99,102,241,0.4);
       border-radius: 16px;
-      padding: 14px 18px;
+      padding: 16px 18px;
       font-size: 14px;
       line-height: 1.6;
       color: #e2e8f0;
       backdrop-filter: blur(10px);
-      min-height: 60px;
+      min-height: 70px;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
       transition: all 0.3s ease;
+      word-break: break-word;
     }
     .voice-live-text.listening { border-color: rgba(239,68,68,0.6); color: #fecaca; }
     .voice-live-text.processing { border-color: rgba(245,158,11,0.6); color: #fde68a; }
     .voice-live-text.speaking { border-color: rgba(16,185,129,0.6); color: #a7f3d0; }
+    .voice-live-text .pulse-answer { color: #e2e8f0; }
     .voice-live-text .pulse-answer strong { color: #6ee7b7; }
+
+    /* Sticky footer ensure visible */
+    #app-footer {
+      position: relative;
+      width: 100%;
+      flex-shrink: 0;
+      padding-bottom: env(safe-area-inset-bottom, 12px);
+    }
   </style>
 </head>
-<body class="bg-[#070b14] text-slate-200 font-sans min-h-screen flex flex-col antialiased">
+<body class="bg-[#070b14] text-slate-200 font-sans antialiased">
 
   <!-- SPLASH -->
   <div id="splash-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-[#070b14] via-[#0b1220] to-[#131a3a] flex flex-col items-center justify-center transition-opacity duration-500 overflow-hidden">
@@ -323,7 +287,7 @@
   </div>
 
   <!-- APP -->
-  <div id="app-container" class="hidden flex-col min-h-screen">
+  <div id="app-container" class="hidden flex flex-col min-h-screen w-full">
     <header class="bg-[#0b1220]/90 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-30 shadow-lg">
       <div class="max-w-7xl mx-auto px-3 py-3 flex justify-between items-center gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
@@ -417,10 +381,17 @@
       </div>
     </main>
 
-    <footer class="bg-[#0b1220] border-t border-slate-800 py-4 mt-auto safe-b">
-      <div class="max-w-7xl mx-auto px-4 text-center space-y-1.5">
-        <p class="text-[11px] text-slate-400"><a href="https://pulse-alpha-privacy-policy.vercel.app" target="_blank" rel="noopener noreferrer" class="text-indigo-400 font-bold">Terms and Conditions & Disclaimer</a></p>
-        <p class="text-[10px] text-slate-500">Developer <span class="text-slate-300 font-bold">Aayan Likhar</span></p>
+    <!-- FOOTER - always visible -->
+    <footer id="app-footer" class="bg-[#0b1220] border-t border-slate-800 py-5 mt-4 w-full">
+      <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+        <p class="text-[12px] text-slate-300 font-medium">
+          <a href="https://pulse-alpha-privacy-policy.vercel.app" target="_blank" rel="noopener noreferrer" class="text-indigo-400 font-bold hover:underline">
+            Terms and Conditions &amp; Disclaimer
+          </a>
+        </p>
+        <p class="text-[11px] text-slate-400 font-medium">
+          Developer <span class="text-indigo-300 font-bold">Aayan Likhar</span>
+        </p>
       </div>
     </footer>
   </div>
@@ -533,9 +504,10 @@
     };
     const SETUP_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
     const setupAlertLog = {};
-    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v9';
-    // ✅ 5 second silence before reply (pehle 2s tha)
-    const SILENCE_TIMEOUT_MS = 5000;
+    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v10';
+
+    // ✅ 3 seconds silence — long enough to complete sentence
+    const SILENCE_TIMEOUT_MS = 3000;
 
     let pulseAssistant = null;
 
@@ -572,9 +544,7 @@
 
     function resetLockedSignal() { lockedSignal = null; }
 
-    // ==================================================================
-    // ============  SPEECH ENGINE (Web Speech API — Chrome)  ===========
-    // ==================================================================
+    // ================== SPEECH ==================
     let voiceList = [], voicesLoaded = false, voicesLoadPromise = null;
     let audioCtx = null, audioUnlocked = false;
 
@@ -588,19 +558,13 @@
         if (!isSpeechSupported()) { resolve([]); return; }
         let resolved = false;
         const finish = (v) => { if (resolved) return; resolved = true; voiceList = v || []; voicesLoaded = voiceList.length > 0; resolve(voiceList); };
-        try {
-          const now = window.speechSynthesis.getVoices();
-          if (now && now.length) { finish(now); return; }
-        } catch (e) {}
+        try { const now = window.speechSynthesis.getVoices(); if (now && now.length) { finish(now); return; } } catch (e) {}
         const handler = () => { try { finish(window.speechSynthesis.getVoices()); } catch (e) { finish([]); } };
         try { window.speechSynthesis.onvoiceschanged = handler; } catch (e) {}
         let attempts = 0;
         const poll = setInterval(() => {
           attempts++;
-          try {
-            const v = window.speechSynthesis.getVoices();
-            if (v && v.length) { clearInterval(poll); finish(v); return; }
-          } catch (e) {}
+          try { const v = window.speechSynthesis.getVoices(); if (v && v.length) { clearInterval(poll); finish(v); return; } } catch (e) {}
           if (attempts >= 15) { clearInterval(poll); finish([]); }
         }, 200);
         setTimeout(handler, 100);
@@ -642,10 +606,7 @@
       } catch (e) {}
       loadVoices().catch(()=>{});
       primeSpeech();
-      try {
-        const a = document.getElementById('notification-sound');
-        if (a) { a.volume = 0; const p = a.play(); if (p && p.then) p.then(() => { a.pause(); a.currentTime = 0; a.volume = 1; }).catch(() => {}); }
-      } catch (e) {}
+      try { const a = document.getElementById('notification-sound'); if (a) { a.volume = 0; const p = a.play(); if (p && p.then) p.then(() => { a.pause(); a.currentTime = 0; a.volume = 1; }).catch(() => {}); } } catch (e) {}
     }
     document.addEventListener('touchstart', unlockAudioOnFirstInteraction, { once: true, passive: true });
     document.addEventListener('click', unlockAudioOnFirstInteraction, { once: true });
@@ -668,10 +629,7 @@
     }
 
     function playNotificationSound() {
-      try {
-        const audio = document.getElementById('notification-sound');
-        if (audio) { audio.currentTime = 0; const p = audio.play(); if (p && p.catch) p.catch(() => playBeepFallback()); return; }
-      } catch (e) {}
+      try { const audio = document.getElementById('notification-sound'); if (audio) { audio.currentTime = 0; const p = audio.play(); if (p && p.catch) p.catch(() => playBeepFallback()); return; } } catch (e) {}
       playBeepFallback();
     }
 
@@ -682,6 +640,7 @@
         if (pulseAssistant && pulseAssistant.state === 'speaking') pulseAssistant.setState('idle');
         if (typeof onDone === 'function') { try { onDone(); } catch(e){} }
       };
+      if (!text || !text.trim()) { finish(); return; }
       if (!isSpeechSupported()) {
         if (pulseAssistant) pulseAssistant.setState('speaking');
         setTimeout(finish, Math.max(2500, Math.min(9000, (text || '').length * 75)));
@@ -701,8 +660,7 @@
           utter.onend = () => { if (ended) return; ended = true; finish(); };
           utter.onerror = () => { if (ended) return; ended = true; finish(); };
           currentUtterance = utter;
-          try { window.speechSynthesis.speak(utter); }
-          catch (e) { ended = true; finish(); return; }
+          try { window.speechSynthesis.speak(utter); } catch (e) { ended = true; finish(); return; }
           const estimatedMs = Math.max(5000, Math.min(90000, (spokenText.length || 20) * 90));
           if (speakWatchdogTimer) clearTimeout(speakWatchdogTimer);
           speakWatchdogTimer = setTimeout(() => { if (ended) return; try { window.speechSynthesis.cancel(); } catch(e){} ended = true; finish(); }, estimatedMs);
@@ -1132,7 +1090,7 @@ Respond in Hindi/Hinglish.`;
       if (!transcript || !transcript.trim()) { if (pulseAssistant) pulseAssistant.setState('idle'); return; }
       if (pulseAssistant) {
         pulseAssistant.setState('processing');
-        pulseAssistant.setLiveText(`<span class="text-amber-300">Analyzing: "${transcript}"</span>`);
+        pulseAssistant.setLiveText(`<span class="text-amber-300">Analyzing: "${escapeHtml(transcript)}"</span>`);
       }
 
       const clean = transcript.trim().toLowerCase();
@@ -1227,7 +1185,7 @@ Respond in Hindi/Hinglish.`;
     }
 
     // ==================================================================
-    // ============  VOICE ASSISTANT (FIXED FOR CHROME)  ================
+    // ============  VOICE ASSISTANT (FIXED)  ==========================
     // ==================================================================
     function initPulseAssistant() {
       if (pulseAssistant) return;
@@ -1243,7 +1201,8 @@ Respond in Hindi/Hinglish.`;
       let isListening = false;
       let silenceTimer = null;
       let lastTranscript = '';
-      let hasCommittedTranscript = false;
+      let committedTranscript = null;   // ✅ Guard: prevents double-processing
+      let listeningGeneration = 0;      // ✅ Guard: prevents stale callbacks
 
       const setState = (state) => {
         pulseAssistant.state = state;
@@ -1263,6 +1222,17 @@ Respond in Hindi/Hinglish.`;
       const setHint = (text) => { if (hint) hint.innerText = text; };
       const setLiveText = (html) => { if (liveTextEl) liveTextEl.innerHTML = html; };
 
+      // ✅ Fire reply once and only once
+      const fireReply = (text) => {
+        const clean = (text || '').trim();
+        if (!clean) return;
+        if (committedTranscript === clean) return;  // Already processed this exact text
+        committedTranscript = clean;
+        try { if (recognition) recognition.stop(); } catch(e){}
+        isListening = false;
+        processPulseCommand(clean);
+      };
+
       const startListening = () => {
         if (isListening) return;
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1272,6 +1242,8 @@ Respond in Hindi/Hinglish.`;
           return;
         }
         try {
+          listeningGeneration++;
+          const myGen = listeningGeneration;
           recognition = new SR();
           recognition.lang = 'hi-IN';
           recognition.interimResults = true;
@@ -1283,47 +1255,46 @@ Respond in Hindi/Hinglish.`;
             isListening = true;
             finalTranscript = '';
             lastTranscript = '';
-            hasCommittedTranscript = false;
+            committedTranscript = null;
             setState('listening');
-            setHint('Sun raha hoon… aap bolo, main sun raha hoon');
+            setHint('Sun raha hoon… bolo, main sun raha hoon');
             setLiveText('<span class="text-red-200">🎙️ Listening…</span>');
           };
 
           recognition.onresult = (event) => {
+            if (myGen !== listeningGeneration) return; // stale
             let interim = '';
             for (let i = event.resultIndex; i < event.results.length; i++) {
               const res = event.results[i];
-              if (res.isFinal) {
-                finalTranscript += ' ' + res[0].transcript;
-              } else {
-                interim += ' ' + res[0].transcript;
-              }
+              if (res.isFinal) finalTranscript += ' ' + res[0].transcript;
+              else interim += ' ' + res[0].transcript;
             }
             const currentText = (finalTranscript + ' ' + interim).trim();
             if (currentText) {
               lastTranscript = currentText;
               setLiveText('<span class="text-red-200">🎙️ ' + escapeHtml(currentText) + '</span>');
             }
-            // ✅ Har chunk pe timer reset — 5 second silence ke baad reply
+            // ✅ 3 second silence → reply
             if (silenceTimer) clearTimeout(silenceTimer);
             silenceTimer = setTimeout(() => {
               silenceTimer = null;
-              const textToProcess = lastTranscript.trim();
+              if (myGen !== listeningGeneration) return;
+              const textToProcess = (lastTranscript || finalTranscript || '').trim();
               if (!textToProcess) {
-                // Nothing heard — restart listening
-                try { recognition.stop(); } catch(e){}
+                // Nothing heard — reset
+                try { if (recognition) recognition.stop(); } catch(e){}
                 isListening = false;
-                setTimeout(() => { if (pulseAssistant && pulseAssistant.state === 'listening') startListening(); }, 300);
+                setState('idle');
+                setHint('Kuch suna nahi. Mic dabakar dobara bolo.');
+                setLiveText('<span class="text-slate-400">Tap the orb and speak...</span>');
                 return;
               }
-              hasCommittedTranscript = true;
-              try { recognition.stop(); } catch(e){}
-              isListening = false;
-              processPulseCommand(textToProcess);
+              fireReply(textToProcess);
             }, SILENCE_TIMEOUT_MS);
           };
 
           recognition.onerror = (event) => {
+            if (myGen !== listeningGeneration) return;
             isListening = false;
             if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
             console.warn('Speech error', event.error);
@@ -1336,7 +1307,7 @@ Respond in Hindi/Hinglish.`;
               setState('idle');
               setLiveText('<span class="text-slate-400">Tap the orb and speak...</span>');
             } else if (event.error === 'aborted') {
-              // User stopped — fine
+              // fine
             } else {
               setHint('Voice capture issue. Dobara try karein.');
               setState('idle');
@@ -1344,9 +1315,12 @@ Respond in Hindi/Hinglish.`;
           };
 
           recognition.onend = () => {
+            if (myGen !== listeningGeneration) return;
             isListening = false;
             if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
-            if (hasCommittedTranscript) return; // Reply is happening
+            // ✅ If silence timer already fired reply, don't do anything
+            if (committedTranscript) return;
+            // If a reply timer was scheduled, don't reset
             if (pulseAssistant && pulseAssistant.state === 'listening') {
               setState('idle');
               setHint('Mic dabakar bolo');
