@@ -26,9 +26,6 @@
       user-select: none; -webkit-user-select: none;
     }
     input, textarea { user-select: text; -webkit-user-select: text; }
-    #splash-screen, #auth-container, #verify-container, #app-container {
-      max-width: 100vw; overflow-x: hidden;
-    }
     .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
     .glass {
       background: rgba(15, 23, 42, 0.82);
@@ -147,37 +144,55 @@
     /* ================= HEADER VOICE BUTTON ================= */
     .header-voice-btn {
       position: relative;
-      width: 34px; height: 34px; border-radius: 12px;
+      width: 36px; height: 36px; border-radius: 12px;
       background: linear-gradient(135deg, #6366f1, #3b82f6);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; border: 1px solid rgba(165,180,252,0.5);
       box-shadow: 0 4px 14px rgba(99,102,241,0.35);
       transition: transform 0.15s ease, box-shadow 0.3s ease, background 0.3s ease;
       flex-shrink: 0;
+      z-index: 60;
     }
-    .header-voice-btn:active { transform: scale(0.92); }
-    .header-voice-btn svg { width: 17px; height: 17px; color: #fff; }
-
-    /* ================= DASHBOARD BLUR WHEN VOICE OPEN ================= */
-    body.voice-open #app-container {
-      filter: blur(8px) saturate(0.7);
-      transition: filter 0.4s ease;
+    .header-voice-btn:active { transform: scale(0.9); }
+    .header-voice-btn svg { width: 18px; height: 18px; color: #fff; }
+    .header-voice-btn::after {
+      content: '';
+      position: absolute; inset: -3px; border-radius: 15px;
+      border: 2px solid rgba(99,102,241,0.5);
+      animation: headerVoicePulse 2s ease-out infinite;
       pointer-events: none;
     }
-    /* Fallback for browsers without filter - apply opacity overlay instead */
+    @keyframes headerVoicePulse {
+      0% { transform: scale(0.9); opacity: 0.9; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+
+    /* ================= DASHBOARD BLUR WHEN VOICE OPEN ================= */
+    body.voice-open {
+      overflow: hidden;
+    }
+    body.voice-open #app-container {
+      filter: blur(14px) saturate(0.8) brightness(0.75);
+      transition: filter 0.5s ease;
+      pointer-events: none;
+      transform: scale(1.02);
+    }
+
+    /* Blue-tinted backdrop */
     #voice-backdrop {
       position: fixed; inset: 0; z-index: 54;
-      background: rgba(7, 11, 20, 0.4);
-      backdrop-filter: blur(18px) saturate(0.8);
-      -webkit-backdrop-filter: blur(18px) saturate(0.8);
+      background: rgba(30, 64, 175, 0.42);
+      backdrop-filter: blur(20px) saturate(1.3);
+      -webkit-backdrop-filter: blur(20px) saturate(1.3);
       opacity: 0; pointer-events: none;
       transition: opacity 0.4s ease;
     }
     body.voice-open #voice-backdrop {
       opacity: 1;
+      pointer-events: auto;
     }
 
-    /* ================= VOICE OVERLAY (SIRI STYLE) ================= */
+    /* ================= SIRI-STYLE VOICE OVERLAY ================= */
     #voice-overlay {
       position: fixed; inset: 0; z-index: 56;
       display: none;
@@ -186,88 +201,121 @@
       -webkit-overflow-scrolling: touch;
     }
     #voice-overlay.visible { display: flex; }
-    #voice-overlay.enter { animation: voiceOverlayIn 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-    @keyframes voiceOverlayIn {
-      from { opacity: 0; transform: scale(0.92); }
-      to { opacity: 1; transform: scale(1); }
+    #voice-overlay.enter .voice-orb-container { animation: orbEnter 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes orbEnter {
+      0% { opacity: 0; transform: scale(0.3) translateY(40px); filter: blur(20px); }
+      60% { opacity: 1; filter: blur(2px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+    }
+    #voice-overlay.enter .voice-info-container { animation: infoEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards; }
+    @keyframes infoEnter {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .voice-orb-wrap {
+    /* Siri-style animated orb container */
+    .voice-orb-container {
       position: relative;
-      width: 200px; height: 200px;
-      display: flex; align-items: center; justify-content: center;
+      width: 240px; height: 240px;
       margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
     }
-    .voice-orb-ring {
-      position: absolute; inset: 0; border-radius: 50%;
-      border: 2px solid rgba(99,102,241,0.35);
+
+    /* Siri rotating gradient rings (behind the orb) */
+    .siri-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    .siri-ring.active { opacity: 1; }
+
+    .siri-ring-1 {
+      inset: 0;
+      background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #ec4899, #f59e0b, #10b981, #06b6d4, #6366f1);
+      filter: blur(22px);
+      animation: siriSpin 4s linear infinite;
+    }
+    .siri-ring-2 {
+      inset: 12px;
+      background: conic-gradient(from 90deg, #3b82f6, #a855f7, #f43f5e, #f59e0b, #22c55e, #06b6d4, #3b82f6);
+      filter: blur(18px);
+      animation: siriSpin 6s linear infinite reverse;
+    }
+    .siri-ring-3 {
+      inset: 26px;
+      background: conic-gradient(from 180deg, #818cf8, #c084fc, #fb7185, #fbbf24, #34d399, #22d3ee, #818cf8);
+      filter: blur(14px);
+      animation: siriSpin 3s linear infinite;
+    }
+    @keyframes siriSpin { to { transform: rotate(360deg); } }
+
+    /* Pulsing rings (outside) */
+    .orb-pulse-ring {
+      position: absolute; inset: -10px; border-radius: 50%;
+      border: 2px solid rgba(99,102,241,0.5);
+      opacity: 0;
       pointer-events: none;
     }
-    .voice-orb-ring.r1 { animation: orbPulse 2.4s ease-out infinite; }
-    .voice-orb-ring.r2 { animation: orbPulse 2.4s ease-out infinite 0.8s; }
-    .voice-orb-ring.r3 { animation: orbPulse 2.4s ease-out infinite 1.6s; }
-    @keyframes orbPulse {
-      0% { transform: scale(0.72); opacity: 0.85; }
-      100% { transform: scale(1.55); opacity: 0; }
+    .orb-pulse-ring.active { animation: orbRipple 2.4s ease-out infinite; }
+    .orb-pulse-ring.active.delay1 { animation-delay: 0.8s; }
+    .orb-pulse-ring.active.delay2 { animation-delay: 1.6s; }
+    @keyframes orbRipple {
+      0% { transform: scale(0.85); opacity: 0.85; }
+      100% { transform: scale(1.5); opacity: 0; }
     }
 
-    /* Siri-style animated gradient orb */
+    /* The main orb */
     .voice-orb-core {
       position: relative; z-index: 5;
       width: 150px; height: 150px; border-radius: 50%;
-      background: radial-gradient(circle at 32% 28%, #818cf8 0%, #6366f1 38%, #4f46e5 70%, #312e81 100%);
+      background: #0b1220;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 60px rgba(99,102,241,0.6), inset 0 -12px 30px rgba(0,0,0,0.4);
-      transition: transform 0.18s ease, box-shadow 0.3s ease;
-      border: 2px solid rgba(165,180,252,0.55);
-      overflow: hidden;
+      box-shadow: 0 0 40px rgba(99,102,241,0.5), inset 0 0 30px rgba(0,0,0,0.6);
+      transition: transform 0.2s ease, box-shadow 0.4s ease;
+      border: 2px solid rgba(99,102,241,0.4);
     }
-    .voice-orb-core:active { transform: scale(0.94); }
-    .voice-orb-core svg { width: 62px; height: 62px; color: #fff; filter: drop-shadow(0 3px 10px rgba(0,0,0,0.5)); position: relative; z-index: 2; }
+    .voice-orb-core:active { transform: scale(0.93); }
+    .voice-orb-core svg { width: 64px; height: 64px; color: #fff; filter: drop-shadow(0 3px 12px rgba(99,102,241,0.6)); position: relative; z-index: 2; }
 
-    /* Siri-like moving gradient inside the orb */
-    .voice-orb-core::before {
-      content: '';
-      position: absolute;
-      inset: -40%;
-      background: conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.15) 25%, transparent 50%, rgba(255,255,255,0.15) 75%, transparent 100%);
-      border-radius: 50%;
-      z-index: 1;
-      opacity: 0.8;
-    }
-    .voice-overlay.listening .voice-orb-core::before { animation: siriSpin 3s linear infinite; }
-    .voice-overlay.processing .voice-orb-core::before { animation: siriSpin 1s linear infinite; }
-    .voice-overlay.speaking .voice-orb-core::before { animation: siriSpin 2s linear infinite; }
-    @keyframes siriSpin { to { transform: rotate(360deg); } }
+    /* States */
+    .voice-overlay.idle .siri-ring-1 { animation-duration: 8s; }
+    .voice-overlay.idle .siri-ring-2 { animation-duration: 10s; }
+    .voice-overlay.idle .siri-ring-3 { animation-duration: 6s; }
 
+    .voice-overlay.listening .siri-ring { opacity: 1; }
+    .voice-overlay.listening .siri-ring-1 { animation-duration: 2s; }
+    .voice-overlay.listening .siri-ring-2 { animation-duration: 2.8s; }
+    .voice-overlay.listening .siri-ring-3 { animation-duration: 1.8s; }
     .voice-overlay.listening .voice-orb-core {
-      background: radial-gradient(circle at 32% 28%, #fca5a5 0%, #ef4444 38%, #dc2626 70%, #7f1d1d 100%);
-      box-shadow: 0 0 80px rgba(239,68,68,0.75), inset 0 -12px 30px rgba(0,0,0,0.4);
-      animation: listenBeat 0.9s ease-in-out infinite;
+      transform: scale(1.06);
+      box-shadow: 0 0 70px rgba(59,130,246,0.85), inset 0 0 30px rgba(0,0,0,0.6);
+      animation: orbBeat 0.9s ease-in-out infinite;
     }
-    .voice-overlay.listening .voice-orb-ring { border-color: rgba(239,68,68,0.55); }
-    @keyframes listenBeat {
-      0%,100% { transform: scale(1); }
-      50% { transform: scale(1.06); }
+    @keyframes orbBeat {
+      0%,100% { transform: scale(1.04); }
+      50% { transform: scale(1.1); }
     }
 
+    .voice-overlay.processing .siri-ring { opacity: 1; }
+    .voice-overlay.processing .siri-ring-1 { animation-duration: 1.2s; }
+    .voice-overlay.processing .siri-ring-2 { animation-duration: 1.6s; }
+    .voice-overlay.processing .siri-ring-3 { animation-duration: 1s; }
     .voice-overlay.processing .voice-orb-core {
-      background: radial-gradient(circle at 32% 28%, #fcd34d 0%, #f59e0b 38%, #d97706 70%, #78350f 100%);
-      box-shadow: 0 0 80px rgba(245,158,11,0.7), inset 0 -12px 30px rgba(0,0,0,0.4);
+      box-shadow: 0 0 70px rgba(245,158,11,0.8), inset 0 0 30px rgba(0,0,0,0.6);
     }
-    .voice-overlay.processing .voice-orb-ring { border-color: rgba(245,158,11,0.55); }
 
+    .voice-overlay.speaking .siri-ring { opacity: 1; }
+    .voice-overlay.speaking .siri-ring-1 { animation-duration: 3s; }
+    .voice-overlay.speaking .siri-ring-2 { animation-duration: 4s; }
+    .voice-overlay.speaking .siri-ring-3 { animation-duration: 2.4s; }
     .voice-overlay.speaking .voice-orb-core {
-      background: radial-gradient(circle at 32% 28%, #6ee7b7 0%, #10b981 38%, #059669 70%, #064e3b 100%);
-      box-shadow: 0 0 90px rgba(16,185,129,0.75), inset 0 -12px 30px rgba(0,0,0,0.4);
-      animation: speakWave 0.7s ease-in-out infinite;
+      box-shadow: 0 0 80px rgba(16,185,129,0.85), inset 0 0 30px rgba(0,0,0,0.6);
+      animation: orbBeat 0.7s ease-in-out infinite;
     }
-    .voice-overlay.speaking .voice-orb-ring { border-color: rgba(16,185,129,0.6); }
-    @keyframes speakWave {
-      0%,100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-    }
+    .voice-overlay.speaking .voice-orb-core svg { color: #6ee7b7; }
 
     .voice-status-pill {
       display: inline-flex; align-items: center; gap: 6px;
@@ -275,25 +323,28 @@
       font-size: 11px; font-weight: 800;
       letter-spacing: 0.06em; text-transform: uppercase;
       border: 1px solid; transition: all 0.3s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    .voice-status-pill.idle { background: rgba(99,102,241,0.1); color: #a5b4fc; border-color: rgba(99,102,241,0.35); }
-    .voice-status-pill.listening { background: rgba(239,68,68,0.12); color: #fca5a5; border-color: rgba(239,68,68,0.4); }
-    .voice-status-pill.processing { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.4); }
-    .voice-status-pill.speaking { background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.4); }
+    .voice-status-pill.idle { background: rgba(99,102,241,0.15); color: #a5b4fc; border-color: rgba(99,102,241,0.4); }
+    .voice-status-pill.listening { background: rgba(239,68,68,0.18); color: #fca5a5; border-color: rgba(239,68,68,0.5); }
+    .voice-status-pill.processing { background: rgba(245,158,11,0.18); color: #fcd34d; border-color: rgba(245,158,11,0.5); }
+    .voice-status-pill.speaking { background: rgba(16,185,129,0.18); color: #6ee7b7; border-color: rgba(16,185,129,0.5); }
 
     .voice-transcript {
-      background: rgba(15,23,42,0.75);
-      border: 1px solid rgba(51,65,85,0.7);
-      border-radius: 18px;
+      background: rgba(15,23,42,0.55);
+      border: 1px solid rgba(99,102,241,0.35);
+      border-radius: 20px;
       padding: 14px 16px;
-      min-height: 96px;
-      max-height: 180px;
+      min-height: 90px;
+      max-height: 170px;
       overflow-y: auto;
       font-size: 13px;
       line-height: 1.6;
-      color: #cbd5e1;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      color: #e2e8f0;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
     }
     .voice-transcript .label {
       font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
@@ -302,44 +353,23 @@
     .voice-transcript .you .label { color: #a5b4fc; }
     .voice-transcript .pulse .label { color: #6ee7b7; }
     .voice-transcript .you { color: #c7d2fe; }
-    .voice-transcript .pulse { color: #cbd5e1; }
-    .voice-transcript .pulse strong { color: #6ee7b7; }
+    .voice-transcript .pulse { color: #e2e8f0; }
     .voice-transcript .msg { margin-top: 10px; }
     .voice-transcript .msg:first-child { margin-top: 0; }
-
-    .voice-wave-bar {
-      display: inline-block; width: 4px; border-radius: 4px;
-      background: currentColor; margin: 0 2px;
-      vertical-align: middle; height: 8px;
-    }
-    .voice-overlay.listening .voice-wave-bar { animation: waveBounce 0.9s ease-in-out infinite; }
-    .voice-overlay.listening .voice-wave-bar:nth-child(1) { animation-delay: 0s; }
-    .voice-overlay.listening .voice-wave-bar:nth-child(2) { animation-delay: 0.15s; }
-    .voice-overlay.listening .voice-wave-bar:nth-child(3) { animation-delay: 0.3s; }
-    .voice-overlay.listening .voice-wave-bar:nth-child(4) { animation-delay: 0.45s; }
-    .voice-overlay.listening .voice-wave-bar:nth-child(5) { animation-delay: 0.6s; }
-    @keyframes waveBounce {
-      0%,100% { transform: scaleY(0.4); opacity: 0.6; }
-      50% { transform: scaleY(2.2); opacity: 1; }
-    }
-    .voice-overlay.speaking .voice-wave-bar { animation: waveBounce 0.55s ease-in-out infinite; }
-    .voice-overlay.speaking .voice-wave-bar:nth-child(1) { animation-delay: 0s; }
-    .voice-overlay.speaking .voice-wave-bar:nth-child(2) { animation-delay: 0.1s; }
-    .voice-overlay.speaking .voice-wave-bar:nth-child(3) { animation-delay: 0.2s; }
-    .voice-overlay.speaking .voice-wave-bar:nth-child(4) { animation-delay: 0.3s; }
-    .voice-overlay.speaking .voice-wave-bar:nth-child(5) { animation-delay: 0.4s; }
 
     .voice-chip {
       display: inline-block;
       padding: 8px 13px; border-radius: 999px;
       font-size: 11px; font-weight: 700;
-      background: rgba(30,41,59,0.75);
-      border: 1px solid rgba(71,85,105,0.65);
+      background: rgba(30,41,59,0.65);
+      border: 1px solid rgba(99,102,241,0.4);
       color: #cbd5e1; cursor: pointer;
       transition: all 0.2s ease;
       white-space: nowrap;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    .voice-chip:hover { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.45); color: #c7d2fe; }
+    .voice-chip:hover { background: rgba(99,102,241,0.3); border-color: rgba(99,102,241,0.6); color: #fff; }
     .voice-chip:active { transform: scale(0.96); }
   </style>
 </head>
@@ -514,7 +544,8 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-          <button type="button" id="header-voice-btn" class="header-voice-btn btn-press" aria-label="Voice Assistant" title="Pulse Voice Assistant">
+          <!-- Voice AI button (left of WhatsApp) — ONLY opener -->
+          <button type="button" id="header-voice-btn" class="header-voice-btn" aria-label="Voice Assistant" title="Pulse Voice Assistant">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -556,36 +587,6 @@
             Subscribe ₹99
           </button>
           <span class="hold-ring"></span>
-        </div>
-      </div>
-
-      <!-- PULSE AI CARD (opener only) -->
-      <div class="bg-[#0f172a] rounded-2xl border border-indigo-800/40 p-4 shadow-lg shadow-indigo-900/20 relative overflow-hidden min-w-0">
-        <div class="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-20 -left-20 w-48 h-48 rounded-full bg-blue-600/10 blur-3xl pointer-events-none"></div>
-
-        <div class="relative z-10 flex items-center justify-between gap-3">
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="w-12 h-12 shrink-0 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-600/30">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                <line x1="12" y1="19" x2="12" y2="22"></line>
-              </svg>
-            </div>
-            <div class="leading-tight min-w-0">
-              <p class="text-sm font-black text-white tracking-tight">PULSE AI</p>
-              <p class="text-[10px] text-slate-500 font-semibold">Hindi Voice Assistant</p>
-            </div>
-          </div>
-          <button type="button" id="open-voice-btn" class="btn-press shrink-0 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-4 py-2.5 rounded-xl font-black text-xs shadow-md shadow-indigo-500/25 flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="22"></line>
-            </svg>
-            <span>Start Voice</span>
-          </button>
         </div>
       </div>
 
@@ -670,19 +671,15 @@
     </footer>
   </div>
 
-  <!-- ================= VOICE BACKDROP (BLUR) ================= -->
+  <!-- ================= VOICE BACKDROP (BLUE BLUR) ================= -->
   <div id="voice-backdrop"></div>
 
-  <!-- ================= VOICE OVERLAY (SIRI STYLE) ================= -->
+  <!-- ================= SIRI-STYLE VOICE OVERLAY ================= -->
   <div id="voice-overlay" class="voice-overlay">
-    <div class="blob" style="width:260px;height:260px;background:#4f46e5;top:-80px;left:-60px;"></div>
-    <div class="blob" style="width:280px;height:280px;background:#2563eb;bottom:-60px;right:-80px;animation-delay:-4s;"></div>
-    <div class="blob" style="width:200px;height:200px;background:#7c3aed;top:40%;left:50%;animation-delay:-8s;"></div>
-
-    <!-- Header with back / close -->
+    <!-- Header with back -->
     <div class="relative z-20 safe-t">
       <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
-        <button type="button" id="voice-close-btn" class="btn-press flex items-center gap-1.5 text-slate-200 hover:text-white text-xs font-bold px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 backdrop-blur">
+        <button type="button" id="voice-close-btn" class="btn-press flex items-center gap-1.5 text-slate-100 hover:text-white text-xs font-bold px-3 py-2 rounded-xl bg-slate-900/60 border border-slate-700 backdrop-blur">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
@@ -696,52 +693,48 @@
       </div>
     </div>
 
-    <div class="relative z-10 max-w-2xl mx-auto w-full px-4 pt-6 pb-10 space-y-5">
+    <div class="relative z-10 max-w-2xl mx-auto w-full px-4 pt-4 pb-10 space-y-5">
 
-      <div class="flex flex-col items-center gap-3">
-        <div class="voice-orb-wrap">
-          <div class="voice-orb-ring r1"></div>
-          <div class="voice-orb-ring r2"></div>
-          <div class="voice-orb-ring r3"></div>
-          <button type="button" id="voice-orb-btn" class="voice-orb-core" aria-label="Tap to talk">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="22"></line>
-            </svg>
-          </button>
-        </div>
+      <!-- Siri orb -->
+      <div class="voice-orb-container">
+        <div class="siri-ring siri-ring-1"></div>
+        <div class="siri-ring siri-ring-2"></div>
+        <div class="siri-ring siri-ring-3"></div>
+        <div class="orb-pulse-ring active"></div>
+        <div class="orb-pulse-ring active delay1"></div>
+        <div class="orb-pulse-ring active delay2"></div>
+        <button type="button" id="voice-orb-btn" class="voice-orb-core" aria-label="Tap to talk">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="22"></line>
+          </svg>
+        </button>
+      </div>
 
-        <p id="voice-hint" class="text-[12px] text-slate-300 font-semibold text-center px-4">
+      <div class="voice-info-container space-y-4">
+        <p id="voice-hint" class="text-[13px] text-slate-200 font-semibold text-center px-4">
           Tap orb and say <span class="text-indigo-300 font-bold">"BTC ka level batao"</span>
         </p>
 
-        <div class="h-6 flex items-center justify-center text-indigo-400" id="voice-wave-wrap">
-          <span class="voice-wave-bar"></span>
-          <span class="voice-wave-bar"></span>
-          <span class="voice-wave-bar"></span>
-          <span class="voice-wave-bar"></span>
-          <span class="voice-wave-bar"></span>
+        <div class="voice-transcript" id="voice-transcript">
+          <div class="msg pulse">
+            <span class="label">Pulse</span>
+            Namaste! Main <strong>Pulse</strong> hoon. Mic dabakar Hindi mein poochho — jaise <em>"BTC ka level batao"</em> ya <em>"Aaj market ka kya haal hai?"</em>
+          </div>
         </div>
-      </div>
 
-      <div class="voice-transcript" id="voice-transcript">
-        <div class="msg pulse">
-          <span class="label">Pulse</span>
-          Namaste! Main <strong>Pulse</strong> hoon. Mic dabakar Hindi mein poochho — jaise <em>"BTC ka level batao"</em> ya <em>"Aaj market ka kya haal hai?"</em>
+        <div class="flex flex-wrap justify-center gap-1.5">
+          <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, aaj market ka kya haal hai?">Aaj market?</button>
+          <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, BTC ka level batao">BTC Levels</button>
+          <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, ETH ka kya scene hai?">ETH Scene</button>
+          <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, SOL mein entry bani hai kya?">SOL Entry</button>
+          <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, XRP ka support resistance batao">XRP S/R</button>
         </div>
-      </div>
 
-      <div class="flex flex-wrap justify-center gap-1.5">
-        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, aaj market ka kya haal hai?">Aaj market?</button>
-        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, BTC ka level batao">BTC Levels</button>
-        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, ETH ka kya scene hai?">ETH Scene</button>
-        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, SOL mein entry bani hai kya?">SOL Entry</button>
-        <button type="button" class="voice-chip" data-voice-chip="Hey Pulse, XRP ka support resistance batao">XRP S/R</button>
-      </div>
-
-      <div class="flex items-center justify-center gap-2 pt-1">
-        <button type="button" id="voice-stop-btn" class="btn-press text-[11px] font-bold text-slate-400 hover:text-slate-200 px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 hidden">■ Stop</button>
+        <div class="flex items-center justify-center gap-2 pt-1">
+          <button type="button" id="voice-stop-btn" class="btn-press text-[11px] font-bold text-slate-300 hover:text-white px-3 py-2 rounded-xl bg-slate-900/60 border border-slate-700 hidden">■ Stop</button>
+        </div>
       </div>
     </div>
   </div>
@@ -830,7 +823,7 @@
     };
     const SETUP_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
     const setupAlertLog = {};
-    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v4';
+    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v5';
     const AUTO_REPLY_DELAY_MS = 2000;
 
     let pulseAssistant = null;
@@ -885,75 +878,95 @@
 
     function resetLockedSignal() { lockedSignal = null; }
 
-    // ================== SPEECH (APK/WebView FIX) ==================
-    // Android WebView does NOT support speechSynthesis in the same way as Chrome.
-    // We attempt speechSynthesis first, and if it fails, we use the native bridge.
-    // Also: WebView often needs speechSynthesis.speak() to be called from a user gesture first.
+    // ==================================================================
+    // ============  SPEECH ENGINE (APK/WEBVIEW SAFE)  ==================
+    // ==================================================================
+    // Android WebView speechSynthesis quirks:
+    //  1. Voices array is often empty until a user gesture
+    //  2. speak() must be called AFTER a user gesture on the same page session
+    //  3. We MUST call speak() with a warmup utterance first
+    //  4. Some WebViews don't fire onend — we use a watchdog timer
 
     let audioCtx = null;
     let audioUnlocked = false;
     let voiceList = [];
     let voicesLoaded = false;
     let speechPrimed = false;
-
-    function isAndroidWebView() {
-      const ua = navigator.userAgent || '';
-      // Android WebView has "; wv)" in UA, or no Chrome-like markers when loaded inside an app
-      return /Android/.test(ua) && (/;\s*wv\)/.test(ua) || !/Chrome\/[0-9]+/.test(ua));
-    }
+    let voicesLoadPromise = null;
 
     function isSpeechSupported() {
-      return 'speechSynthesis' in window && typeof window.speechSynthesis.speak === 'function';
+      return typeof window !== 'undefined' && 'speechSynthesis' in window && typeof window.speechSynthesis.speak === 'function';
     }
 
     function loadVoices() {
-      return new Promise((resolve) => {
+      if (voicesLoadPromise) return voicesLoadPromise;
+      voicesLoadPromise = new Promise((resolve) => {
         if (!isSpeechSupported()) { resolve([]); return; }
-        let voices = window.speechSynthesis.getVoices();
-        if (voices && voices.length) { voiceList = voices; voicesLoaded = true; resolve(voices); return; }
-        let done = false;
-        const handler = () => {
-          if (done) return; done = true;
-          voices = window.speechSynthesis.getVoices();
-          voiceList = voices || [];
-          voicesLoaded = true;
-          try { window.speechSynthesis.onvoiceschanged = null; } catch(e){}
+        let resolved = false;
+        const finish = (v) => {
+          if (resolved) return; resolved = true;
+          voiceList = v || [];
+          voicesLoaded = voiceList.length > 0;
           resolve(voiceList);
         };
-        try { window.speechSynthesis.onvoiceschanged = handler; } catch(e){}
-        setTimeout(handler, 800);
-        setTimeout(() => { if (!done) { done = true; resolve(window.speechSynthesis.getVoices() || []); } }, 3000);
+        try {
+          const now = window.speechSynthesis.getVoices();
+          if (now && now.length) { finish(now); return; }
+        } catch (e) {}
+        const handler = () => {
+          try {
+            const v = window.speechSynthesis.getVoices();
+            finish(v);
+          } catch (e) { finish([]); }
+        };
+        try { window.speechSynthesis.onvoiceschanged = handler; } catch (e) {}
+        // Retry polling — Android WebView often loads voices lazily
+        let attempts = 0;
+        const poll = setInterval(() => {
+          attempts++;
+          try {
+            const v = window.speechSynthesis.getVoices();
+            if (v && v.length) { clearInterval(poll); finish(v); return; }
+          } catch (e) {}
+          if (attempts >= 15) { clearInterval(poll); finish([]); }
+        }, 200);
+        // Also fire handler once after 100ms (some WebViews fire onvoiceschanged silently)
+        setTimeout(handler, 100);
+        // Hard timeout
+        setTimeout(() => { try { clearInterval(poll); } catch(e){} finish(window.speechSynthesis.getVoices() || []); }, 3500);
       });
+      return voicesLoadPromise;
     }
 
     function pickHindiVoice() {
-      if (!voiceList || !voiceList.length) voiceList = (window.speechSynthesis && window.speechSynthesis.getVoices()) || [];
-      let v = voiceList.find(x => x.lang && x.lang.toLowerCase() === 'hi-in');
+      let list = voiceList && voiceList.length ? voiceList : (isSpeechSupported() ? window.speechSynthesis.getVoices() : []);
+      if (!list || !list.length) return null;
+      let v = list.find(x => x.lang && x.lang.toLowerCase() === 'hi-in');
       if (v) return v;
-      v = voiceList.find(x => x.lang && x.lang.toLowerCase().startsWith('hi'));
+      v = list.find(x => x.lang && x.lang.toLowerCase().startsWith('hi'));
       if (v) return v;
-      v = voiceList.find(x => x.lang && x.lang.toLowerCase() === 'en-in');
+      v = list.find(x => x.lang && x.lang.toLowerCase() === 'en-in');
       if (v) return v;
-      v = voiceList.find(x => x.lang && x.lang.toLowerCase().startsWith('en'));
+      v = list.find(x => x.lang && x.lang.toLowerCase().startsWith('en'));
       if (v) return v;
       return null;
     }
 
-    // Prime speechSynthesis — MUST be called from a user gesture
+    // MUST be called from a user gesture
     function primeSpeech() {
       if (speechPrimed) return;
       if (!isSpeechSupported()) return;
       try {
-        const warm = new SpeechSynthesisUtterance(' ');
-        warm.volume = 0;
+        const warm = new SpeechSynthesisUtterance('.');
+        warm.volume = 0.001;
         warm.rate = 1;
         warm.pitch = 1;
+        warm.lang = 'hi-IN';
         window.speechSynthesis.speak(warm);
         speechPrimed = true;
-        // Cancel after short delay
-        setTimeout(() => { try { window.speechSynthesis.cancel(); } catch(e){} }, 250);
+        setTimeout(() => { try { window.speechSynthesis.cancel(); } catch(e){} }, 300);
       } catch (e) {
-        console.warn('primeSpeech error', e);
+        console.warn('[Pulse] primeSpeech error', e);
       }
     }
 
@@ -1170,7 +1183,6 @@
 
     window.addEventListener('popstate', () => {
       if (isTransitioning) return;
-      // If voice overlay open, close it and return to dashboard
       if (document.body.classList.contains('voice-open')) {
         closeVoiceOverlay();
         return;
@@ -1838,7 +1850,7 @@ HOW TO RESPOND based on intent:
 Respond now in Hindi/Hinglish as Pulse.`;
     }
 
-    // ---------- SPEAK with APK WebView fallback ----------
+    // ---------- SPEAK (Android WebView hardened) ----------
     let currentUtterance = null;
     let speakWatchdogTimer = null;
 
@@ -1853,9 +1865,8 @@ Respond now in Hindi/Hinglish as Pulse.`;
 
       if (!isSpeechSupported()) {
         console.warn('[Pulse] speechSynthesis not supported');
-        // Visual feedback only
         if (pulseAssistant) pulseAssistant.setState('speaking');
-        setTimeout(finish, Math.max(2500, Math.min(8000, (text || '').length * 70)));
+        setTimeout(finish, Math.max(2500, Math.min(9000, (text || '').length * 75)));
         return;
       }
 
@@ -1894,33 +1905,52 @@ Respond now in Hindi/Hinglish as Pulse.`;
             if (ended) return; ended = true;
             finish();
           };
+          utter.onpause = () => {};
+          utter.onresume = () => {};
 
           currentUtterance = utter;
-          try {
-            window.speechSynthesis.speak(utter);
-          } catch (e) {
-            console.warn('[Pulse speak] throw', e);
-            finish();
-            return;
-          }
 
-          // Watchdog — estimated max duration
-          const estimatedMs = Math.max(4000, Math.min(60000, (spokenText.length || 20) * 80));
+          // Some Android WebViews need a delay after cancel()
+          setTimeout(() => {
+            try {
+              window.speechSynthesis.speak(utter);
+            } catch (e) {
+              console.warn('[Pulse speak] throw', e);
+              ended = true;
+              finish();
+              return;
+            }
+            // If after 500ms the speech hasn't started AND the browser reports nothing speaking,
+            // try speaking again — Android WebView quirk
+            setTimeout(() => {
+              if (!started && !ended) {
+                try {
+                  if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+                    console.warn('[Pulse speak] retry speak()');
+                    window.speechSynthesis.speak(utter);
+                  }
+                } catch(e){}
+              }
+            }, 500);
+          }, 50);
+
+          // Watchdog — force finish if speech never ends
+          const estimatedMs = Math.max(5000, Math.min(90000, (spokenText.length || 20) * 90));
           if (speakWatchdogTimer) clearTimeout(speakWatchdogTimer);
           speakWatchdogTimer = setTimeout(() => {
             if (ended) return;
-            console.warn('[Pulse speak] watchdog fired — forcing finish');
+            console.warn('[Pulse speak] watchdog fired');
             try { window.speechSynthesis.cancel(); } catch(e){}
             ended = true;
             finish();
           }, estimatedMs);
 
-          // If onstart didn't fire within 2.5s, assume it's playing (WebView quirk) and mark speaking visually
+          // If onstart didn't fire but speech is likely playing, still show speaking
           setTimeout(() => {
             if (!started && !ended && pulseAssistant && pulseAssistant.state !== 'speaking') {
               pulseAssistant.setState('speaking');
             }
-          }, 2500);
+          }, 800);
         };
 
         if (!voiceList || !voiceList.length) {
@@ -2065,7 +2095,7 @@ Respond now in Hindi/Hinglish as Pulse.`;
       return null;
     }
 
-    // ---------- First-time welcome ----------
+    // ---------- Welcome ----------
     function hasSeenWelcome() {
       try { return localStorage.getItem(PULSE_WELCOME_SEEN_KEY) === '1'; } catch(e){ return false; }
     }
@@ -2080,7 +2110,7 @@ Respond now in Hindi/Hinglish as Pulse.`;
       setTimeout(() => {
         if (pulseAssistant) pulseAssistant.setState('speaking');
         speakPulseResponse(welcomeText);
-      }, 500);
+      }, 600);
       return true;
     }
 
@@ -2093,7 +2123,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const hint = document.getElementById('voice-hint');
       const transcriptEl = document.getElementById('voice-transcript');
       const stopBtn = document.getElementById('voice-stop-btn');
-      const waveWrap = document.getElementById('voice-wave-wrap');
       const orbBtn = document.getElementById('voice-orb-btn');
 
       if (!overlay || !statusPill || !orbBtn) return;
@@ -2110,19 +2139,15 @@ Respond now in Hindi/Hinglish as Pulse.`;
         statusPill.classList.add(state);
         if (state === 'idle') {
           statusPill.innerText = '● Ready';
-          if (waveWrap) waveWrap.style.opacity = '0.3';
           if (stopBtn) stopBtn.classList.add('hidden');
         } else if (state === 'listening') {
           statusPill.innerText = '● Listening…';
-          if (waveWrap) waveWrap.style.opacity = '1';
           if (stopBtn) stopBtn.classList.remove('hidden');
         } else if (state === 'processing') {
           statusPill.innerText = '● Analyzing…';
-          if (waveWrap) waveWrap.style.opacity = '0.3';
           if (stopBtn) stopBtn.classList.add('hidden');
         } else if (state === 'speaking') {
           statusPill.innerText = '● Speaking…';
-          if (waveWrap) waveWrap.style.opacity = '1';
           if (stopBtn) stopBtn.classList.remove('hidden');
         }
       };
@@ -2305,6 +2330,10 @@ Respond now in Hindi/Hinglish as Pulse.`;
       const overlay = document.getElementById('voice-overlay');
       if (!overlay) return;
 
+      // Unlock speech BEFORE opening — user gesture context
+      primeSpeech();
+      loadVoices().catch(()=>{});
+
       document.body.classList.add('voice-open');
       overlay.classList.add('visible');
       overlay.classList.remove('enter');
@@ -2318,7 +2347,7 @@ Respond now in Hindi/Hinglish as Pulse.`;
           pulseAssistant.hasPlayedWelcome = true;
           playWelcomeIfFirstTime();
         }
-      }, 400);
+      }, 500);
     }
 
     function closeVoiceOverlay() {
@@ -2329,9 +2358,6 @@ Respond now in Hindi/Hinglish as Pulse.`;
       document.body.classList.remove('voice-open');
       const overlay = document.getElementById('voice-overlay');
       if (overlay) overlay.classList.remove('visible', 'enter');
-      if (currentScreen !== 'app') {
-        // only reset if we were in app
-      }
       currentScreen = 'app';
       pushScreenState('app', true);
     }
@@ -3399,17 +3425,17 @@ Write 4-5 lines: (1) why setup is valid, (2) volume confirmation, (3) key risk, 
       const headerLogout = document.getElementById('header-logout-btn');
       if (headerLogout) headerLogout.addEventListener('click', doLogout);
 
-      // Voice overlay openers
+      // Voice overlay openers (only header mic button now)
       const headerVoiceBtn = document.getElementById('header-voice-btn');
-      if (headerVoiceBtn) headerVoiceBtn.addEventListener('click', () => { unlockAudioOnFirstInteraction(); openVoiceOverlay(); });
-      const openVoiceBtn = document.getElementById('open-voice-btn');
-      if (openVoiceBtn) openVoiceBtn.addEventListener('click', () => { unlockAudioOnFirstInteraction(); openVoiceOverlay(); });
+      if (headerVoiceBtn) {
+        headerVoiceBtn.addEventListener('click', () => {
+          unlockAudioOnFirstInteraction();
+          primeSpeech();
+          openVoiceOverlay();
+        });
+      }
       const voiceCloseBtn = document.getElementById('voice-close-btn');
       if (voiceCloseBtn) voiceCloseBtn.addEventListener('click', closeVoiceOverlay);
-
-      // Backdrop click also closes
-      const voiceBackdrop = document.getElementById('voice-backdrop');
-      if (voiceBackdrop) voiceBackdrop.addEventListener('click', closeVoiceOverlay);
 
       setupPasswordToggle();
       setupVerifyButtons();
@@ -3419,10 +3445,9 @@ Write 4-5 lines: (1) why setup is valid, (2) volume confirmation, (3) key risk, 
       attachSubscribeButton(document.getElementById('subscribe-btn'));
       attachSubscribeButton(document.getElementById('paywall-subscribe-btn'));
 
-      // Preload voices
       if (isSpeechSupported()) {
         loadVoices().catch(()=>{});
-        try { window.speechSynthesis.onvoiceschanged = () => { loadVoices().catch(()=>{}); }; } catch(e){}
+        try { window.speechSynthesis.onvoiceschanged = () => { voicesLoadPromise = null; loadVoices().catch(()=>{}); }; } catch(e){}
       }
 
       try { history.replaceState({ pulseScreen: 'splash', ts: Date.now() }, '', location.href); } catch(e){}
