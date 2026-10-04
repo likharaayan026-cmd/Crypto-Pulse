@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Pulse Alpha</title>
+  <title>Pulse Alpha · 9/20 EMA + Liquidity Sweep</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -512,7 +512,6 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // ✅ Persistence ko await karne ke liye promise store karo
     const authReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
       .catch(e => { console.warn('persistence', e); });
 
@@ -1408,7 +1407,6 @@
     }
 
     // ================== AUTH STATE ==================
-    // ✅ bootstrapped check hata diya — pehla event bhi handle hoga
     auth.onAuthStateChanged(async (user) => {
       if (!user) {
         clearCachedUser();
@@ -1441,7 +1439,6 @@
       setSplashProgress(40);
       setSplashStatus('Loading session...');
 
-      // ✅ Pehle persistence ready hone do
       try { await authReady; } catch(e){}
 
       const restoredUser = await new Promise((resolve) => {
@@ -1700,6 +1697,14 @@
     }
 
     // ================== STRATEGY ==================
+    // 🔥 NEW: 9/20 EMA + Liquidity Sweep detection engine
+    //    - Trend filter: 9 EMA > 20 EMA (bull) or 9 EMA < 20 EMA (bear)
+    //    - Swing high/low liquidity pools over lookback N (default 20)
+    //    - Sweep: price wicks beyond swing level but closes back inside
+    //    - Reversal/validation candle: opposite color, body > previous body
+    //    - Entry: close of validation candle
+    //    - SL: sweep candle low/high with ATR buffer
+    //    - TP: 2R / 3R
     function findSwingHighs(candles, lookback = 5) {
       const highs = [];
       for (let i = lookback; i < candles.length - lookback; i++) {
@@ -1764,87 +1769,151 @@
       return { resistances, supports };
     }
 
-    function detectEmaStrategy(candles) {
+    // ===== 9/20 EMA + LIQUIDITY SWEEP STRATEGY =====
+    function detectEmaLiquiditySweepStrategy(candles, volumes, N = 20, ATR_PERIOD = 14) {
       const len = candles.length;
       if (len < 80) return { valid: false, reason: 'Not enough data' };
+
+      // EMAs
       const ema9Vals = computeEMA(candles, 9);
       const ema20Vals = computeEMA(candles, 20);
-      const lastClosed = len - 2;
-      const scanStart = Math.max(2, lastClosed - 40);
-      let crossIdx = -1, crossType = null;
 
-      for (let i = scanStart; i <= lastClosed; i++) {
-        const e9p = ema9Vals[i - 1].value, e20p = ema20Vals[i - 1].value;
-        const e9c = ema9Vals[i].value, e20c = ema20Vals[i].value;
-        if (e9p <= e20p && e9c > e20c) { crossIdx = i; crossType = 'BULLISH_CROSSOVER'; }
-        else if (e9p >= e20p && e9c < e20c) { crossIdx = i; crossType = 'BEARISH_CROSSOVER'; }
+      // ATR for buffer
+      function computeATR(candles, period) {
+        if (candles.length < period + 1) return 0;
+        let trSum = 0;
+        for (let i = candles.length - period; i < candles.length; i++) {
+          const prevClose = candles[i - 1].close;
+          const tr = Math.max(
+            candles[i].high - candles[i].low,
+            Math.abs(candles[i].high - prevClose),
+            Math.abs(candles[i].low - prevClose)
+          );
+          trSum += tr;
+        }
+        return trSum / period;
       }
-      if (crossIdx === -1) return { valid: false, reason: 'No recent 9/20 EMA crossover' };
+      const atr = computeATR(candles, ATR_PERIOD);
 
-      for (let i = crossIdx + 1; i <= lastClosed; i++) {
-        const e9p = ema9Vals[i - 1].value, e20p = ema20Vals[i - 1].value;
-        const e9c = ema9Vals[i].value, e20c = ema20Vals[i].value;
-        if (crossType === 'BULLISH_CROSSOVER' && e9p >= e20p && e9c < e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
-        if (crossType === 'BEARISH_CROSSOVER' && e9p <= e20p && e9c > e20c) return { valid: false, reason: 'Opposite crossover cancelled setup' };
-      }
+      // Last closed candle index (the one just finished)
+      const lastClosedIdx = len - 2;
+      if (lastClosedIdx < N + 5) return { valid: false, reason: 'Not enough history for lookback' };
 
-      for (let i = crossIdx + 3; i <= lastClosed - 1; i++) {
-        const pullback = candles[i - 1];
-        const rejection = candles[i];
-        const confirmation = candles[i + 1];
-        if (i + 1 > lastClosed) continue;
+      // Trend filter using last closed
+      const ema9 = ema9Vals[lastClosedIdx].value;
+      const ema20 = ema20Vals[lastClosedIdx].value;
+      const isBullTrend = ema9 > ema20;
+      const isBearTrend = ema9 < ema20;
 
-        const confirmKey = `${currentSymbol}_${currentTimeframe}_${confirmation.time}`;
-        if (lastClosedSignalKey === confirmKey) continue;
+      // Dynamic lookback: check the most recent 3 closed candles for a sweep pattern
+      for (let offset = 0; offset <= 2; offset++) {
+        const valIdx = lastClosedIdx - offset;          // validation candle (close)
+        if (valIdx < N + 2) continue;
+        const sweepIdx = valIdx - 1;                    // potential sweep candle
+        const sweepCandle = candles[sweepIdx];
+        const valCandle = candles[valIdx];
 
-        const pullbackEma9 = ema9Vals[i - 1].value;
-        const pullbackEma20 = ema20Vals[i - 1].value;
-        const rejectEma9 = ema9Vals[i].value;
-        const rejectBody = Math.abs(rejection.close - rejection.open);
-        const pullBody = Math.abs(pullback.close - pullback.open);
+        // ---- BULLISH SETUP ----
+        if (isBullTrend) {
+          // Recent swing low over N candles ending before sweep candle
+          const lookbackStart = Math.max(0, sweepIdx - N);
+          const lookbackCandles = candles.slice(lookbackStart, sweepIdx);
+          if (lookbackCandles.length < 5) continue;
+          const swingLow = Math.min(...lookbackCandles.map(c => c.low));
 
-        if (crossType === 'BULLISH_CROSSOVER') {
-          const isRed = pullback.close < pullback.open;
-          const touchedEMA = pullback.low <= pullbackEma9 * 1.005 || pullback.low <= pullbackEma20 * 1.005;
-          const isGreen = rejection.close > rejection.open;
-          const bigger = rejectBody > pullBody;
-          const closesAbove = rejection.close > rejectEma9;
-          const breaks = confirmation.close > rejection.high;
-          const aligned = ema9Vals[i + 1].value > ema20Vals[i + 1].value;
-          if (isRed && touchedEMA && isGreen && bigger && closesAbove && breaks && aligned) {
-            const swingLow = Math.min(pullback.low, rejection.low);
-            return {
-              valid: true, type: 'BULLISH_EMA_SETUP', entry: rejection.high,
-              sl: swingLow * 0.998,
-              confirmCandleTime: confirmation.time, confirmCandleClose: confirmation.close,
-              confirmCandleLow: confirmation.low, confirmCandleHigh: confirmation.high,
-              note: 'Bullish 9/20 EMA crossover → Red pullback → Bigger Green rejection → Confirmation high break'
-            };
+          // 1) Sweep condition: sweep candle low pierces below swing low
+          const sweptBelow = sweepCandle.low < swingLow;
+          // 2) Close back above swing low (validation within sweep candle itself)
+          const closeBackAbove = sweepCandle.close > swingLow;
+
+          if (sweptBelow && closeBackAbove) {
+            // 3) Validation: next candle (valCandle) is bullish and strong
+            const isGreen = valCandle.close > valCandle.open;
+            const valBody = Math.abs(valCandle.close - valCandle.open);
+            const sweepBody = Math.abs(sweepCandle.close - sweepCandle.open);
+            const biggerBody = valBody > sweepBody;
+            // 4) Confirmation: close above sweep candle high
+            const closesAboveSweepHigh = valCandle.close > sweepCandle.high;
+            // 5) 9 EMA still above 20 EMA
+            const ema9Val = ema9Vals[valIdx].value;
+            const ema20Val = ema20Vals[valIdx].value;
+            const trendStillBull = ema9Val > ema20Val;
+
+            if (isGreen && biggerBody && closesAboveSweepHigh && trendStillBull) {
+              const entry = valCandle.close;
+              const sl = sweepCandle.low - atr * 0.10;   // 10% ATR buffer
+              const risk = Math.abs(entry - sl);
+              const tp1 = entry + risk * 2;
+              const tp2 = entry + risk * 3;
+
+              return {
+                valid: true,
+                type: 'BULLISH_EMA_SETUP',
+                entry, sl, tp1, tp2,
+                note: `Bullish 9/20 EMA + Sweep: low pierced ${formatPrice(swingLow, currentSymbol)} and closed back above with a strong rejection candle.`,
+                confirmCandleTime: valCandle.time,
+                confirmCandleClose: valCandle.close,
+                confirmCandleLow: valCandle.low,
+                confirmCandleHigh: valCandle.high,
+                sweepLevel: swingLow,
+                sweepType: 'BULLISH_SWEEP',
+                sweepCandleLow: sweepCandle.low,
+                sweepCandleHigh: sweepCandle.high
+              };
+            }
           }
         }
-        if (crossType === 'BEARISH_CROSSOVER') {
-          const isGreen = pullback.close > pullback.open;
-          const touchedEMA = pullback.high >= pullbackEma9 * 0.995 || pullback.high >= pullbackEma20 * 0.995;
-          const isRed = rejection.close < rejection.open;
-          const bigger = rejectBody > pullBody;
-          const closesBelow = rejection.close < rejectEma9;
-          const breaks = confirmation.close < rejection.low;
-          const aligned = ema9Vals[i + 1].value < ema20Vals[i + 1].value;
-          if (isGreen && touchedEMA && isRed && bigger && closesBelow && breaks && aligned) {
-            const swingHigh = Math.max(pullback.high, rejection.high);
-            return {
-              valid: true, type: 'BEARISH_EMA_SETUP', entry: rejection.low,
-              sl: swingHigh * 1.002,
-              confirmCandleTime: confirmation.time, confirmCandleClose: confirmation.close,
-              confirmCandleLow: confirmation.low, confirmCandleHigh: confirmation.high,
-              note: 'Bearish 9/20 EMA crossover → Green pullback → Bigger Red rejection → Confirmation low break'
-            };
+
+        // ---- BEARISH SETUP ----
+        if (isBearTrend) {
+          const lookbackStart = Math.max(0, sweepIdx - N);
+          const lookbackCandles = candles.slice(lookbackStart, sweepIdx);
+          if (lookbackCandles.length < 5) continue;
+          const swingHigh = Math.max(...lookbackCandles.map(c => c.high));
+
+          const sweptAbove = sweepCandle.high > swingHigh;
+          const closeBackBelow = sweepCandle.close < swingHigh;
+
+          if (sweptAbove && closeBackBelow) {
+            const isRed = valCandle.close < valCandle.open;
+            const valBody = Math.abs(valCandle.close - valCandle.open);
+            const sweepBody = Math.abs(sweepCandle.close - sweepCandle.open);
+            const biggerBody = valBody > sweepBody;
+            const closesBelowSweepLow = valCandle.close < sweepCandle.low;
+            const ema9Val = ema9Vals[valIdx].value;
+            const ema20Val = ema20Vals[valIdx].value;
+            const trendStillBear = ema9Val < ema20Val;
+
+            if (isRed && biggerBody && closesBelowSweepLow && trendStillBear) {
+              const entry = valCandle.close;
+              const sl = sweepCandle.high + atr * 0.10;
+              const risk = Math.abs(sl - entry);
+              const tp1 = entry - risk * 2;
+              const tp2 = entry - risk * 3;
+
+              return {
+                valid: true,
+                type: 'BEARISH_EMA_SETUP',
+                entry, sl, tp1, tp2,
+                note: `Bearish 9/20 EMA + Sweep: high pierced ${formatPrice(swingHigh, currentSymbol)} and closed back below with a strong rejection candle.`,
+                confirmCandleTime: valCandle.time,
+                confirmCandleClose: valCandle.close,
+                confirmCandleLow: valCandle.low,
+                confirmCandleHigh: valCandle.high,
+                sweepLevel: swingHigh,
+                sweepType: 'BEARISH_SWEEP',
+                sweepCandleLow: sweepCandle.low,
+                sweepCandleHigh: sweepCandle.high
+              };
+            }
           }
         }
       }
-      return { valid: false, reason: 'Waiting for pullback + bigger rejection candle + confirmation' };
+
+      return { valid: false, reason: 'Waiting for sweep + rejection + confirmation' };
     }
 
+    // Keep the original choppy detector and volume meter for UI context
     function detectChoppyMarket(candles) {
       const len = candles.length;
       if (len < 40) return false;
@@ -1860,6 +1929,18 @@
       return crosses >= 3 || sep < 0.0015;
     }
 
+    function calculateVolumeMeter(volumes) {
+      if (volumes.length < 30) return { label: '--' };
+      const recent = volumes.slice(-30, -1);
+      const current = volumes[volumes.length - 2];
+      const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+      const ratio = current / avg;
+      if (ratio >= 1.8) return { label: 'High', ratio };
+      if (ratio <= 0.6) return { label: 'Low', ratio };
+      return { label: 'Normal', ratio };
+    }
+
+    // Helper for sweep display (used by UI)
     function detectLiquiditySweep(candles) {
       const len = candles.length;
       if (len < 30) return { swept: false, type: 'NONE' };
@@ -1875,17 +1956,6 @@
       if (sweepCandle.high > highestHigh && sweepCandle.close < highestHigh && sweepCandle.close < ema9 && ema9 < ema20)
         return { swept: true, type: 'BEARISH_SWEEP', sweepLevel: highestHigh };
       return { swept: false, type: 'NONE' };
-    }
-
-    function calculateVolumeMeter(volumes) {
-      if (volumes.length < 30) return { label: '--' };
-      const recent = volumes.slice(-30, -1);
-      const current = volumes[volumes.length - 2];
-      const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
-      const ratio = current / avg;
-      if (ratio >= 1.8) return { label: 'High', ratio };
-      if (ratio <= 0.6) return { label: 'Low', ratio };
-      return { label: 'Normal', ratio };
     }
 
     // ================== DATA FETCH ==================
@@ -2131,7 +2201,8 @@
       const volInfo = calculateVolumeMeter(currentVolumes);
       const isChoppy = detectChoppyMarket(currentCandles);
 
-      const strategy = detectEmaStrategy(currentCandles);
+      // 🔥 Use the new 9/20 EMA + Liquidity Sweep strategy
+      const strategy = detectEmaLiquiditySweepStrategy(currentCandles, currentVolumes, 20, 14);
       updateMetrics(isBullishTrend, sweep, volInfo, strategy.valid, strategy.type);
 
       clearCanvasLines();
@@ -2162,7 +2233,7 @@ LIQUIDITY SWEEP: ${sweep.swept ? sweep.type : 'None detected'}
 VOLUME: ${volInfo.label}
 EMA CROSSOVER: ${strategy.reason}
 
-STATUS: NO VALID 9/20 EMA PULLBACK SETUP right now.
+STATUS: NO VALID 9/20 EMA + LIQUIDITY SWEEP SETUP right now.
 
 Give a real, actionable analysis covering: (1) current market structure, (2) what price action you're waiting for, (3) a specific key level to watch. Keep it under 45 words. Do NOT use markdown or bullet points.`;
 
@@ -2230,8 +2301,8 @@ Risk Amount: $${formatPrice(risk, currentSymbol)}
 
 CONTEXT:
 Trend: ${isBullishTrend ? 'Bullish (9 EMA > 20 EMA)' : 'Bearish (9 EMA < 20 EMA)'}
-Setup: ${strategy.type} — 9/20 EMA crossover, pullback to EMA zone, bigger rejection candle, confirmation break
-Liquidity Sweep: ${sweep.swept ? sweep.type + ' at $' + formatPrice(sweep.sweepLevel, currentSymbol) : 'None'}
+Setup: ${strategy.type} — 9/20 EMA trend + liquidity sweep at ${formatPrice(strategy.sweepLevel, currentSymbol)}, rejection candle, confirmation break
+Liquidity Sweep: ${strategy.sweepType}
 Volume: ${volInfo.label}
 Nearest Resistance: $${formatPrice(nearestR, currentSymbol)}
 Nearest Support: $${formatPrice(nearestS, currentSymbol)}
@@ -2504,7 +2575,6 @@ Write 4-5 lines covering: (1) why this setup is valid, (2) volume confirmation, 
       }, 8000);
     });
 
-    // ✅ visibilitychange se force reload hata diya — sirf subscription refresh
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && bootstrapped) {
         if (auth.currentUser && currentScreen === 'app') {
