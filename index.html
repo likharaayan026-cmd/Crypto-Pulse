@@ -20,7 +20,6 @@
     :root { color-scheme: dark; }
     * { font-family: 'Inter', system-ui, -apple-system, sans-serif; box-sizing: border-box; }
     html { height: 100%; overflow-x: hidden; }
-    /* ✅ CRITICAL FIX: Normal scroll behavior */
     body {
       width: 100%; max-width: 100%; margin: 0; padding: 0;
       overflow-x: hidden; overflow-y: auto;
@@ -80,8 +79,24 @@
     .safe-t { padding-top: env(safe-area-inset-top, 0px); }
     .hold-ring { position: absolute; inset: -3px; border-radius: 14px; border: 2px solid rgba(251,191,36,0.0); transition: border-color .2s ease; pointer-events: none; }
 
+    /* ✅ HEADER — fixed at top, never scrolls away */
+    #app-header {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 40 !important;
+      background: rgba(11, 18, 32, 0.95);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    #app-container main { padding-top: 76px; }
+
     .header-voice-btn {
-      position: relative; width: 36px; height: 36px; border-radius: 12px;
+      position: relative; width: 38px; height: 38px; border-radius: 12px;
       background: linear-gradient(135deg, #6366f1, #3b82f6);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; border: 1px solid rgba(165,180,252,0.5);
@@ -89,9 +104,8 @@
       flex-shrink: 0;
     }
     .header-voice-btn:active { transform: scale(0.9); }
-    .header-voice-btn svg { width: 18px; height: 18px; color: #fff; }
+    .header-voice-btn svg { width: 19px; height: 19px; color: #fff; }
 
-    /* ✅ VOICE OVERLAY — Fixed position, scrollable content */
     #voice-backdrop {
       position: fixed; inset: 0; z-index: 54;
       background: rgba(30, 64, 175, 0.42);
@@ -113,17 +127,11 @@
     @keyframes orbEnter { 0% { opacity: 0; transform: scale(0.3) translateY(40px); filter: blur(20px); } 60% { opacity: 1; filter: blur(2px); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
 
     .voice-content-wrap {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      padding: 16px;
-      padding-bottom: 60px;
+      flex: 1; display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      width: 100%; padding: 16px; padding-bottom: 60px;
       min-height: 100%;
     }
-
     .voice-orb-container { position: relative; width: 200px; height: 200px; margin: 0 auto; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .siri-ring { position: absolute; border-radius: 50%; pointer-events: none; opacity: 1; }
     .siri-ring-1 { inset: 0; background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #ec4899, #f59e0b, #10b981, #06b6d4, #6366f1); filter: blur(22px); animation: siriSpin 4s linear infinite; }
@@ -159,7 +167,7 @@
       color: #e2e8f0;
       backdrop-filter: blur(10px);
       min-height: 70px;
-      max-height: 200px;
+      max-height: 260px;
       overflow-y: auto;
       display: flex;
       align-items: center;
@@ -186,7 +194,7 @@
       <div class="relative w-24 h-24 flex items-center justify-center">
         <div class="splash-ring"></div>
         <div class="splash-ring delay"></div>
-        <div class="splash-logo-inner w-20 h-20 rounded-[28px] bg-gradient-to-tr from-indigo-600 via-violet-500 to-blue-500 flex items-center justify-center shadow-2xl shadow-indigo-500/40 relative z-10">
+        <div class="splash-logo-inner w-20 h-20 rounded-[28px] bg-gradient-to-tr from-indigo-600 via-violet-500 to-blue-500 flex items-center justify-center shadow-2xl relative z-10">
           <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4"><path d="M2 12h3l2.5-7 4 14 2.5-7H22"/></svg>
         </div>
       </div>
@@ -262,10 +270,11 @@
     </div>
   </div>
 
-  <!-- APP (scrollable normal page) -->
+  <!-- APP -->
   <div id="app-container" class="hidden">
-    <header class="bg-[#0b1220]/90 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-30 shadow-lg">
-      <div class="max-w-7xl mx-auto px-3 py-3 flex justify-between items-center gap-2">
+    <!-- ✅ FIXED HEADER — always on top -->
+    <header id="app-header">
+      <div class="max-w-7xl mx-auto px-3 py-2.5 flex justify-between items-center gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-500 to-blue-500 flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.6"><path d="M2 12h3l2.5-7 4 14 2.5-7H22"/></svg>
@@ -300,7 +309,7 @@
           <div id="sub-icon" class="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-600 flex items-center justify-center text-base">💎</div>
           <div class="leading-tight min-w-0">
             <p id="sub-status-title" class="text-xs font-black text-white">Free Plan</p>
-            <p id="sub-status-sub" class="text-[10px] text-slate-400 font-medium">2 free scans per day</p>
+            <p id="sub-status-sub" class="text-[10px] text-slate-400 font-medium">3 free voice scans per day</p>
           </div>
         </div>
         <button type="button" id="subscribe-btn" class="btn-press bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-xl font-black text-xs">Subscribe ₹99</button>
@@ -362,15 +371,13 @@
         <p class="text-[12px] text-slate-300 font-medium">
           <a href="https://pulse-alpha-privacy-policy.vercel.app" target="_blank" rel="noopener noreferrer" class="text-indigo-400 font-bold hover:underline">Terms and Conditions &amp; Disclaimer</a>
         </p>
-        <p class="text-[11px] text-slate-400 font-medium">Developer <span class="text-indigo-300 font-bold">Aayan Likhar</span></p>
+        <p class="text-[11px] text-slate-400 font-medium">Developer <span class="text-indigo-300 font-bold">Aayan Likhar</span> · 17-year-old trader</p>
       </div>
     </footer>
   </div>
 
-  <!-- VOICE BACKDROP -->
   <div id="voice-backdrop"></div>
 
-  <!-- VOICE OVERLAY -->
   <div id="voice-overlay" class="voice-overlay">
     <div class="voice-content-wrap">
       <div class="w-full max-w-2xl mx-auto mb-4 flex items-center justify-between gap-2">
@@ -411,11 +418,10 @@
 
   <audio id="notification-sound" src="nothing.mp3" preload="auto"></audio>
 
-  <!-- PAYWALL -->
   <div id="paywall-modal" class="hidden fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="glass w-full max-w-sm p-6 rounded-[26px] space-y-4 screen-enter text-center">
       <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-2xl">🔒</div>
-      <div class="space-y-1.5"><h3 class="text-lg font-black text-white">Daily Limit Reached</h3><p id="paywall-msg" class="text-[11px] text-slate-400">You've used your 2 free scans for today. Upgrade to Pro for unlimited scans.</p></div>
+      <div class="space-y-1.5"><h3 class="text-lg font-black text-white">Daily Voice Limit Reached</h3><p id="paywall-msg" class="text-[11px] text-slate-400">You've used your 3 free voice scans for today. Upgrade to Pro for unlimited scans.</p></div>
       <button type="button" id="paywall-subscribe-btn" class="btn-press w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black py-3.5 rounded-xl text-sm">Upgrade Now — ₹99</button>
       <button type="button" id="paywall-close-btn" class="text-slate-400 font-bold text-xs py-1">Maybe later</button>
     </div>
@@ -451,7 +457,7 @@
     const RAZORPAY_KEY_ID = "rzp_live_T5OZeAeTkrB7YG";
     const SUBSCRIPTION_PRICE_PAISE = 9900;
     const SUBSCRIPTION_DAYS = 28;
-    const FREE_SCANS_PER_DAY = 2;
+    const FREE_SCANS_PER_DAY = 3;   // ✅ Changed from 2 to 3
     const FREE_ACCESS_PASSWORD = "pulse28";
     const LONG_PRESS_DURATION = 4000;
 
@@ -471,18 +477,18 @@
       trend: ['trend', 'bias', 'direction', 'kaha ja raha'],
       entry: ['entry', 'trade', 'buy', 'sell', 'long', 'short', 'setup', 'signal'],
       sr: ['support', 'resistance', 's/r', 'level', 'level batao', 'level btao'],
-      overview: ['market', 'aaj', 'overall', 'haal', 'hal', 'sab', 'scene']
+      overview: ['market', 'aaj', 'overall', 'haal', 'hal', 'sab', 'scene'],
+      anyEntry: ['kisi', 'koi', 'kisi mein', 'koi coin', 'kis coin', 'entry ban rahi', 'entry bani', 'konsa', 'kaunsa', 'any', 'which coin', 'kisme', 'kisme entry', 'kaha entry'],
+      developer: ['developer', 'tumhe kisne banaya', 'kisne banaya', 'tumhara developer', 'who made you', 'who is your developer', 'tumhe kaun banaya', 'creator', 'tumhara creator', 'owner', 'founder', 'kisne develop']
     };
     const SETUP_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
     const setupAlertLog = {};
-    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v13';
+    const PULSE_WELCOME_SEEN_KEY = 'pulsealpha_welcome_seen_v14';
 
     const SILENCE_TIMEOUT_MS = 2500;
     const MAX_RECORDING_MS = 15000;
 
-    // ✅ Last response tracking to avoid repeats
     let lastResponses = {};
-
     let pulseAssistant = null;
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -682,7 +688,6 @@
       if (currentScreen === 'verify') { isTransitioning = true; doLogout().finally(() => { isTransitioning = false; }); return; }
     });
 
-    // ✅ SIMPLE SCREEN ROUTER — uses classList
     function showScreen(screen) {
       const authEl = document.getElementById('auth-container');
       const verifyEl = document.getElementById('verify-container');
@@ -782,7 +787,7 @@
       const titleEl = document.getElementById('sub-status-title'), subEl = document.getElementById('sub-status-sub');
       const btn = document.getElementById('subscribe-btn'), icon = document.getElementById('sub-icon'), bar = document.getElementById('subscription-bar');
       if (!titleEl) return;
-      if (!auth.currentUser) { titleEl.innerText = 'Free Plan'; titleEl.className = 'text-xs font-black text-white'; subEl.innerText = `2 free scans per day`; return; }
+      if (!auth.currentUser) { titleEl.innerText = 'Free Plan'; titleEl.className = 'text-xs font-black text-white'; subEl.innerText = `3 free voice scans per day`; return; }
       const now = Date.now(); const isPro = userSubscription.active && userSubscription.expiresAt > now;
       if (isPro) {
         const daysLeft = Math.max(1, Math.ceil((userSubscription.expiresAt - now) / 86400000));
@@ -794,7 +799,7 @@
         let used = 0; try { used = await getTodayScanCount(); } catch(e){}
         const left = Math.max(0, FREE_SCANS_PER_DAY - used);
         titleEl.innerText = 'Free Plan'; titleEl.className = 'text-xs font-black text-white';
-        subEl.innerText = left > 0 ? `${left} of ${FREE_SCANS_PER_DAY} free scans left today` : `Daily limit reached · upgrade for unlimited`;
+        subEl.innerText = left > 0 ? `${left} of ${FREE_SCANS_PER_DAY} free voice scans left today` : `Daily limit reached · upgrade for unlimited`;
         if (btn) btn.innerText = 'Subscribe ₹99'; if (icon) icon.innerText = '💎';
         if (bar) bar.className = 'rounded-2xl border p-3 flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#1a1f3d] to-[#0f172a] border-indigo-800/50 min-w-0';
       }
@@ -840,7 +845,7 @@
     }
     function showPaywall(reason) {
       const m = document.getElementById('paywall-modal'), msg = document.getElementById('paywall-msg'); if (!m) return;
-      if (msg) msg.innerText = reason === 'daily_limit' ? "Aaj ke 2 free scans khatam. Pro lein aur unlimited scan karein." : "Free scan limit reached.";
+      if (msg) msg.innerText = reason === 'daily_limit' ? "Aaj ke 3 free voice scans khatam. Pro lein aur unlimited scan karein." : "Free scan limit reached.";
       m.classList.remove('hidden');
     }
     function hidePaywall() { const m = document.getElementById('paywall-modal'); if (m) m.classList.add('hidden'); }
@@ -960,6 +965,11 @@
     }
     function detectIntentFromText(text) {
       const lower = text.toLowerCase();
+      // ✅ Developer question check first
+      if (PULSE_INTENT_KEYWORDS.developer.some(k => lower.includes(k))) return 'developer';
+      // ✅ Any coin entry check
+      if (PULSE_INTENT_KEYWORDS.anyEntry.some(k => lower.includes(k))) return 'anyEntry';
+      // Standard intents
       if (PULSE_INTENT_KEYWORDS.entry.some(k => lower.includes(k))) return 'entry';
       if (PULSE_INTENT_KEYWORDS.sr.some(k => lower.includes(k))) return 'sr';
       if (PULSE_INTENT_KEYWORDS.price.some(k => lower.includes(k))) return 'price';
@@ -968,7 +978,80 @@
       return 'levels';
     }
 
-    // ✅ Prompt with strict rules + variety + no-repeat guard
+    // ✅ Check if the user's question is off-topic (not market/crypto related)
+    function isOffTopic(text) {
+      const lower = text.toLowerCase();
+      // Crypto/market keywords allow-list
+      const allowed = ['btc','eth','sol','xrp','tao','aave','avax','zec','paxg','bitcoin','ethereum','solana','ripple','bittensor','avalanche','zcash','pax gold','market','chart','crypto','coin','trade','entry','support','resistance','level','price','trend','analysis','buy','sell','long','short','target','stop','loss','profit','setup','signal','volume','sweep','ema','bias','pattern','timeframe','asset','bull','bear','haar','jeet','kaha','kya','kaise','batao','bolo','poocho','hello','hi','namaste','hey','thanks','shukriya','developer','aayan','likhar','creator','tumhe','kisne'];
+      for (const word of allowed) { if (lower.includes(word)) return false; }
+      return true;
+    }
+
+    // ✅ Handle developer question
+    function buildDeveloperResponse() {
+      const variants = [
+        'Mere developer hain Aayan Likhar — ek 17 saal ke talented crypto trader. Unhone apni real trading strategy mujhme inbuild ki hai, isliye main bilkul unke style me analysis karti hoon.',
+        'Mujhe Aayan Likhar ne banaya hai. Wo 17 saal ke crypto trader hain, aur unki apni trading strategy hai jo unhone mujhme inbuild ki hai. Isi strategy se main aapko analysis deti hoon.',
+        'Main Pulse Alpha hoon, aur mera developer Aayan Likhar hai. Wo 17 saal ke trader hain jo crypto trading karte hain. Unhone apni personal strategy mujhme daali hai — isliye mere analysis real hote hain.'
+      ];
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+
+    // ✅ Handle off-topic politely
+    function buildOffTopicResponse() {
+      const variants = [
+        'Maaf kijiye, main is vishay par jawab nahi de sakti. Aap mujhse market analysis ke sawal pooch sakte hain — jaise "BTC ka level batao" ya "Aaj market ka kya haal hai".',
+        'Yeh mere knowledge ke bahar hai. Main sirf crypto market analysis me help kar sakti hoon. Aap kisi bhi coin ke baare me pooch sakte hain.',
+        'Is sawal ka jawab dena mere kaam me nahi aata. Main aapko market analysis, entry setup, support resistance aur trend ke baare me bata sakti hoon.'
+      ];
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+
+    // ✅ Handle "koi entry ban rahi hai?" — check all 4 main coins
+    async function handleAnyEntryQuestion(userTranscript) {
+      const symbols = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT'];
+      const results = await Promise.all(symbols.map(s => scanSingleCoin(s)));
+
+      const found = [];
+      const notFound = [];
+      results.forEach(r => {
+        if (r.error) return;
+        const meta = PULSE_SUPPORTED[r.symbol];
+        if (r.validEntry) found.push({ r, meta });
+        else notFound.push({ r, meta });
+      });
+
+      let responseText = '';
+      if (found.length > 0) {
+        responseText = 'Haan, mujhe entry mil rahi hai. ';
+        found.forEach(item => {
+          const label = item.meta.hi;
+          const dir = item.r.direction === 'LONG' ? 'buy' : 'sell';
+          responseText += `${label} mein valid ${dir} setup bana hai — agar price ${formatPrice(item.r.entry, item.r.symbol)} pe aaye toh entry le sakte ho, stop loss ${formatPrice(item.r.stopLoss, item.r.symbol)} aur target ${formatPrice(item.r.tp1, item.r.symbol)}. `;
+        });
+        if (notFound.length > 0) {
+          responseText += `Baki, `;
+          notFound.forEach((item, i) => {
+            const label = item.meta.hi;
+            responseText += `${label} mein abhi clean entry nahi bani${i < notFound.length - 1 ? ', ' : '. '}`;
+          });
+          responseText += 'Un par confirmation ka wait karo.';
+        }
+      } else {
+        responseText = 'Nahi, abhi kisi bhi coin mein clean entry nahi bani hai. ';
+        notFound.forEach((item, i) => {
+          const label = item.meta.hi;
+          const support = item.r.support ? formatPrice(item.r.support, item.r.symbol) : '';
+          const resistance = item.r.resistance ? formatPrice(item.r.resistance, item.r.symbol) : '';
+          if (support && resistance) {
+            responseText += `${label} mein agar price ${resistance} ke upar close de toh bullish setup ban sakta hai, support ${support} pe hai. `;
+          }
+        });
+        responseText += 'Filhaal wait karna better hai, confirmation ka wait karo.';
+      }
+      return responseText;
+    }
+
     function buildPulsePrompt(analysis, intent, userTranscript, previousResponse) {
       const dataLines = [];
       if (Array.isArray(analysis)) {
@@ -990,27 +1073,25 @@
 
       let noRepeatRule = '';
       if (previousResponse) {
-        noRepeatRule = `\n\n⚠️ CRITICAL: The user ALREADY heard a similar answer before. Do NOT repeat it. Here is what you said last time: "${previousResponse.slice(0, 150)}..."\n\nYou MUST give a DIFFERENT response this time — use different wording, different structure, different emphasis.`;
+        noRepeatRule = `\n\n⚠️ CRITICAL: Do NOT repeat this exact answer from before: "${previousResponse.slice(0, 150)}..."\nGive a DIFFERENT response with different wording.`;
       }
 
-      return `You are Pulse — a Hindi-speaking crypto market assistant by Aayan Likhar. You talk like a real Indian friend who explains market on a phone call. Warm, natural, direct.
+      return `You are Pulse — Hindi-speaking crypto market assistant by Aayan Likhar. Natural warm Hindi.
 
 CRITICAL RULES:
-${onlyOne ? `1. User asked ONLY about ${coinLabel}. Talk ONLY about ${coinLabel}. NEVER mention any other coin name.` : `1. User asked for overall market. Briefly cover each provided coin.`}
-2. Use ONLY the exact numbers from the LIVE DATA below. NEVER invent any number.
-3. Give ACTIONABLE LEVELS. Never just say "price is X" or "trend is bullish" without a level.
-4. Speak format: "agar [coin] [level] pe aaye toh [long/short] kar sakte ho, stop loss [SL], target [TP]".
-5. If ValidEntry=false → say clearly "abhi clean entry nahi bani, confirmation ka wait karo" + give nearest S/R levels.
-6. If ValidEntry=true → use EXACT Entry/SL/TP1/TP2 numbers. Frame as "agar price X pe aaye toh...".
-7. NEVER say "guaranteed", "100% profit", "sure shot", "loss nahi hoga".
-8. Write in natural Hindi (Devanagari). Numbers in RAW DIGITS (86388, 4250.50) — the app speaks Hindi automatically.
-9. Length: 3-4 SHORT sentences. Voice-friendly. No markdown, no lists, no bullets.
-10. Vary your sentence structure every time. Don't start all sentences the same way.
-11. Talk naturally: "dekho", "bhai", "samjho" — but stay professional.
-12. If intent is "price" → just current price + one key level. Don't ramble.
-13. If intent is "sr" → nearest S/R + what a break means.
-14. If intent is "entry" → focus entirely on entry setup.
-15. If intent is "trend" → EMA9 vs EMA20 + flip level.${noRepeatRule}
+${onlyOne ? `1. User asked ONLY about ${coinLabel}. Talk ONLY about ${coinLabel}. NEVER mention other coins.` : `1. User asked overall market. Cover each provided coin briefly.`}
+2. Use ONLY LIVE data numbers. NEVER invent numbers.
+3. Give ACTIONABLE LEVELS. Never just "price is X".
+4. Format: "agar [coin] [level] pe aaye toh [long/short], stop loss [SL], target [TP]".
+5. If ValidEntry=false → say "abhi clean entry nahi bani, confirmation ka wait karo" + nearest S/R.
+6. If ValidEntry=true → use EXACT Entry/SL/TP numbers as conditional levels.
+7. NEVER say "guaranteed", "100% profit", "sure shot".
+8. Natural Hindi (Devanagari). Numbers in RAW DIGITS — app speaks Hindi.
+9. Length: 3-4 SHORT sentences. No markdown.
+10. Vary your sentence structure. Don't repeat phrases.
+11. If intent is "price" → just price + one key level. Don't ramble.
+12. If intent is "sr" → nearest S/R + break meaning.
+13. If intent is "entry" → focus entirely on entry setup.${noRepeatRule}
 
 USER SAID: "${userTranscript}"
 INTENT: ${intent}
@@ -1018,19 +1099,75 @@ INTENT: ${intent}
 LIVE DATA:
 ${dataLines.join('\n')}
 
-Respond now in natural Hindi (Devanagari). Keep it SHORT and DIFFERENT from any previous response.`;
+Respond now in natural Hindi (Devanagari). SHORT and DIFFERENT from before.`;
     }
 
     async function processPulseCommand(transcript) {
       if (!transcript || !transcript.trim()) { if (pulseAssistant) pulseAssistant.setState('idle'); return; }
+
+      // ✅ Check permission FIRST for voice scans
+      if (!subInitDone) { try { await initSubscription(); } catch(e){} }
+      let gate;
+      try { gate = await checkScanPermission(); } catch (e) { gate = { allowed: true, unlimited: false, left: FREE_SCANS_PER_DAY }; }
+      if (!gate.allowed) {
+        if (pulseAssistant) {
+          const msg = 'Aapke 3 free voice scans aaj ke liye khatam ho gaye. Pro subscription lein aur unlimited analysis paayen.';
+          pulseAssistant.setLiveText(`<span class="pulse-answer">${msg}</span>`);
+          pulseAssistant.setState('speaking');
+          speakPulseResponse(msg);
+        }
+        showPaywall('daily_limit');
+        return;
+      }
+
+      // Consume a free scan (not for developer / off-topic — only for real analysis)
       if (pulseAssistant) {
         pulseAssistant.setState('processing');
         pulseAssistant.setLiveText(`<span class="text-amber-300">Samajh raha hoon: "${escapeHtml(transcript)}"</span>`);
       }
 
       const clean = transcript.trim().toLowerCase();
-      const coin = detectCoinFromText(clean);
       const intent = detectIntentFromText(clean);
+      const coin = detectCoinFromText(clean);
+
+      // ✅ Developer question — no scan consumption, no Gemini
+      if (intent === 'developer') {
+        const devText = buildDeveloperResponse();
+        if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${devText}</span>`);
+        speakPulseResponse(devText);
+        return;
+      }
+
+      // ✅ Off-topic — no scan consumption
+      if (!coin && isOffTopic(clean) && intent !== 'anyEntry' && intent !== 'overview' && intent !== 'levels') {
+        const offText = buildOffTopicResponse();
+        if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${offText}</span>`);
+        speakPulseResponse(offText);
+        return;
+      }
+
+      // ✅ "Any entry?" — check all 4 main coins — consumes ONE scan
+      if (intent === 'anyEntry' && !coin) {
+        try {
+          await consumeFreeScan();
+          refreshSubscriptionUI().catch(()=>{});
+          if (pulseAssistant) pulseAssistant.setHint('Saare coins check kar raha hoon...');
+          const anyEntryText = await handleAnyEntryQuestion(transcript);
+          if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${anyEntryText}</span>`);
+          speakPulseResponse(anyEntryText);
+        } catch (e) {
+          const errMsg = 'Analysis nahi ho paya. Dobara try karein.';
+          if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${errMsg}</span>`);
+          speakPulseResponse(errMsg);
+        }
+        return;
+      }
+
+      // ✅ Real market analysis — consume scan
+      try {
+        await consumeFreeScan();
+        refreshSubscriptionUI().catch(()=>{});
+      } catch(e){}
 
       try {
         let finalText;
@@ -1118,13 +1255,7 @@ Respond now in natural Hindi (Devanagari). Keep it SHORT and DIFFERENT from any 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts: [{ text: promptText }] }],
-              generationConfig: {
-                temperature: 1.1,       // ✅ Very high for max variety
-                topP: 0.98,
-                topK: 50,
-                maxOutputTokens: 260,
-                candidateCount: 1
-              },
+              generationConfig: { temperature: 1.1, topP: 0.98, topK: 50, maxOutputTokens: 260, candidateCount: 1 },
               safetySettings: [
                 { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
                 { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -1146,15 +1277,12 @@ Respond now in natural Hindi (Devanagari). Keep it SHORT and DIFFERENT from any 
     function playWelcomeIfFirstTime() {
       if (hasSeenWelcome()) return false;
       markWelcomeSeen();
-      const welcomeText = 'Welcome to Aayan World. Main Pulse hoon, aapka Hindi market assistant. Aap mic dabakar BTC, Ethereum, Solana, XRP, ya kisi bhi coin ke baare me pooch sakte ho.';
+      const welcomeText = 'Welcome to Aayan World. Main Pulse hoon, aapka Hindi market assistant. Aap mic dabakar BTC, Ethereum, Solana, XRP, ya kisi bhi coin ke baare me pooch sakte ho. Roz 3 free voice scans milenge.';
       if (pulseAssistant) pulseAssistant.setLiveText(`<span class="pulse-answer">${welcomeText}</span>`);
       setTimeout(() => { if (pulseAssistant) pulseAssistant.setState('speaking'); speakPulseResponse(welcomeText); }, 500);
       return true;
     }
 
-    // ==================================================================
-    // ============  VOICE ASSISTANT  ===================================
-    // ==================================================================
     function initPulseAssistant() {
       if (pulseAssistant) return;
       const overlay = document.getElementById('voice-overlay');
@@ -1337,18 +1465,13 @@ Respond now in natural Hindi (Devanagari). Keep it SHORT and DIFFERENT from any 
       }, 400);
     }
 
-    // ✅ CRITICAL: Proper cleanup on close
     function closeVoiceOverlay() {
       if (pulseAssistant) { try { pulseAssistant.stopListening(); } catch(e){} try { pulseAssistant.stopSpeaking(); } catch(e){} }
       document.body.classList.remove('voice-open');
       document.body.style.overflow = 'auto';
       const overlay = document.getElementById('voice-overlay'); if (overlay) overlay.classList.remove('visible', 'enter');
       currentScreen = 'app'; pushScreenState('app', true);
-      // ✅ Force reset any lingering state
-      setTimeout(() => {
-        document.body.style.overflow = 'auto';
-        window.scrollTo({ top: window.scrollY, behavior: 'auto' });
-      }, 100);
+      setTimeout(() => { document.body.style.overflow = 'auto'; }, 100);
     }
 
     function maybeSendSetupAlert(sig) {
@@ -1865,7 +1988,7 @@ Respond now in natural Hindi (Devanagari). Keep it SHORT and DIFFERENT from any 
       if (checkBtn) checkBtn.addEventListener('click', async () => {
         const u = auth.currentUser; if (!u) { showScreen('auth'); return; }
         checkBtn.disabled = true;
-        const checkText = document.getElementById('verify-check-text'), checkIcon = document.getElementById('verify-check-icon');
+        const checkText = document.getElementById('verify-check-text');
         if (checkText) checkText.innerText = 'Checking...';
         try {
           await u.reload(); const fresh = auth.currentUser;
